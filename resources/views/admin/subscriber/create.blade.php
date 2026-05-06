@@ -14,6 +14,17 @@
                             </div>
                             <div class="card-body">
 
+                                <div id="pincodeEmptyMessage" class="alert alert-info" role="alert" style="display:none;">
+                                    If your pincode is not listed, send it via WhatsApp to 9069067008.<br>
+                                    We will add it and notify you!
+                                </div>
+
+                                <input type="hidden" id="pincodeSearchApiUrl" value="{{ route('pincode.search') ?? url('pincode/search') }}">
+
+
+
+
+
                                 <form class="needs-validation" method="post" action="{{ url('subscriberstore') }}"
                                     enctype="multipart/form-data" novalidate>
                                     {{ csrf_field() }}
@@ -131,10 +142,10 @@
                                                     multiple multiselect-search="true" value=""
                                                     multiselect-select-all="true" multiselect-max-items="3"
                                                     onchange="console.log(this.selectedOptions)">
-                                                    @foreach ($pincode as $pincode)
-                                                        <option value="{{ $pincode->id }}"
-                                                            {{ (is_array(old('pincode')) and in_array($pincode->id, old('pincode'))) ? ' selected' : '' }}>
-                                                            {{ $pincode->pincode }}</option>
+                                                    @foreach ($pincode as $pin)
+                                                        <option value="{{ $pin->id }}"
+                                                            {{ (is_array(old('pincode')) and in_array($pin->id, old('pincode'))) ? ' selected' : '' }}>
+                                                            {{ $pin->pincode }}</option>
                                                     @endforeach
                                                 </select>
 
@@ -737,8 +748,79 @@
         </div> <!-- .row -->
     </div> <!-- .container-fluid -->
 @endsection
-@section('scripts')
+{{-- @section('scripts')
     <script>
+        // Default hidden; show only when backend indicates empty pincode search result.
+        // Current page UI uses AJAX pincode search, so backend must trigger this via JS.
+
+        function setPincodeEmptyMessage(show) {
+            const el = document.getElementById('pincodeEmptyMessage');
+            if (!el) return;
+            el.style.display = show ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('pincode');
+
+    function toggleMessage() {
+        const selected = select.selectedOptions.length;
+        setPincodeEmptyMessage(selected === 0);
+    }
+
+    // Initial check
+    toggleMessage();
+
+    // On change
+    select.addEventListener('change', toggleMessage);
+});
+
+        // If server-side computed empty flag is provided (fallback).
+        @if(isset($pincodeEmpty) && $pincodeEmpty)
+            setPincodeEmptyMessage(true);
+        @endif
+
+document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('pincode');
+    let modalShown = false;
+
+    function setPincodeEmptyMessage(show) {
+        const el = document.getElementById('pincodeEmptyMessage');
+        if (!el) return;
+        el.style.display = show ? 'block' : 'none';
+    }
+
+    function toggleMessage() {
+        const selected = select.selectedOptions.length;
+
+        if (selected === 0) {
+            setPincodeEmptyMessage(true);
+
+            if (!modalShown) {
+                $('#pincodeNotListedModal').modal('show');
+                modalShown = true;
+            }
+        } else {
+            setPincodeEmptyMessage(false);
+        }
+    }
+
+    // initial
+    toggleMessage();
+
+    // change (when selecting)
+    select.addEventListener('change', toggleMessage);
+
+    // 👇 IMPORTANT: detect typing (multiselect search)
+    select.addEventListener('keyup', function () {
+        const dropdown = document.querySelector('.multiselect-container');
+
+        // check if no results shown
+        if (dropdown && dropdown.innerText.trim() === '') {
+            setPincodeEmptyMessage(true);
+        }
+    });
+});
+
         function isNumberKey(evt) {
             var charCode = (evt.which) ? evt.which : evt.keyCode
             if (charCode > 31 && (charCode < 48 || charCode > 57))
@@ -759,4 +841,169 @@
 
         })
     </script>
+@endsection --}}
+@section('scripts')
+{{-- <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectEl = document.getElementById('pincode');
+    const messageEl = document.getElementById('pincodeEmptyMessage');
+    const modalEl = $('#pincodeNotListedModal');
+
+    if (!selectEl || !messageEl) return;
+
+    let modalShown = false;
+
+    const hasSelected = () => {
+        return selectEl.selectedOptions && selectEl.selectedOptions.length > 0;
+    };
+
+    const isSearchResultEmpty = () => {
+        const dropdown = document.querySelector('.multiselect-container');
+        if (!dropdown) return false;
+
+        // Multiselect renders list items for results.
+        const items = dropdown.querySelectorAll('li');
+        if (!items || items.length === 0) {
+            return dropdown.innerText.trim().length === 0;
+        }
+
+        // If there is at least one visible list item with non-empty text => not empty.
+        for (const li of items) {
+            const style = window.getComputedStyle(li);
+            if (style && style.display !== 'none' && style.visibility !== 'hidden') {
+                if (li.innerText && li.innerText.trim().length > 0) return false;
+            }
+        }
+
+        return true;
+    };
+
+    const setMessage = (show) => {
+        messageEl.style.display = show ? 'block' : 'none';
+    };
+
+    const evaluate = () => {
+        const selectedCount = (selectEl.selectedOptions ? selectEl.selectedOptions.length : 0);
+        const emptySearch = isSearchResultEmpty();
+
+        // Requirement:
+        // 1) When user searches: show message only if search result is empty.
+        // 2) On page load: do not show if pincodes exist.
+        // 3) If no pincode is selected (and user hasn't searched yet), show message.
+        //
+        // We approximate ("has searched") by checking whether multiselect search box currently has value.
+        const searchInput = document.querySelector('.multiselect-search');
+        const hasSearchText = !!(searchInput && searchInput.value && searchInput.value.trim().length > 0);
+
+        const show = (selectedCount === 0 && !hasSearchText) || (hasSearchText && emptySearch);
+        setMessage(show);
+
+        // Modal only ONCE when no pincode is found due to empty search.
+        // If selectedCount === 0 but user is just on load, do not open modal repeatedly.
+        if (hasSearchText && emptySearch && show && !modalShown) {
+            modalEl.modal('show');
+            modalShown = true;
+        }
+    };
+
+    // Backend fallback: if controller indicates empty, ensure message is visible.
+    @if(isset($pincodeEmpty) && $pincodeEmpty)
+        setMessage(true);
+        // avoid opening modal multiple times on render
+        modalShown = true;
+    @endif
+
+    evaluate();
+
+    selectEl.addEventListener('change', evaluate);
+
+    // Re-evaluate during user typing/search.
+    document.addEventListener('input', function (e) {
+        if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-search')) {
+            evaluate();
+        }
+    });
+
+    // Re-evaluate after multiselect dropdown interactions.
+    document.addEventListener('click', function (e) {
+        if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-dropdown')) {
+            setTimeout(evaluate, 0);
+        }
+    });
+});
+</script> --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectEl = document.getElementById('pincode');
+        const messageEl = document.getElementById('pincodeEmptyMessage');
+        const modalEl = $('#pincodeNotListedModal');
+
+        if (!selectEl || !messageEl) return;
+
+        let modalShown = false;
+
+        const setPincodeEmptyMessage = (show) => {
+            messageEl.style.display = show ? 'block' : 'none';
+        };
+
+        const getIsSearchActive = () => {
+            const searchInput = document.querySelector('.multiselect-search');
+            return !!(searchInput && searchInput.value && searchInput.value.trim().length > 0);
+        };
+
+        const isSearchResultEmpty = () => {
+            const dropdown = document.querySelector('.multiselect-container');
+            if (!dropdown) return false;
+
+            const items = dropdown.querySelectorAll('li');
+            if (!items || items.length === 0) return true;
+
+            // If at least one visible item has text => not empty
+            for (const li of items) {
+                const style = window.getComputedStyle(li);
+                const visible = style && style.display !== 'none' && style.visibility !== 'hidden';
+                if (visible && li.innerText && li.innerText.trim().length > 0) return false;
+            }
+
+            return true;
+        };
+
+        const evaluate = () => {
+            const searchActive = getIsSearchActive();
+            if (!searchActive) {
+                // Requirement: do not show message on page load / without typing
+                setPincodeEmptyMessage(false);
+                return;
+            }
+
+            const emptySearch = isSearchResultEmpty();
+            setPincodeEmptyMessage(emptySearch);
+
+            if (emptySearch && !modalShown) {
+                modalEl.modal('show');
+                modalShown = true;
+            }
+        };
+
+        // Initial: do not show
+        setPincodeEmptyMessage(false);
+
+        // When user types
+        document.addEventListener('input', function (e) {
+            if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-search')) {
+                evaluate();
+            }
+        });
+
+        // When multiselect updates results
+        document.addEventListener('click', function (e) {
+            if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-dropdown')) {
+                setTimeout(evaluate, 0);
+            }
+        });
+    });
+</script>
+
 @endsection
+
+
