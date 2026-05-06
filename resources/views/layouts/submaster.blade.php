@@ -46,6 +46,7 @@
     <main role="main" class="main-content">
         @yield('content')
     </main> <!-- main -->
+    @include('partials.success-modal')
     @yield('scripts')
 
     @include('partials.subscriber.footer')

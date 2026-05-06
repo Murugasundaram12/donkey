@@ -109,10 +109,18 @@ class otherController extends Controller
     public function validId(Request $request)
     {
         $subscriber = Subscriber::where('subscriberId', $request?->subscriberId)?->first();
+        if (!$subscriber) {
+            return response()->json(0);
+        }
         $today = now()->startOfDay(); // Normalize to the start of the day
         $expiryDate = Carbon::parse($subscriber->expiryDate)->startOfDay();
         $diffinDays = $expiryDate->diffInDays($today, false);
-        $price = $subscriber->subscription_price;
+        // Default price logic:
+        // 1) Admin-set subscription_price (if available)
+        // 2) Fallback default Rs.2
+        $price = is_numeric($subscriber->subscription_price) && $subscriber->subscription_price > 0
+            ? (float) $subscriber->subscription_price
+            : 2;
         // dd($price);
         $gstPrice = $price * 18 / 100;
         $subscription_price = $price + $gstPrice;

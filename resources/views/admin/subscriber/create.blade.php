@@ -124,24 +124,50 @@
                                             <div class="invalid-feedback"> Please enter description </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="pincode">Pincode</label>
-                                            <select name="pincode[]"
-                                                class="form-control @error('pincode') is-invalid @enderror" id="pincode"
-                                                multiple multiselect-search="true" value=""
-                                                multiselect-select-all="true" multiselect-max-items="3"
-                                                onchange="console.log(this.selectedOptions)">
-                                                @foreach ($pincode as $pincode)
-                                                    <option value="{{ $pincode->id }}"
-                                                        {{ (is_array(old('pincode')) and in_array($pincode->id, old('pincode'))) ? ' selected' : '' }}>
-                                                        {{ $pincode->pincode }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('pincode')
-                                                <span class="invalid-feedback">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                            <div class="invalid-feedback"> Please select a valid pincode. </div>
+                                            <div>
+                                                <label for="pincode">Pincode</label>
+                                                <select name="pincode[]"
+                                                    class="form-control @error('pincode') is-invalid @enderror" id="pincode"
+                                                    multiple multiselect-search="true" value=""
+                                                    multiselect-select-all="true" multiselect-max-items="3"
+                                                    onchange="console.log(this.selectedOptions)">
+                                                    @foreach ($pincode as $pincode)
+                                                        <option value="{{ $pincode->id }}"
+                                                            {{ (is_array(old('pincode')) and in_array($pincode->id, old('pincode'))) ? ' selected' : '' }}>
+                                                            {{ $pincode->pincode }}</option>
+                                                    @endforeach
+                                                </select>
+
+                                                @error('pincode')
+                                                    <span class="invalid-feedback">
+                                                        <strong>{{ $message }}</strong>
+                                                    </span>
+                                                @enderror
+                                                <div class="invalid-feedback"> Please select a valid pincode. </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal: Pincode not listed -->
+                                        <div class="modal fade" id="pincodeNotListedModal" tabindex="-1" role="dialog"
+                                            aria-labelledby="pincodeNotListedModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="pincodeNotListedModalLabel">Pincode Not Found</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        If your pincode is not listed, send it via WhatsApp to 9069067008. We will add it
+                                                        and notify you
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                        <button type="button" class="btn btn-primary" id="pincodeModalOkBtn" data-dismiss="modal">OK</button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-6 mb-3">
@@ -328,7 +354,7 @@
                                                 </span>
                                             @enderror
                                             <div class="invalid-feedback"> Please upload bike image </div> -->
-                                        </div> 
+                                        </div>
                                         <div class="col-md-4 mb-4">
                                             <label for="biketaxi_price">Bike Taxi Service Fare</label>
                                             <input type="text"
@@ -734,4 +760,3 @@
         })
     </script>
 @endsection
-

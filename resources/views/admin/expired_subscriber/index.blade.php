@@ -15,9 +15,10 @@
 
                     <div class="col ml-auto">
                         {{-- <div class="dropdown float-right">
-                        <a href="{{ url('createSubscriber') }}"><button class="btn btn-primary float-right ml-3" type="button">Add more +</button></a>
+                            <a href="{{ url('createSubscriber') }}"><button class="btn btn-primary float-right ml-3"
+                                    type="button">Add more +</button></a>
 
-                    </div> --}}
+                        </div> --}}
                     </div>
                     <div class="d-flex align-items-center justify-content-end">
                         <h4 class="mb-0 mr-3">Count :</h4>
@@ -72,7 +73,7 @@
                             <div class="card-body table-responsive">
 
                                 <!-- table -->
-                                <table class="table datatables" id="dataTable-1">                                    
+                                <table class="table datatables" id="dataTable-1">
                                     <thead>
                                         <tr>
 
@@ -84,44 +85,46 @@
                                             <th>Pincode</th>
                                             <th>Account Type</th>
                                             <th>Mobile</th>
+                                            <th>Joined Date</th>
                                             <th>Status</th>
                                             {{-- <th>Status</th> --}}
                                             {{-- @php
-                                                $status = [
-                                                    1 => ['label' => 'Active', 'color' => 'green'],
-                                                    0 => ['label' => 'Inactive', 'color' => 'red'],
-                                                ];
+                                            $status = [
+                                            1 => ['label' => 'Active', 'color' => 'green'],
+                                            0 => ['label' => 'Inactive', 'color' => 'red'],
+                                            ];
                                             @endphp --}}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php $i = 1; ?>
-                                       
-@foreach ($expiredSubscribers as $subscriber)
-@php
-$currentDate = now()->format('Y-m-d');
-    $daysLeft = $subscriber->expiryDate->diffInDays($currentDate);
-@endphp
 
-<tr>
-    <td>{{ $loop->iteration }}</td>
-    <td>{{ $subscriber->subscriberId }}</td>
-    <td>{{ $roleName[0] }}</td>
-    <td>{{ $subscriber->name }}</td>
-    <td>{{ $subscriber->location }}</td>
-    <td>
-        @php
-            $subspin = json_decode($subscriber->pincode);
-            foreach ($pincode as $pin) {
-                if (in_array($pin->id, $subspin)) {
-                    echo $pin->pincode.'<br>';
-                }
-            }
-        @endphp
-    </td>
-    <td>{{ $subscriber->account_type ? $subscriber->account_type : 'N/A' }}</td>
-    <td>{{ $subscriber->mobile }}</td>
+                                        @foreach ($expiredSubscribers as $subscriber)
+                                            @php
+                                                $currentDate = now()->format('Y-m-d');
+                                                $daysLeft = $subscriber->expiryDate->diffInDays($currentDate);
+                                            @endphp
+
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $subscriber->subscriberId }}</td>
+                                                <td>{{ $subscriber->created_by }}</td>
+                                                <td>{{ $subscriber->name }}</td>
+                                                <td>{{ $subscriber->location }}</td>
+                                                <td>
+                                                    @php
+                                                        $subspin = json_decode($subscriber->pincode);
+                                                        foreach ($pincode as $pin) {
+                                                            if (in_array($pin->id, $subspin)) {
+                                                                echo $pin->pincode . '<br>';
+                                                            }
+                                                        }
+                                                    @endphp
+                                                </td>
+                                                <td>{{ $subscriber->account_type ? $subscriber->account_type : 'N/A' }}</td>
+                <td>{{ $subscriber->mobile }}</td>
+                <td>{{ $subscriber->joined_date }}</td>
     <td>
         @if ($daysLeft == 0)
             Today Expiring
@@ -133,12 +136,12 @@ $currentDate = now()->format('Y-m-d');
             Expired
         @endif
     </td>
-    <td>
-        <a href="{{ url('subscriber/show/' . $subscriber->id) }}">
-            <span class="fe fe-24 fe-eye text-warning"></span>
-        </a>
-    </td>
-</tr>
+                                                <td>
+                                                    <a href="{{ url('subscriber/show/' . $subscriber->id) }}">
+                                                        <span class="fe fe-24 fe-eye text-warning"></span>
+                                                    </a>
+                                                </td>
+                                            </tr>
 
                                             <!--Modal-->
                                             <div class="modal fade" id="verticalModal{{ $subscriber->id }}" tabindex="-1"
@@ -161,60 +164,55 @@ $currentDate = now()->format('Y-m-d');
                                                                 <div class="form-group">
                                                                     <label for="recipient-name"
                                                                         class="col-form-label">Subscriber Name:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="recipient-name" value="{{ $subscriber->name }}"
-                                                                        readonly>
+                                                                    <input type="text" class="form-control" id="recipient-name"
+                                                                        value="{{ $subscriber->name }}" readonly>
 
 
                                                                 </div>
                                                                 <div class="form-group">
                                                                     <label for="message-text"
                                                                         class="col-form-label">Reason:</label>
-                                                                    <textarea class="form-control" id="message-text" name="reason" required></textarea>
+                                                                    <textarea class="form-control" id="message-text"
+                                                                        name="reason" required></textarea>
                                                                 </div>
 
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn mb-2 btn-secondary"
                                                                     data-dismiss="modal">Close</button>
-                                                                <button type="submit"
-                                                                    class="btn mb-2 btn-danger">Block</button>
+                                                                <button type="submit" class="btn mb-2 btn-danger">Block</button>
                                                             </div>
                                                         </form>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="modal fade" id="verticalModalone{{ $subscriber->id }}"
-                                                tabindex="-1" role="dialog" aria-labelledby="verticalModalTitle"
-                                                aria-hidden="true">
+                                            <div class="modal fade" id="verticalModalone{{ $subscriber->id }}" tabindex="-1"
+                                                role="dialog" aria-labelledby="verticalModalTitle" aria-hidden="true">
                                                 <div class="modal-dialog modal-dialog-centered" role="document">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <h5 class="modal-title" id="verticalModalTitle">Status Change
                                                                 Subscriber
                                                             </h5>
-                                                            <button type="button" class="close close1"
-                                                                data-dismiss="modal" aria-label="Close">
+                                                            <button type="button" class="close close1" data-dismiss="modal"
+                                                                aria-label="Close">
                                                                 <span aria-hidden="true">&times;</span>
                                                             </button>
                                                         </div>
-                                                        <form method="post"
-                                                            action="{{ route('subscriberstatuschange') }}">
+                                                        <form method="post" action="{{ route('subscriberstatuschange') }}">
                                                             {{ csrf_field() }}
                                                             <!-- @method('PUT') -->
                                                             <div class="modal-body">
                                                                 <div class="form-group">
                                                                     <label for="recipient-name"
                                                                         class="col-form-label">Subscriber Name:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="recipient-name"
+                                                                    <input type="text" class="form-control" id="recipient-name"
                                                                         value="{{ $subscriber->name }}" readonly>
                                                                     <input type="hidden" class="form-control"
                                                                         id="recipient-name" name='id'
                                                                         value="{{ $subscriber->id }}" readonly>
                                                                     <input type="hidden" class="form-control"
-                                                                        id="recipient-name" name='status' value="0"
-                                                                        readonly>
+                                                                        id="recipient-name" name='status' value="0" readonly>
                                                                 </div>
                                                                 <div class="form-group">
                                                                     <label for="message-text"
@@ -236,14 +234,15 @@ $currentDate = now()->format('Y-m-d');
 
 
                                                                     </select>
-                                                                    <textarea name="message1" id="" cols="10" placeholder="Description"
-                                                                        class="form-control statuschangeselecttextarea" rows="3"></textarea>
+                                                                    <textarea name="message1" id="" cols="10"
+                                                                        placeholder="Description"
+                                                                        class="form-control statuschangeselecttextarea"
+                                                                        rows="3"></textarea>
                                                                 </div>
 
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button"
-                                                                    class="btn mb-2 btn-secondary close1"
+                                                                <button type="button" class="btn mb-2 btn-secondary close1"
                                                                     data-dismiss="modal">Close</button>
                                                                 <button type="submit"
                                                                     class="btn mb-2 btn-warning">Update</button>
@@ -252,37 +251,33 @@ $currentDate = now()->format('Y-m-d');
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="modal fade" id="verticalModaltwo{{ $subscriber->id }}"
-                                                tabindex="-1" role="dialog" aria-labelledby="verticalModalTitle"
-                                                aria-hidden="true">
+                                            <div class="modal fade" id="verticalModaltwo{{ $subscriber->id }}" tabindex="-1"
+                                                role="dialog" aria-labelledby="verticalModalTitle" aria-hidden="true">
                                                 <div class="modal-dialog modal-dialog-centered" role="document">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <h5 class="modal-title" id="verticalModalTitle">Status Change
                                                                 Subscriber
                                                             </h5>
-                                                            <button type="button" class="close close1"
-                                                                data-dismiss="modal" aria-label="Close">
+                                                            <button type="button" class="close close1" data-dismiss="modal"
+                                                                aria-label="Close">
                                                                 <span aria-hidden="true">&times;</span>
                                                             </button>
                                                         </div>
-                                                        <form method="post"
-                                                            action="{{ route('subscriberstatuschange') }}">
+                                                        <form method="post" action="{{ route('subscriberstatuschange') }}">
                                                             {{ csrf_field() }}
                                                             <!-- @method('PUT') -->
                                                             <div class="modal-body">
                                                                 <div class="form-group">
                                                                     <label for="recipient-name"
                                                                         class="col-form-label">Subscriber Name:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="recipient-name"
+                                                                    <input type="text" class="form-control" id="recipient-name"
                                                                         value="{{ $subscriber->name }}" readonly>
                                                                     <input type="hidden" class="form-control"
                                                                         id="recipient-name" name='id'
                                                                         value="{{ $subscriber->id }}" readonly>
                                                                     <input type="hidden" class="form-control"
-                                                                        id="recipient-name" name='status' value="1"
-                                                                        readonly>
+                                                                        id="recipient-name" name='status' value="1" readonly>
                                                                 </div>
                                                                 <div class="form-group">
                                                                     <label for="message-text"
@@ -302,14 +297,15 @@ $currentDate = now()->format('Y-m-d');
 
 
                                                                     </select>
-                                                                    <textarea name="message1" id="" cols="10" placeholder="Description"
-                                                                        class="form-control statuschangeselecttextarea" rows="3"></textarea>
+                                                                    <textarea name="message1" id="" cols="10"
+                                                                        placeholder="Description"
+                                                                        class="form-control statuschangeselecttextarea"
+                                                                        rows="3"></textarea>
                                                                 </div>
 
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button"
-                                                                    class="btn mb-2 btn-secondary close1"
+                                                                <button type="button" class="btn mb-2 btn-secondary close1"
                                                                     data-dismiss="modal">Close</button>
                                                                 <button type="submit"
                                                                     class="btn mb-2 btn-warning">Update</button>
@@ -319,7 +315,7 @@ $currentDate = now()->format('Y-m-d');
                                                 </div>
                                             </div>
                                             <!--End modal-->
-                                            <?php $i++; ?>
+                                            <?php    $i++; ?>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -345,8 +341,7 @@ $currentDate = now()->format('Y-m-d');
                         {{ csrf_field() }}
 
                         <div class="modal-body">
-                            <input type="hidden" class="form-control" name="sub_id" id="sub_id" value=""
-                                readonly>
+                            <input type="hidden" class="form-control" name="sub_id" id="sub_id" value="" readonly>
 
                             <div class="form-group">
                                 <label for="message-text" class="col-form-label">Comments:</label>
@@ -378,14 +373,14 @@ $currentDate = now()->format('Y-m-d');
     <script>
         let elems = Array.prototype.slice.call(document.querySelectorAll('.js-switch'));
 
-        elems.forEach(function(html) {
+        elems.forEach(function (html) {
             let switchery = new Switchery(html, {
                 size: 'small'
             });
         });
     </script>
     <script>
-        $('.delete-confirm').on('click', function(event) {
+        $('.delete-confirm').on('click', function (event) {
             event.preventDefault();
             const url = $(this).attr('href');
             swal({
@@ -393,7 +388,7 @@ $currentDate = now()->format('Y-m-d');
                 text: 'This record and it`s details will be permanantly deleted!',
                 icon: 'warning',
                 buttons: ["Cancel", "Yes!"],
-            }).then(function(value) {
+            }).then(function (value) {
                 if (value) {
                     window.location.href = url;
                 }
@@ -401,9 +396,9 @@ $currentDate = now()->format('Y-m-d');
         });
     </script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.statuschangeselecttextarea').slideUp()
-            $('.close1').click(function() {
+            $('.close1').click(function () {
                 window.location.reload();
             });
             // $('.statuschangeselect').on('change', function() {
@@ -414,7 +409,7 @@ $currentDate = now()->format('Y-m-d');
             //         $('.statuschangeselecttextarea').hide()
             //     }
             // })
-            $('.js-switch').change(function() {
+            $('.js-switch').change(function () {
                 let status = $(this).prop('checked') === true ? 1 : 0;
                 let userId = $(this).data('id');
                 // $.ajax({
@@ -443,7 +438,7 @@ $currentDate = now()->format('Y-m-d');
         });
     </script>
     <script>
-        $(".update_user").click(function() {
+        $(".update_user").click(function () {
 
             var player_id = $(this).attr('data-payer_id');
 
@@ -463,4 +458,3 @@ $currentDate = now()->format('Y-m-d');
 @endsection
 @section('scripts')
 @endsection
-

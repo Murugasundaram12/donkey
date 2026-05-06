@@ -275,12 +275,16 @@ class SubscriberController extends Controller
             }
         }
 
-        //return back()->with('success', 'You have just created one pincode');
-        return redirect('subscriberList')->with('success', 'Subscriber added!');
+        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
+        return redirect('subscriberList')->with([
+            'success' => 'Subscriber added!',
+            'success_message' => $message,
+            'show_success_modal' => true
+        ]);
     }
     public function edit($id)
     {
-        $subscriber = Subscriber::find($id);
+        $subscriber = Subscriber::findOrFail($id);
 
         $pincode = Pincode::where('usedBy', 0)->orWhere('usedBy', $id)->get();
         //dd($pincode);

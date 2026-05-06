@@ -552,7 +552,7 @@ class HomeController extends Controller
         // dd($enduser);
         return view('admin.enduser.index', compact('enduser'));
     }
-    
+
     public function enduser()
     {
         $endusers = Enduser::where('is_driver', 0)
@@ -569,7 +569,7 @@ class HomeController extends Controller
         // dd($enduser);
         return view('admin.enduser.index', ['endusers' => $endusers]);
     }
-    
+
     public function blockEndUser(EnduserBlockRequest $request, $id)
     {
         //   dd($request->validated());
@@ -619,7 +619,7 @@ class HomeController extends Controller
             return redirect()->back()->with('error', 'End user not found.');
         }
     }
-    
+
     public function sendNotification($user, $title, $content)
     {
         $fcm_token = site::where('id', 1)?->first();
@@ -700,7 +700,7 @@ class HomeController extends Controller
             return $result;
         }
     }
-    
+
     //Category View
     public function category()
     {
@@ -758,7 +758,7 @@ class HomeController extends Controller
         ];
         return view('admin.driver.create', compact('pincode', 'subscriber', 'languages'));
     }
- 
+
     public function driverstore(Request $request)
     {
         // dd($request->all());
@@ -777,7 +777,7 @@ class HomeController extends Controller
             'aadharFrontImage' => 'required|mimes:pdf',
             'aadharBackImage' => 'required|mimes:pdf',
             'rcbook' => 'required|mimes:pdf',
-           // 'insurance' => 'required|mimes:pdf',
+            // 'insurance' => 'required|mimes:pdf',
             'bike' => 'nullable|mimes:pdf',
             'drivingLicence' => 'required|mimes:pdf',
             'vehicleNo' => 'required',
@@ -848,10 +848,10 @@ class HomeController extends Controller
         $request->drivingLicence->move(public_path('subscriber/driver/drivingLicence'), $drivingLicence);
         $driver->drivingLicence = $drivingLicence;
 
-      //  $insurance = time() . '.' . $request->insurance->extension();
-      //  $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
-      //  $driver->insurance = $insurance;
-      
+        //  $insurance = time() . '.' . $request->insurance->extension();
+        //  $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
+        //  $driver->insurance = $insurance;
+
         if ($request->hasFile('bike')) {
             $bike = time() . '.' . $request->bike->extension();
             $request->bike->move(public_path('subscriber/driver/bike'), $bike);
@@ -863,9 +863,14 @@ class HomeController extends Controller
         $driver->subscriberId = $request->get('subscriber');
         $driver->type = $request->get('type');
         $driver->save();
-        return redirect()->route('drivers')->with('success', 'Driver added!');
+        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
+        return redirect()->route('drivers')->with([
+            'success' => 'Driver added!',
+            'success_message' => $message,
+            'show_success_modal' => true
+        ]);
     }
-    
+
     public function driverstorebackup(Request $request)
     {
         //dd($request);
@@ -1032,7 +1037,7 @@ class HomeController extends Controller
         //dd($pincode);
         return view('admin.driver.edit', compact('driver', 'pincode', 'user', 'languages', 'languageArray'));
     }
-    
+
     public function driverupdate(Request $request, $id)
     {
         $driver = Driver::find($id);
@@ -1121,11 +1126,11 @@ class HomeController extends Controller
             $request->drivingLicence->move(public_path('subscriber/driver/drivingLicence'), $drivingLicence);
             $driver->drivingLicence = $drivingLicence;
         }
-       // if ($request->hasFile('insurance')) {
-       //     $insurance = time() . '.' . $request->insurance->extension();
-       //     $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
-       //     $driver->insurance = $insurance;
-       // }
+        // if ($request->hasFile('insurance')) {
+        //     $insurance = time() . '.' . $request->insurance->extension();
+        //     $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
+        //     $driver->insurance = $insurance;
+        // }
         if ($request->hasFile('bike')) {
             $bike = time() . '.' . $request->bike->extension();
             $request->bike->move(public_path('subscriber/driver/bike'), $bike);
@@ -1167,8 +1172,8 @@ class HomeController extends Controller
         // $u->dop = $request->get('dob');
         // $u->gender = $request->get('gender');
         return redirect()->route('drivers')->with('success', 'Driver Updated');
-    }   
-    
+    }
+
     public function driverupdatebackup(Request $request, $id)
     {
         $driver = Driver::find($id);

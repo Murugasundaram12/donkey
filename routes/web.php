@@ -94,6 +94,12 @@ Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'dashboard
 Route::get('/createpincode', [App\Http\Controllers\PincodeController::class, 'create'])->name('createpincode');
 Route::get('/pincode', [App\Http\Controllers\PincodeController::class, 'index'])->name('pincode');
 Route::post('/pincodestore', [App\Http\Controllers\PincodeController::class, 'pincodestore']);
+
+// AJAX: pincode search for subscriber create
+Route::get('/pincode/search', [App\Http\Controllers\PincodeController::class, 'searchPincode'])
+    ->name('pincode.search');
+Route::post('/search-pincode', [App\Http\Controllers\PincodeController::class, 'searchPincode'])
+    ->name('search.pincode');
 Route::get('/pincode/{id}', [App\Http\Controllers\PincodeController::class, 'edit']);
 Route::put('/pincodeupdate/{id}', [App\Http\Controllers\PincodeController::class, 'update']);
 Route::get('/pincodedelete/{id}', [App\Http\Controllers\PincodeController::class, 'destroy']);
@@ -101,10 +107,10 @@ Route::get('/pincodedelete/{id}', [App\Http\Controllers\PincodeController::class
 Route::get('/createSubscriber', [App\Http\Controllers\SubscriberController::class, 'create'])->name('createSubscriber');
 Route::get('/subscriberList', [App\Http\Controllers\SubscriberController::class, 'subscriber'])->name('subscriber');
 Route::post('/subscriberstore', [App\Http\Controllers\SubscriberController::class, 'subscriberstore']);
-Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->name('show');
-Route::get('/subscriber/{id}', [App\Http\Controllers\SubscriberController::class, 'edit']);
-Route::put('/subscriberupdate/{id}', [App\Http\Controllers\SubscriberController::class, 'update']);
-Route::get('/subscriberdelete/{id}', [App\Http\Controllers\SubscriberController::class, 'destroy']);
+Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->whereNumber('id')->name('show');
+Route::get('/subscriber/{id}', [App\Http\Controllers\SubscriberController::class, 'edit'])->whereNumber('id');
+Route::put('/subscriberupdate/{id}', [App\Http\Controllers\SubscriberController::class, 'update'])->whereNumber('id');
+Route::get('/subscriberdelete/{id}', [App\Http\Controllers\SubscriberController::class, 'destroy'])->whereNumber('id');
 Route::get('/changeStatus', [App\Http\Controllers\SubscriberController::class, 'changeStatus']);
 Route::get('/expiredsubscriber', [App\Http\Controllers\SubscriberController::class, 'expiry'])->name('expiredsubscriber');
 Route::put('/subscriberblock/{id}', [App\Http\Controllers\SubscriberController::class, 'block']);

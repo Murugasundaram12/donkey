@@ -20,7 +20,7 @@
         integrity="sha384-rvCmN5lLPWk9ZFBq8v8VzL4pF6Eu/jl5F5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.2/dist/js/bootstrap.min.js"
         integrity="sha384-Rn538y5F5EC5CyTCWT5/Cs5eHV8l5X6w5V5X6w5X6w5X6w5V5X6w5X6w5X6w5V5X6w5" crossorigin="anonymous">
-    </script>
+        </script>
 
     <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -30,6 +30,16 @@
     <link href="{{ url('public/assets/css/responsive.css') }}" rel="stylesheet">
     <!-- Color File -->
     <link href="{{ url('public/assets/css/color.css') }}" rel="stylesheet">
+
+    <!-- WhatsApp Banner -->
+    <div class="alert alert-info alert-dismissible fade show bg-primary text-white mb-0 border-0" role="alert"
+        style="font-size: 0.9rem; position: fixed; top: 0; left: 0; right: 0; z-index: 9999;">
+        <i class="fas fa-info-circle me-2"></i>
+        If your pincode is not listed, <a href="https://wa.me/919069067008"
+            class="text-white fw-bold text-decoration-none" target="_blank">send it via WhatsApp</a> to 9069067008. We
+        will add it and notify you!
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+    </div>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&amp;family=Yantramanav:wght@300;400;500;700;900&amp;display=swap"
@@ -46,29 +56,30 @@
     <!--[if lt IE 9]><script src="js/respond.js"></script><![endif]-->
     <style>
         .copyright-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-.flag-india {
-    display: flex;
-    align-items: center;
-    gap: 5px; /* Adjust the gap as needed */
-}
+        .flag-india {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            /* Adjust the gap as needed */
+        }
 
-        
-         html,
-    body {
-        scroll-behavior: smooth;
-    } 
+
+        html,
+        body {
+            scroll-behavior: smooth;
+        }
     </style>
     <style>
         a {
             text-decoration: none !important;
         }
 
-       
+
 
         /*!
  * three-dots - v0.3.2
@@ -90,16 +101,18 @@
         /* Add this CSS for mobile responsiveness */
         /* Add this CSS for mobile responsiveness */
         @media (max-width: 746px) {
-            .pb{
+            .pb {
                 /* float: left; */
-                margin-left:250px !important;
+                margin-left: 250px !important;
             }
         }
+
         @media (max-width: 320px) {
-            .pb{
+            .pb {
                 /* float: left; */
-                margin-left:250px !important;
+                margin-left: 250px !important;
             }
+
             .row {
                 flex-direction: column;
                 display: flex;
@@ -173,8 +186,9 @@
             border-radius: 16px;
             font-size: 18px;
         }
-        .has-search{
-            margin-left:-20px;
+
+        .has-search {
+            margin-left: -20px;
         }
 
         .snippet {
@@ -205,6 +219,7 @@
             cursor: pointer;
             outline: 2px solid rgb(255, 25, 100);
         }
+
         .stage {
             display: flex;
             justify-content: center;
@@ -383,24 +398,27 @@
             /* Initially hide the content */
             /* Add your content styles here */
         }
+
         /* Style for the scroll-to-top button */
         @media (max-width: 480px) {
-            .ridr{
-        margin-top:-70px !important;
-    }
-    .gplay{
-        margin-top:20px !important;
-        margin-bottom: 30px !important;
+            .ridr {
+                margin-top: -70px !important;
+            }
 
-    }
-    .inner-container{
-            margin-right: 0px !important;
-        }
-        .disblo{
-            display:block !important;
-        }
-        }
+            .gplay {
+                margin-top: 20px !important;
+                margin-bottom: 30px !important;
 
+            }
+
+            .inner-container {
+                margin-right: 0px !important;
+            }
+
+            .disblo {
+                display: block !important;
+            }
+        }
     </style>
 
 
@@ -434,9 +452,9 @@
 
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             // Simulate a 1.2-second loading time (adjust as needed)
-            setTimeout(function() {
+            setTimeout(function () {
                 // Hide the preloader
                 document.querySelector(".dots").style.display = "none";
 
@@ -459,7 +477,7 @@
                     <div class="left-column">
                         <ul class="social-icon ">
                             <li><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/do.png') }}"
-                                        style="width: 180px; margin-left:-40px;" ></a></li>
+                                        style="width: 180px; margin-left:-40px;"></a></li>
                             <!-- <li class="right-column  myhiddennav  myhiddennav2"><a href="https://www.facebook.com/donkeydeliveries/"><i class="fab fa-facebook-f"></i></a></li>
                                 <li class="right-column myhiddennav myhiddennav2"><a href="https://twitter.com/doNkeyDeliverys?t=CcXdqICxVYHRRnr1pE-zug&s=08"><i class="fab fa-twitter"></i></a></li>
                                 <li class="right-column myhiddennav myhiddennav2"><a href="#"><i-->
@@ -473,7 +491,8 @@
                             <div class="nav-outer  ">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler"><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
+                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt=""
+                                        style="margin-top: -147px;">
                                 </div>
 
                                 <!-- Main Menu -->
@@ -519,108 +538,125 @@
                                     <div class="collapse navbar-collapse show clearfix" id="navbarSupportedContent"
                                         style="margin-left:79px;">
                                         <!-- Search Form -->
-                                        {{-- <form class="form-inline sb d-none d-md-block" action="{{ url('/') }}" method="get" style="padding-bottom: -17px;">
+                                        {{-- <form class="form-inline sb d-none d-md-block" action="{{ url('/') }}"
+                                            method="get" style="padding-bottom: -17px;">
                                             @csrf
                                             <div class="form-group has-search" style="font-size: 12px;">
-                                                <span class="fa fa-search form-control-feedback" id="search-icon"></span>
+                                                <span class="fa fa-search form-control-feedback"
+                                                    id="search-icon"></span>
                                                 <div class="input-container">
-                                                    <input id="pincode-input" type="text" class="form-control" placeholder="Search Pincode" name="pincode" value="{{ request('pincode') }}"
+                                                    <input id="pincode-input" type="text" class="form-control"
+                                                        placeholder="Search Pincode" name="pincode"
+                                                        value="{{ request('pincode') }}"
                                                         style="background: none !important; border: none !important;"
                                                         oninput="this.value = this.value.replace(/[^0-9]/g, ''); if (this.value.length > 6) this.value = this.value.slice(0, 6);">
                                                 </div>
                                             </div>
                                             @if (request('pincode') && $notification)
-                                                <small id="notification" style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;">
-                                                    {{ $notification }} <span id="clear-notification" style="cursor: pointer;">&times;</span>
-                                                </small>
+                                            <small id="notification"
+                                                style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;">
+                                                {{ $notification }} <span id="clear-notification"
+                                                    style="cursor: pointer;">&times;</span>
+                                            </small>
                                             @endif
                                         </form>
-                                        
+
                                         <script>
                                             @if (request('pincode') && $notification)
                                                 // Execute this JavaScript code when the clear (X) symbol in the notification is clicked
-                                                document.getElementById('clear-notification').addEventListener('click', function() {
+                                                document.getElementById('clear-notification').addEventListener('click', function () {
                                                     document.getElementById('pincode-input').value = ''; // Clear the input field
                                                     document.getElementById('notification').textContent = ''; // Clear the notification text
                                                 });
                                             @endif
                                         </script> --}}
-                                        {{-- <form class="form-inline sb d-none d-md-block" action="{{ url('/') }}" method="get" style="padding-bottom: -17px;"> --}}
-                                            <form class="form-inline  d-sm-block d-md-block" action="{{ url('/') }}{{ request('pincode') ? '?pincode=' . request('pincode') : '' }}" method="get" style="padding-bottom: -17px;">
+                                        {{-- <form class="form-inline sb d-none d-md-block" action="{{ url('/') }}"
+                                            method="get" style="padding-bottom: -17px;"> --}}
+                                            <form class="form-inline  d-sm-block d-md-block"
+                                                action="{{ url('/') }}{{ request('pincode') ? '?pincode=' . request('pincode') : '' }}"
+                                                method="get" style="padding-bottom: -17px;">
 
-                                            @csrf
-                                            <div class="form-group has-search" style="font-size: 12px;">
-                                                <span class="fa fa-search form-control-feedback" id="search-icon"></span>
-                                                <div class="input-container">
-                                                    <input type="text"  id="pincode-input" class="form-control" placeholder="Search Pincode" name="pincode" value="{{ request('pincode') }}"
-                                                        style="background: none !important; border: none !important;"
-                                                        oninput="this.value = this.value.replace(/[^0-9]/g, ''); if (this.value.length > 6) this.value = this.value.slice(0, 6);">
+                                                @csrf
+                                                <div class="form-group has-search" style="font-size: 12px;">
+                                                    <span class="fa fa-search form-control-feedback"
+                                                        id="search-icon"></span>
+                                                    <div class="input-container">
+                                                        <input type="text" id="pincode-input" class="form-control"
+                                                            placeholder="Search Pincode" name="pincode"
+                                                            value="{{ request('pincode') }}"
+                                                            style="background: none !important; border: none !important;"
+                                                            oninput="this.value = this.value.replace(/[^0-9]/g, ''); if (this.value.length > 6) this.value = this.value.slice(0, 6);">
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            @if (request('pincode') && $notification)
-                                                {{-- <small style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;"> {{ $notification }}</small> --}}
-                                                <small id="notification" style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;">
-                                                    {{ $notification }} <span id="clear-notification" style="cursor: pointer;">&times;</span>
-                                                </small>
+                                                @if (request('pincode') && $notification)
+                                                    {{-- <small
+                                                        style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;">
+                                                        {{ $notification }}</small> --}}
+                                                    <small id="notification"
+                                                        style="color: {{ $notificationColor ?? 'red' }}; padding-left:5px;">
+                                                        {{ $notification }} <span id="clear-notification"
+                                                            style="cursor: pointer;">&times;</span>
+                                                    </small>
                                                 @endif
-                                        </form>
-                                        {{-- <script>
-                                            @if (request('pincode') && $notification)
-                                                // Execute this JavaScript code when the clear (X) symbol in the notification is clicked
-                                                
-                                                document.getElementById('clear-notification').addEventListener('click', function() {
-                                                    document.getElementById('pincode-input').value = ''; // Clear the input field
-                                                    document.getElementById('notification').textContent = ''; // Clear the notification text
-                                                    document.getElementById('clear-notification-form').submit(); // Submit the form to redirect
-       
-                                                    
-                                                });
-                                            @endif
-                                        </script> --}}
-                                        <script>
-                                            @if (request('pincode') && $notification)
-                                                // Execute this JavaScript code when the clear (X) symbol in the notification is clicked
-                                                document.getElementById('clear-notification').addEventListener('click', function() {
-                                                    document.getElementById('pincode-input').value = ''; // Clear the input field
-                                                    document.getElementById('notification').textContent = ''; // Clear the notification text
-                                        
-                                                    // Remove the pincode parameter from the URL
-                                                    const urlWithoutPincode = window.location.href.split('?')[0];
-                                                    window.location.reload();
-                                                    
-                                                    // Update the URL without the pincode parameter
-                                                    window.history.replaceState(null, null, urlWithoutPincode);
-                                                });
-                                            @endif
-                                        </script>
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
+                                            </form>
+                                            {{--
+                                            <script>
+                                                @if (request('pincode') && $notification)
+                                                    // Execute this JavaScript code when the clear (X) symbol in the notification is clicked
 
-                                        <!-- Navigation Links -->
-                                        <ul class="navigation"
-                                            style="margin-right: 70px; margin-left:22px; font-size: 12px;">
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{{ url('/') }}">Home</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{{ url('about') }}">About Us</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{{ url('services') }}">Services</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{{ url('contact') }}">Contact</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{{ url('pbp') }}">PBP</a>
-                                            </li>
+                                                    document.getElementById('clear-notification').addEventListener('click', function () {
+                                                        document.getElementById('pincode-input').value = ''; // Clear the input field
+                                                        document.getElementById('notification').textContent = ''; // Clear the notification text
+                                                        document.getElementById('clear-notification-form').submit(); // Submit the form to redirect
 
-                                        </ul>
+
+                                                    });
+                                                @endif
+                                            </script> --}}
+                                            <script>
+                                                @if (request('pincode') && $notification)
+                                                    // Execute this JavaScript code when the clear (X) symbol in the notification is clicked
+                                                    document.getElementById('clear-notification').addEventListener('click', function () {
+                                                        document.getElementById('pincode-input').value = ''; // Clear the input field
+                                                        document.getElementById('notification').textContent = ''; // Clear the notification text
+
+                                                        // Remove the pincode parameter from the URL
+                                                        const urlWithoutPincode = window.location.href.split('?')[0];
+                                                        window.location.reload();
+
+                                                        // Update the URL without the pincode parameter
+                                                        window.history.replaceState(null, null, urlWithoutPincode);
+                                                    });
+                                                @endif
+                                            </script>
+
+
+
+
+
+
+
+
+                                            <!-- Navigation Links -->
+                                            <ul class="navigation"
+                                                style="margin-right: 70px; margin-left:22px; font-size: 12px;">
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url('/') }}">Home</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url('about') }}">About Us</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url('services') }}">Services</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url('contact') }}">Contact</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url('pbp') }}">PBP</a>
+                                                </li>
+
+                                            </ul>
                                     </div>
                                 </nav>
 
@@ -667,7 +703,7 @@
                                                 <li><a href="{{ url('about') }}">Packaging</a></li>
                                             </ul> -->
                                     </li>
-                                    
+
                                     <li><a href="{{ url('contact') }}">Contact</a></li>
                                     <li>
                                         <a href="tel:{{ $site_details[0]->phone }}">
@@ -686,10 +722,11 @@
                                             class="flaticon-calling"></i></div>
                                 </div>
                                 <div class="col">
-                                    <a href="tel:{{ $site_details[0]->phone }}" style="display:inline-flex; width:116px;">
+                                    <a href="tel:{{ $site_details[0]->phone }}"
+                                        style="display:inline-flex; width:116px;">
                                         @php
                                             $numbers = explode('/', $site_details[0]->phone);
-                                            
+
                                         @endphp
                                         {{ $numbers[0] }}
                                         <br>
@@ -710,14 +747,16 @@
                     <!--Logo-->
                     <div class="logo-box">
                         <div class="logo">
-                            {{-- <a href="{{url('/')}}"><img src="{{url('public/assets/images/do.png')}}" --}} {{-- style="width: 180px"></a> --}} </div>
+                            {{-- <a href="{{url('/')}}"><img src="{{url('public/assets/images/do.png')}}" --}} {{--
+                                    style="width: 180px"></a> --}} </div>
                     </div>
                     <div class="right-column ">
                         <!--Nav Box-->
                         <div class="nav-outer ">
                             <!--Mobile Navigation Toggler-->
                             <div class="mobile-nav-toggler"><img
-                                    src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
+                                    src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt=""
+                                    style="margin-top: -147px;">
                             </div>
 
                             <!-- Main Menu -->
@@ -801,15 +840,16 @@
                         <!--Logo-->
                         <div class="logo-box">
                             <div class="logo"><a href="{{ url('/') }}"><img
-                                        src="{{ url('public/assets/images/do.png') }}" style="width: 180px"
-                                        alt=""></a></div>
+                                        src="{{ url('public/assets/images/do.png') }}" style="width: 180px" alt=""></a>
+                            </div>
                         </div>
                         <div class="right-column">
                             <!--Nav Box-->
                             <div class="nav-outer">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler "><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" class="pb" alt="" style="margin-top: -147px;">
+                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" class="pb" alt=""
+                                        style="margin-top: -147px;">
                                 </div>
 
                                 <!-- Main Menu -->
@@ -834,20 +874,23 @@
             <div class="close-btn"><span class="icon flaticon-remove"></span></div>
 
             <nav class="menu-box">
-                <div class="nav-logo "><a href="{{ url('/') }}"><img
-                            src="{{ url('public/assets/images/fav.png') }}" style="width: 100px; height:100px;" alt=""
-                            title=""></a></div>
+                <div class="nav-logo "><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/fav.png') }}"
+                            style="width: 100px; height:100px;" alt="" title=""></a></div>
                 <div class="menu-outer">
                     <!--Here Menu Will Come Automatically Via Javascript / Same Menu as in Header-->
                 </div>
                 <!--Social Links-->
                 <div class="social-links">
                     <ul class="clearfix">
-                      
-                        <li><a href="https://x.com/doNkey_Delivery?t=MNIa2Z-ja0QlsTExo4eDnQ&s=08"><span class="fab fa-twitter"></span></a></li>
-                        <li><a href="https://www.facebook.com/doNkey.app.deliveries?mibextid=ZbWKwL"><span class="fab fa-facebook-square"></span></a></li>
-                        <li><a href="https://instagram.com/donkey_deliveries?igshid=MzRlODBiNWFlZA=="><span class="fab fa-instagram"></span></a></li>
-                        <li><a href="https://youtube.com/@doNkey_Delivery?si=VnSW6_eHtOQG5Zpg"><span class="fab fa-youtube"></span></a></li>
+
+                        <li><a href="https://x.com/doNkey_Delivery?t=MNIa2Z-ja0QlsTExo4eDnQ&s=08"><span
+                                    class="fab fa-twitter"></span></a></li>
+                        <li><a href="https://www.facebook.com/doNkey.app.deliveries?mibextid=ZbWKwL"><span
+                                    class="fab fa-facebook-square"></span></a></li>
+                        <li><a href="https://instagram.com/donkey_deliveries?igshid=MzRlODBiNWFlZA=="><span
+                                    class="fab fa-instagram"></span></a></li>
+                        <li><a href="https://youtube.com/@doNkey_Delivery?si=VnSW6_eHtOQG5Zpg"><span
+                                    class="fab fa-youtube"></span></a></li>
                     </ul>
                 </div>
             </nav>
@@ -866,8 +909,8 @@
             <div class="content-wrapper">
                 <div class="hidden-sidebar-close"><span class="flaticon-remove"></span></div>
                 <div class="text-widget sidebar-widget">
-                    <div class="logo"><a href="{{ url('/') }}"><img
-                                src="{{ url('public/assets/images/do.png') }}" style="width: 180px" alt="">
+                    <div class="logo"><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/do.png') }}"
+                                style="width: 180px" alt="">
                             <div class="text">Demoralized by the charms of pleasure of the moment so blinded by
                                 desire
                                 that they cannot foresees the pain.</div>
@@ -939,6 +982,7 @@
 
 
     @yield('content')
+    @include('partials.success-modal')
 
 
     <!--Main Footer-->
@@ -953,12 +997,14 @@
                         <div class="widget links-widget">
 
                             <h4 style="font-weight: 700;" class="ridr"> Rider App</h4><br>
-                          <a href="https://play.google.com/store/apps/details?id=com.donkey.driverapp">  <img class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}" alt="Rider App"
-                                style="height: 35px; width:108px;">
-                            <br> <br>
-                            <h4 style="font-weight: 700;"> User App</h4><br>
-                           <a href="https://play.google.com/store/apps/details?id=com.fertail.donkeyuser"> <img class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}" alt="Rider App"
-                                style="height: 35px; width:108px;"></a>
+                            <a href="https://play.google.com/store/apps/details?id=com.donkey.driverapp"> <img
+                                    class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}"
+                                    alt="Rider App" style="height: 35px; width:108px;">
+                                <br> <br>
+                                <h4 style="font-weight: 700;"> User App</h4><br>
+                                <a href="https://play.google.com/store/apps/details?id=com.fertail.donkeyuser"> <img
+                                        class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}"
+                                        alt="Rider App" style="height: 35px; width:108px;"></a>
 
                         </div>
                     </div>
@@ -973,8 +1019,8 @@
                                             <div class="text"><strong></strong><a
                                                     href="tel:{{ $site_details[0]->phone }}">
                                                     @php
-                                                        $numbers = explode('/', $site_details[0]->phone);
-                                                        
+                                                    $numbers = explode('/', $site_details[0]->phone);
+
                                                     @endphp
                                                     {{ $numbers[0] }}
                                                     <br>
@@ -984,20 +1030,22 @@
                                         </div> --}}
                                         <div class="icon-box">
                                             <div class="icon"><span class="flaticon-calling"></span></div>
-                                            <div class="text"><strong></strong><a class="disblo" href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[0]) }}">
-                                                @php
-                                                    $numbers = explode('/', $site_details[0]->phone);
-                                                @endphp
-                                                {{ $numbers[0] }}
-                                            </a>
+                                            <div class="text"><strong></strong><a class="disblo"
+                                                    href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[0]) }}">
+                                                    @php
+                                                        $numbers = explode('/', $site_details[0]->phone);
+                                                    @endphp
+                                                    {{ $numbers[0] }}
+                                                </a>
                                                 <br>
                                                 <a href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[1]) }}">
-                                              
-                                                {{ $numbers[1] }}
-                                                <!-- {{ $site_details[0]->phone }} --> 
-                                            </a></div>
+
+                                                    {{ $numbers[1] }}
+                                                    <!-- {{ $site_details[0]->phone }} -->
+                                                </a>
+                                            </div>
                                         </div>
-                                        
+
                                         <div class="icon-box">
                                             <div class="icon" style="display: flex">
                                                 <span class="flaticon-mail mr-3"></span>
@@ -1021,17 +1069,16 @@
                                         <ul class="social-icon" style="margin-top: 10px">
                                             <li> <b>
                                                     Follow Us On:</b></li>
-                                            <li><a href="https://www.facebook.com/doNkey.app.deliveries?mibextid=ZbWKwL"><i
-                                                        class="fab fa-facebook-f"></i></a></li>
                                             <li><a
-                                                    href="https://x.com/doNkey_Delivery?t=MNIa2Z-ja0QlsTExo4eDnQ&s=08"><i
+                                                    href="https://www.facebook.com/doNkey.app.deliveries?mibextid=ZbWKwL"><i
+                                                        class="fab fa-facebook-f"></i></a></li>
+                                            <li><a href="https://x.com/doNkey_Delivery?t=MNIa2Z-ja0QlsTExo4eDnQ&s=08"><i
                                                         class="fab fa-twitter"></i></a></li>
                                             <li><a
                                                     href="https://instagram.com/donkey_deliveries?igshid=MzRlODBiNWFlZA=="><i
                                                         class="fab fa-instagram"></i></a></li>
-                                                        <li><a
-                                                            href="https://youtube.com/@doNkey_Delivery?si=VnSW6_eHtOQG5Zpg"><i
-                                                                class="fab fa-youtube"></i></a></li>
+                                            <li><a href="https://youtube.com/@doNkey_Delivery?si=VnSW6_eHtOQG5Zpg"><i
+                                                        class="fab fa-youtube"></i></a></li>
                                             <!--<li><a href="#"><i class="fab fa-google-plus-g"></i></a></li>-->
                                             <!--<li><a href="#"><i class="fab fa-youtube"></i></a></li>-->
                                         </ul>
@@ -1050,7 +1097,7 @@
                                     <li><a href="{{ url('contact') }}">Get In Touch</a></li>
 
                                     <li><a href="{{ url('services') }}">Our Services</a></li>
-                            </ul>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -1084,7 +1131,8 @@
                 <div class="col-auto">
                     <div class="copyright-container">
                         <div class="copyright-text text-dark">
-                            Copyright © {{ now()->format('Y') }} <a href="{{ url('/') }}">{{ $site_details[0]->sitename }}</a>
+                            Copyright © {{ now()->format('Y') }} <a
+                                href="{{ url('/') }}">{{ $site_details[0]->sitename }}</a>
                             All Rights Reserved. Patent Pending.
                         </div>
                     </div>
@@ -1098,71 +1146,73 @@
                 </div>
                 <div class="col-auto">
                     <span class="flag-india">
-                        <img src=" {{ asset('public/assets/images/india.png') }}" alt="India Flag " style="height: 25px; width: 25px;">
+                        <img src=" {{ asset('public/assets/images/india.png') }}" alt="India Flag "
+                            style="height: 25px; width: 25px;">
                         <b>(IND)</b>
                     </span>
                 </div>
             </div>
-        </div>        
+        </div>
     </div>
 
     </div>
     <!--End pagewrapper-->
 
     <!--Scroll to top-->
-    {{-- <div class="scroll-to-top scroll-to-target" data-target="html"><span class="flaticon-right-arrow-6"></span></div>
+    {{-- <div class="scroll-to-top scroll-to-target" data-target="html"><span class="flaticon-right-arrow-6"></span>
+    </div>
     </div> --}}
     <div class="scroll-to-top scroll-to-target" data-target="#top">
         <span class="flaticon-right-arrow-6"></span>
-      </div>
-      <script>
+    </div>
+    <script>
       // Get the scroll-to-top button element
       const scrollButton = document.querySelector('.scroll-to-top');
-      
-      // Add a scroll event listener to the window
-      window.addEventListener('scroll', () => {
-        // Show the button when scrolling down
-        if (window.scrollY > 200) {
-          scrollButton.style.display = 'block';
-        } else {
-          scrollButton.style.display = 'none';
-        }
-      });
-      
-      // Add a click event listener to the scroll button
-      scrollButton.addEventListener('click', () => {
-        // Scroll to the top of the page with a smooth transition
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
+
+        // Add a scroll event listener to the window
+        window.addEventListener('scroll', () => {
+            // Show the button when scrolling down
+            if (window.scrollY > 200) {
+                scrollButton.style.display = 'block';
+            } else {
+                scrollButton.style.display = 'none';
+            }
         });
-      });
+
+        // Add a click event listener to the scroll button
+        scrollButton.addEventListener('click', () => {
+            // Scroll to the top of the page with a smooth transition
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     </script>
-            
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const currentPath = window.location.pathname;
             const navLinks = document.querySelectorAll('.nav-link');
 
             // Set the active link based on the current URL
-            navLinks.forEach(function(link) {
+            navLinks.forEach(function (link) {
                 if (link.getAttribute('href') === currentPath) {
                     link.classList.add('active');
                 }
             });
 
             // Highlight the active link when scrolling to a section
-            window.addEventListener('scroll', function() {
+            window.addEventListener('scroll', function () {
                 const scrollPosition = window.scrollY;
                 const sections = document.querySelectorAll('[data-scrollto]');
 
-                sections.forEach(function(section) {
+                sections.forEach(function (section) {
                     const offsetTop = section.offsetTop - 100; // Adjust the offset as needed
                     const targetLink = document.querySelector(
                         `.nav-link[href="#${section.getAttribute('data-scrollto')}"]`);
 
                     if (scrollPosition >= offsetTop) {
-                        navLinks.forEach(function(link) {
+                        navLinks.forEach(function (link) {
                             link.classList.remove('active');
                         });
                         targetLink.classList.add('active');
@@ -1173,11 +1223,11 @@
     </script>
     <script>
         var scroll = new SmoothScroll('a[href*="#"]', {
-          speed: 800, // Adjust the scrolling speed (milliseconds)
-          offset: 0,  // Adjust the offset if needed (pixels)
+            speed: 800, // Adjust the scrolling speed (milliseconds)
+            offset: 0,  // Adjust the offset if needed (pixels)
         });
-      </script>
-      
+    </script>
+
     <script>
         new WOW().init();
     </script>

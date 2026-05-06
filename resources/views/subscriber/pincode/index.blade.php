@@ -4,7 +4,7 @@
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="row">
-                    <h2 class="mb-2 page-title">Pincodes <small>(Service Settings)</small></h2>
+                    <h2 class="mb-2 page-title">Service Areas <small>(Service Settings)</small></h2>
 
                     <div class="col ml-auto">
                         {{-- <div class="dropdown float-right">
@@ -57,7 +57,7 @@
 
                                             <th>S.No</th>
                                             <th>City</th>
-                                            <th>Pincode</th>
+                                            <th>Service Area</th>
                                             {{-- <th>Employee Id</th>
 
                                             <th>Mobile</th>

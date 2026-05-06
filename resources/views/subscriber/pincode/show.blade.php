@@ -8,7 +8,7 @@
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="row">
-                    <h2 class="mb-2 page-title">Pincode - {{ $pincodeBasedcategories[0]->pincode?->pincode }}
+                    <h2 class="mb-2 page-title">Service Area - {{ $pincodeBasedcategories[0]->pincode?->pincode }}
                         <small>(Service Settings)</small>
                     </h2>
 

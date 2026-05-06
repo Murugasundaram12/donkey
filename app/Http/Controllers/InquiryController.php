@@ -64,7 +64,10 @@ class InquiryController extends Controller
 
         // dd($validator);
         Enquiry::create($validator);
-        return back();
+        return back()->with([
+            'success_message' => 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.',
+            'show_success_modal' => true
+        ]);
     }
 
     /**

@@ -30,9 +30,10 @@ class SubscriberBookingReportController extends Controller
             '1'=> '1',
             '2'=>'2'
         ];
-        $pin = json_decode(session('subscribers')['pincode']);
+        $pin = json_decode(session('subscribers')['pincode'] ?? null, true);
+        $pin = is_array($pin) ? $pin : [];
         // dd($pin);
-        if (isset($pin)) {
+        if (!empty($pin)) {
             $pincodeCollection = Pincode::whereIn('id', $pin)->get();
             //dd($pincodeCollection);
             $pincodeArray = [];
@@ -83,10 +84,11 @@ class SubscriberBookingReportController extends Controller
             '2'=>'2'
         ];
             $user = FacadesSession::get('subscribers');
-            $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-            $pin = json_decode($subscriber->pincode);
+            $subscriber = Subscriber::where('id', $user->subscriber_id ?? 0)->first();
+            $pin = json_decode($subscriber?->pincode, true);
+            $pin = is_array($pin) ? $pin : [];
             // dd($pin);
-            $pincodeCollection = Pincode::whereIn('id', $pin)->get();
+            $pincodeCollection = !empty($pin) ? Pincode::whereIn('id', $pin)->get() : collect();
             $pincodeArray = [];
             foreach ($pincodeCollection as $pincodeObject) {
                 $pincodeArray[] = $pincodeObject->pincode;
@@ -236,9 +238,10 @@ class SubscriberBookingReportController extends Controller
     // Fetch the status value from the request
     $status = $request->input('status');
 
-    $pin = json_decode(session('subscribers')['pincode']);
+        $pin = json_decode(session('subscribers')['pincode'] ?? null, true);
+        $pin = is_array($pin) ? $pin : [];
         // dd($pin);
-        if (isset($pin)) {
+        if (!empty($pin)) {
             $pincodeCollection = Pincode::whereIn('id', $pin)->get();
             //dd($pincodeCollection);
             $pincodeArray = [];
@@ -289,10 +292,11 @@ class SubscriberBookingReportController extends Controller
             '2'=>'2'
         ];
             $user = FacadesSession::get('subscribers');
-            $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-            $pin = json_decode($subscriber->pincode);
+            $subscriber = Subscriber::where('id', $user->subscriber_id ?? 0)->first();
+            $pin = json_decode($subscriber?->pincode, true);
+            $pin = is_array($pin) ? $pin : [];
             // dd($pin);
-            $pincodeCollection = Pincode::whereIn('id', $pin)->get();
+            $pincodeCollection = !empty($pin) ? Pincode::whereIn('id', $pin)->get() : collect();
             $pincodeArray = [];
             foreach ($pincodeCollection as $pincodeObject) {
                 $pincodeArray[] = $pincodeObject->pincode;
@@ -342,9 +346,10 @@ class SubscriberBookingReportController extends Controller
     public function downloadPDF(Request $request)
     {
       $status = $request->input('status');
-         $pin = json_decode(session('subscribers')['pincode']);
+         $pin = json_decode(session('subscribers')['pincode'] ?? null, true);
+        $pin = is_array($pin) ? $pin : [];
         // dd($pin);
-        if (isset($pin)) {
+        if (!empty($pin)) {
             $pincodeCollection = Pincode::whereIn('id', $pin)->get();
             //dd($pincodeCollection);
             $pincodeArray = [];
@@ -395,10 +400,11 @@ class SubscriberBookingReportController extends Controller
             '2'=>'2'
         ];
             $user = FacadesSession::get('subscribers');
-            $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-            $pin = json_decode($subscriber->pincode);
+            $subscriber = Subscriber::where('id', $user->subscriber_id ?? 0)->first();
+            $pin = json_decode($subscriber?->pincode, true);
+            $pin = is_array($pin) ? $pin : [];
             // dd($pin);
-            $pincodeCollection = Pincode::whereIn('id', $pin)->get();
+            $pincodeCollection = !empty($pin) ? Pincode::whereIn('id', $pin)->get() : collect();
             $pincodeArray = [];
             foreach ($pincodeCollection as $pincodeObject) {
                 $pincodeArray[] = $pincodeObject->pincode;

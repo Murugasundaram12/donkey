@@ -18,6 +18,38 @@ class PincodeController extends Controller
         $this->middleware('permission:pincode-delete', ['only' => ['destroy']]);
     }
 
+    // Pincode search (AJAX)
+    public function searchPincode(Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if ($q === '') {
+            return response()->json([
+                'status' => false,
+                'data' => [],
+                // Backward compatibility
+                'results' => []
+            ]);
+        }
+
+        $results = Pincode::query()
+            ->where('pincode', 'LIKE', '%' . $q . '%')
+            ->select(['id', 'pincode'])
+            ->limit(10)
+            ->get()
+            ->map(fn($row) => [
+                'id' => $row->id,
+                'pincode' => $row->pincode,
+            ])->values();
+
+        return response()->json([
+            'status' => $results->isNotEmpty(),
+            'data' => $results,
+            // Backward compatibility
+            'results' => $results
+        ]);
+    }
+
     //Pincode
     public function index()
 
@@ -35,14 +67,14 @@ class PincodeController extends Controller
     public function pincodestore(Request $request)
     {
         $this->validate($request, [
-        'state' => 'required|alpha',
+            'state' => 'required|alpha',
             'district' => 'required|alpha',
             'city' => 'required|alpha',
             'pincode' => 'required|numeric|unique:pincode,pincode',
         ]);
         $pincode = new Pincode();
         $pincode->district = $request->get('district');
-         $pincode->state= $request->get('state');
+        $pincode->state = $request->get('state');
         $pincode->city = $request->get('city');
         $pincode->taluk = $request->get('taluk');
         $pincode->pincode = $request->get('pincode');
@@ -50,7 +82,12 @@ class PincodeController extends Controller
 
 
         //return back()->with('success', 'You have just created one pincode');
-        return redirect('pincode')->with('success', 'Pincode added!');
+        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
+        return redirect('pincode')->with([
+            'success' => 'Pincode added!',
+            'success_message' => $message,
+            'show_success_modal' => true
+        ]);
     }
     public function edit($id)
     {
@@ -63,7 +100,7 @@ class PincodeController extends Controller
     {
 
         $this->validate($request, [
-        'state' => 'required|alpha',
+            'state' => 'required|alpha',
             'district' => 'required|alpha',
             'city' => 'required|alpha',
             'pincode' => 'required|numeric',
@@ -71,14 +108,14 @@ class PincodeController extends Controller
         $count = Pincode::where("id", "!=", $id)->where("pincode", $request->input('pincode'))->count();
         if ($count > 0) {
             $this->validate($request, [
-            'state' => 'required|alpha',
+                'state' => 'required|alpha',
                 'district' => 'required|alpha',
                 'city' => 'required|alpha',
                 'pincode' => 'required|numeric|unique:pincode,pincode',
             ]);
         } else {
             $pincode =  Pincode::findorFail($id);
-              $pincode->state= $request->input('state');
+            $pincode->state = $request->input('state');
             $pincode->district = $request->input('district');
             $pincode->pincode = $request->input('pincode');
             $pincode->city = $request->get('city');

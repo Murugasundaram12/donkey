@@ -95,8 +95,9 @@
         <i class="fe fe-menu navbar-toggler-icon"></i>
     </button>
     {{-- <form class="form-inline mr-auto searchform text-muted">
-          <input class="form-control mr-sm-2 bg-transparent border-0 pl-4 text-muted" type="search" placeholder="Type something..." aria-label="Search">
-        </form> --}}
+        <input class="form-control mr-sm-2 bg-transparent border-0 pl-4 text-muted" type="search"
+            placeholder="Type something..." aria-label="Search">
+    </form> --}}
     <ul class="nav">
         <li class="nav-item">
             <a class="nav-link text-muted my-2" href="#" id="modeSwitcher" data-mode="light">
@@ -112,12 +113,12 @@
             @if ($user->platform_fee != 0 && $user->need_to_pay == 1)
                 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
                     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
-                </script>
+                    </script>
                 <script>
-                    $(function() {
+                    $(function () {
                         //$('.error-msg').text("{{ session('error') }}");
                         $('#platformfeemodal').modal('show');
-                        $('#payCloseButton').click(function() {
+                        $('#payCloseButton').click(function () {
                             $('#platformfeemodal').modal('hide'); // Manually close the modal
                         });
                     });
@@ -132,12 +133,12 @@
             @if ($subscriber->platform_fee != 0 && $subscriber->need_to_pay == 1)
                 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
                     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
-                </script>
+                    </script>
                 <script>
-                    $(function() {
+                    $(function () {
                         //$('.error-msg').text("{{ session('error') }}");
                         $('#platformfeemodal').modal('show');
-                        $('#payCloseButton').click(function() {
+                        $('#payCloseButton').click(function () {
                             $('#platformfeemodal').modal('hide'); // Manually close the modal
                         });
                     });
@@ -149,12 +150,12 @@
             @if ($user->activestatus == 0)
                 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
                     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
-                </script>
+                    </script>
                 <script>
-                    $(function() {
+                    $(function () {
                         //$('.error-msg').text("{{ session('error') }}");
                         $('#inactivemodal').modal('show');
-                        $('#closeButton').click(function() {
+                        $('#closeButton').click(function () {
                             $('#inactivemodal').modal('hide'); // Manually close the modal
                         });
                     });
@@ -185,7 +186,8 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="paymentModalLabel">Payment Required</h5>
-                        {{-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> --}}
+                        {{-- <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button> --}}
                     </div>
                     <div class="modal-body">
                         <div role="alert">
@@ -196,7 +198,8 @@
                     </div>
                     @if (isset($user->subscriberId))
                         <div class="modal-footer">
-                            {{-- <button type="button" class="btn btn-secondary" id="payCloseButton" data-bs-dismiss="modal">Close</button> --}}
+                            {{-- <button type="button" class="btn btn-secondary" id="payCloseButton"
+                                data-bs-dismiss="modal">Close</button> --}}
                             <a type="button" href="{{ route('makePlatFormFee', ['Id' => $user->id]) }}"
                                 class="btn btn-primary">Proceed to Payment</a>
                         </div>
@@ -206,8 +209,8 @@
         </div>
 
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink"
-                role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink" role="button"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="avatar avatar-sm mt-2">
                     @if (isset($user->subscriberId))
                         @php
@@ -217,8 +220,7 @@
                             <img src="{{ asset('admin/employee/profile/' . $employee?->profile) }}" alt="..."
                                 class="avatar-img rounded-circle">
                         @else
-                            <img src="{{ asset($employee?->profile) }}" alt="..."
-                                class="avatar-img rounded-circle">
+                            <img src="{{ asset($employee?->profile) }}" alt="..." class="avatar-img rounded-circle">
                         @endif
                     @else
                         @php
@@ -228,8 +230,7 @@
                             <img src="{{ asset('admin/employee/profile/' . $employee?->profile) }}" alt="..."
                                 class="avatar-img rounded-circle">
                         @else
-                            <img src="{{ asset($employee?->profile) }}" alt="..."
-                                class="avatar-img rounded-circle">
+                            <img src="{{ asset($employee?->profile) }}" alt="..." class="avatar-img rounded-circle">
                         @endif
                     @endif
 
@@ -256,8 +257,7 @@
             <a class="navbar-brand mx-auto flex-fill text-center" href="#">
                 <div class="w-100 d-flex flex-column align-items-center">
                     <a class="navbar-brand mx-auto flex-fill text-center" href="https://www.donkeydeliveries.com/">
-                        <img src="{{ url('public/site/' . $site->main_logo) }}" height="40"
-                            alt="do Nk ey PBP Panel">
+                        <img src="{{ url('public/site/' . $site->main_logo) }}" height="40" alt="do Nk ey PBP Panel">
                         <h3><span class="mt-2 font-weight-bold">PBP Control Center</span></h3>
                     </a>
                 </div>
@@ -283,7 +283,7 @@
                         {{-- <span class="badge badge-pill badge-primary">New</span> --}}
                     </a>
                 </li>
-                
+
                 <li class="nav-item w-100">
                     <a class="nav-link" href="{{ route('pincodes.index') }}">
                         <i class="fe fe-layers fe-16"></i>
@@ -359,8 +359,9 @@
                         @endif
 
                         {{-- <li class="nav-item">
-    <a class="nav-link pl-3" href="{{ url('subscribers/blockedDriver') }}"><span class="ml-1 item-text">Blocked </span></a>
-    </li> --}}
+                            <a class="nav-link pl-3" href="{{ url('subscribers/blockedDriver') }}"><span
+                                    class="ml-1 item-text">Blocked </span></a>
+                        </li> --}}
                     </ul>
                 </li>
                 @if (isset($user->subscriberId))
@@ -384,7 +385,7 @@
                 @endif
                 {{-- @php
 
-    @endphp --}}
+                @endphp --}}
                 @if (isset($user->subscriberId))
                     <li class="nav-item w-100">
                         <a class="nav-link" href="{{ route('subscribers.complaints') }}">
@@ -449,15 +450,24 @@
                     </li>
                 @endif
 
+                @if (Auth::check())
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('pincodes.index') }}">
+                            <i class="fe fe-layers fe-16"></i>
+                            <span class="ml-3 item-text">Service Management</span>
+                        </a>
+                    </li>
+                @endif
+
 
 
                 @if (
-                    $user->hasPermissionTo('rider-list') ||
+                        $user->hasPermissionTo('rider-list') ||
                         $user->hasPermissionTo('rider-create') ||
-                        $user->hasPermissionTo('rider-blocked'))
+                        $user->hasPermissionTo('rider-blocked')
+                    )
                     <li class="nav-item dropdown">
-                        <a href="#driver" data-toggle="collapse" aria-expanded="false"
-                            class="dropdown-toggle nav-link">
+                        <a href="#driver" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
                             <i class="fe fe-award fe-16"></i>
                             <span class="ml-3 item-text">Riders</span><span class="sr-only">(current)</span>
                         </a>
@@ -541,8 +551,9 @@
                         @endif
 
                         {{-- <li class="nav-item">
-<a class="nav-link pl-3" href="{{ url('subscribers/blockedDriver') }}"><span class="ml-1 item-text">Blocked </span></a>
-</li> --}}
+                            <a class="nav-link pl-3" href="{{ url('subscribers/blockedDriver') }}"><span
+                                    class="ml-1 item-text">Blocked </span></a>
+                        </li> --}}
                     </ul>
                 </li>
                 @if (isset($user->subscriberId))
@@ -570,7 +581,7 @@
                 @endif
                 {{-- @php
 
-@endphp --}}
+                @endphp --}}
                 @if (isset($user->subscriberId))
                     @if ($user->hasPermissionTo('complaint-list'))
                         <li class="nav-item w-100">
@@ -634,7 +645,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         setInterval(() => {
             bookingComplete();
             bookingCancel();
@@ -650,19 +661,19 @@
             type: "get",
             //   data: {id : menuId},
             dataType: "json",
-            success: function(result) {
+            success: function (result) {
                 console.log(result, "bookingComplete");
             },
         });
     }
-    
+
     function bookingCancel() {
         $.ajax({
             url: "{{ route('automaticBookingCancel') }}",
             type: "get",
             //   data: {id : menuId},
             dataType: "json",
-            success: function(result) {
+            success: function (result) {
                 console.log(result, "bookingCancel");
             },
 
@@ -676,7 +687,7 @@
             type: "get",
             //   data: {id : menuId},
             dataType: "json",
-            success: function(result) {
+            success: function (result) {
                 console.log(result, "Sub-notify");
             },
         });
@@ -708,7 +719,7 @@
 </script>
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Hide the loader when the page is fully loaded
         $('.loader-container').hide();
         $('.wrapper').removeClass('blur');
@@ -726,4 +737,3 @@
         $('.wrapper').removeClass('blur');
     }
 </script>
-

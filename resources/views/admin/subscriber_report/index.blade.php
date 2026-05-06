@@ -12,9 +12,10 @@
 
                     <div class="col ml-auto">
                         {{-- <div class="dropdown float-right">
-                        <a href="{{ url('createSubscriber') }}"><button class="btn btn-primary float-right ml-3" type="button">Add more +</button></a>
+                            <a href="{{ url('createSubscriber') }}"><button class="btn btn-primary float-right ml-3"
+                                    type="button">Add more +</button></a>
 
-                    </div> --}}
+                        </div> --}}
                     </div>
 
 
@@ -58,20 +59,19 @@
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="m-section__content">
-                            <form method="GET" class="search-form form-inline"
+                                    <form method="GET" class="search-form form-inline"
                                         action="{{ route('subscriberReport.index') }}">
 
                                         <div class="form-group for pl-2">
                                             <label class="mr-2">From Date:</label>
                                             <input value="{{ request('from_date') }}" type="date" class="form-control"
-                                                name="from_date" autocomplete="off" placeholder="From Date"
-                                                min="" />
+                                                name="from_date" autocomplete="off" placeholder="From Date" min="" />
                                         </div>
                                         <div class="form-group for pl-3">
                                             <label class="mr-2">To Date:</label>
                                             <input value="{{ request('to_date') }}" type="date" class="form-control"
                                                 name="to_date" autocomplete="off" placeholder="To Date" min="" />
-                                        </div>                                        
+                                        </div>
                                         <div class="form-group pl-3">
                                             <button class="btn btn-primary m-btn m-btn--air m-btn--custom" type="submit"><i
                                                     class="fa fa-search"></i></button>
@@ -80,78 +80,78 @@
                                         </div>
                                     </form>
                                 </div>
-                            <div class="card-body table-responsive">
+                                <div class="card-body table-responsive">
 
-                                <!-- table -->
-                                <table class="table datatables" id="dataTable-1">
-                                    <thead>
-                                        <tr>
-
-                                            <th>S.No</th>
-                                            <th>Subscriber ID</th>
-                                            <th>Created By</th>
-                                            <th>Name</th>
-                                            <th>Location</th>
-                                            <th>Pincode</th>
-                                            <th>Joining Date</th>
-                                            <th>Mobile</th>
-                                            {{-- <th>Status</th> --}}
-                                            {{-- <th>Block</th> --}}
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $i = 1; ?>
-                                        @foreach ($subscribers as $subscriber)
+                                    <!-- table -->
+                                    <table class="table datatables" id="dataTable-1">
+                                        <thead>
                                             <tr>
 
-
-                                                <td>{{ $i }}</td>
-                                                <td>{{ $subscriber->subscriberId }}</td>
-                                                <td>{{ $roleName[0] }}</td>
-                                                <td>{{ $subscriber->name }}</td>
-                                                <td>{{ $subscriber->location }}</td>
-                                                 
-                                            <td>
-    @php
-        // Ensure $subscriber and $pincode are defined and contain valid data
-        $subspin = json_decode($subscriber?->pincode);
-
-        // Loop through each pincode and check if it's in the subscriber's pincode array
-        foreach ($pincode as $pin) {
-            // Ensure $pin->id exists and is a valid value
-            if (in_array($pin->id, $subspin)) {
-                // Output the pincode if it's found in the subscriber's pincode array
-                echo $pin->pincode.'<br>';                
-            }            
-        }
-    @endphp
-</td>
-                                                
-                                                <td>{{ $subscriber->created_at->format('d-m-Y') }}</td>
-                                                <td>{{ $subscriber->mobile }}</td>
-                                                {{-- @php
-                                                    $status = [
-                                                        1 => ['label' => 'Active', 'color' => 'green'],
-                                                        0 => ['label' => 'Inactive', 'color' => 'red'],
-                                                    ];
-                                                @endphp
-                                                <td style="color: {{ $status[$subscriber->activestatus]['color'] }}">
-                                                    {{ $status[$subscriber->activestatus]['label'] }}
-                                                </td> --}}
-
-                                                <td>
-                                                    <a href="{{ route('subscriberReport.show', $subscriber->id) }}"><span
-                                                            class="fe fe-24 fe-eye text-white btn btn-success"> Full
-                                                            Details</span></a>
-                                                </td>
+                                                <th>S.No</th>
+                                                <th>Subscriber ID</th>
+                                                <th>Created By</th>
+                                                <th>Name</th>
+                                                <th>Location</th>
+                                                <th>Pincode</th>
+                                                <th>Joined Date</th>
+                                                <th>Mobile</th>
+                                                {{-- <th>Status</th> --}}
+                                                {{-- <th>Block</th> --}}
+                                                <th>Action</th>
                                             </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php $i = 1; ?>
+                                            @foreach ($subscribers as $subscriber)
+                                                <tr>
 
-                                            <?php $i++; ?>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+
+                                                    <td>{{ $i }}</td>
+                                                    <td>{{ $subscriber->subscriberId }}</td>
+                                                    <td>{{ $subscriber->created_by }}</td>
+                                                    <td>{{ $subscriber->name }}</td>
+                                                    <td>{{ $subscriber->location }}</td>
+
+                                                    <td>
+                                                        @php
+                                                            // Ensure $subscriber and $pincode are defined and contain valid data
+                                                            $subspin = json_decode($subscriber?->pincode);
+
+                                                            // Loop through each pincode and check if it's in the subscriber's pincode array
+                                                            foreach ($pincode as $pin) {
+                                                                // Ensure $pin->id exists and is a valid value
+                                                                if (in_array($pin->id, $subspin)) {
+                                                                    // Output the pincode if it's found in the subscriber's pincode array
+                                                                    echo $pin->pincode . '<br>';
+                                                                }
+                                                            }
+                                                        @endphp
+                                                    </td>
+
+                                                    <td>{{ $subscriber->joined_date }}</td>
+                                                    <td>{{ $subscriber->mobile }}</td>
+                                                    {{-- @php
+                                                    $status = [
+                                                    1 => ['label' => 'Active', 'color' => 'green'],
+                                                    0 => ['label' => 'Inactive', 'color' => 'red'],
+                                                    ];
+                                                    @endphp
+                                                    <td style="color: {{ $status[$subscriber->activestatus]['color'] }}">
+                                                        {{ $status[$subscriber->activestatus]['label'] }}
+                                                    </td> --}}
+
+                                                    <td>
+                                                        <a href="{{ route('subscriberReport.show', $subscriber->id) }}"><span
+                                                                class="fe fe-24 fe-eye text-white btn btn-success"> Full
+                                                                Details</span></a>
+                                                    </td>
+                                                </tr>
+
+                                                <?php    $i++; ?>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div> <!-- simple table -->
@@ -174,8 +174,7 @@
                         {{ csrf_field() }}
 
                         <div class="modal-body">
-                            <input type="hidden" class="form-control" name="sub_id" id="sub_id" value=""
-                                readonly>
+                            <input type="hidden" class="form-control" name="sub_id" id="sub_id" value="" readonly>
 
                             <div class="form-group">
                                 <label for="message-text" class="col-form-label">Comments:</label>
@@ -207,14 +206,14 @@
     <script>
         let elems = Array.prototype.slice.call(document.querySelectorAll('.js-switch'));
 
-        elems.forEach(function(html) {
+        elems.forEach(function (html) {
             let switchery = new Switchery(html, {
                 size: 'small'
             });
         });
     </script>
     <script>
-        $('.delete-confirm').on('click', function(event) {
+        $('.delete-confirm').on('click', function (event) {
             event.preventDefault();
             const url = $(this).attr('href');
             swal({
@@ -222,7 +221,7 @@
                 text: 'This record and it`s details will be permanantly deleted!',
                 icon: 'warning',
                 buttons: ["Cancel", "Yes!"],
-            }).then(function(value) {
+            }).then(function (value) {
                 if (value) {
                     window.location.href = url;
                 }
@@ -230,9 +229,9 @@
         });
     </script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.statuschangeselecttextarea').slideUp()
-            $('.close1').click(function() {
+            $('.close1').click(function () {
                 window.location.reload();
             });
             // $('.statuschangeselect').on('change', function() {
@@ -243,7 +242,7 @@
             //         $('.statuschangeselecttextarea').hide()
             //     }
             // })
-            $('.js-switch').change(function() {
+            $('.js-switch').change(function () {
                 let status = $(this).prop('checked') === true ? 1 : 0;
                 let userId = $(this).data('id');
                 // $.ajax({
@@ -272,7 +271,7 @@
         });
     </script>
     <script>
-        $(".update_user").click(function() {
+        $(".update_user").click(function () {
 
             var player_id = $(this).attr('data-payer_id');
 

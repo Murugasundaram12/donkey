@@ -2,9 +2,10 @@
     <thead>
         <tr>
             <th>S.No</th>
-            <th>Subscriber ID</th>
-            <th>Created By</th>
-            <th>Name</th>
+<th>Joined Date</th>
+                                            <th>Subscriber ID</th>
+                                            <th>Created By</th>
+                                            <th>Name</th>
             <th>Location</th>
             <th>Pincode</th>
             <th>Account Type</th>
@@ -18,9 +19,10 @@
             {{-- {{ $subscriber->driver }} --}}
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $subscriber->subscriberId }}</td>
-                <td>{{ $id[0] }}</td>
-                <td>{{ $subscriber->name }}</td>
+            <td>{{ $subscriber->joined_date }}</td>
+            <td>{{ $subscriber->subscriberId }}</td>
+            <td>{{ $id[0] }}</td>
+            <td>{{ $subscriber->name }}</td>
                 <td>{{ $subscriber->location }}</td>
                 <td>
                                             @php $subspin=json_decode($subscriber->pincode);

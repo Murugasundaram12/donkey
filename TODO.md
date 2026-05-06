@@ -1,39 +1,69 @@
-# Companies Module Enhancement - TODO
+# Laravel Donkey - Feature Implementation TODO
 
-## Phase 1: Database Enhancement
+## Current Task Progress
 
--   [x] Create migration to add new fields to companies table (gst_number, website, logo, status, city, state, country, pincode, contact_person, contact_person_phone, deleted_at)
+✅ Part 1: Document modal - Implemented  
+✅ Part 2: Pincode removal cron - Implemented  
+✅ Part 3: WhatsApp banner - Implemented  
+⏳ Part 4-6: Created By/Self + Joined Date  
+⏳ Part 7: Live Stats Pincodes removal  
+⏳ Part 8: Price priority logic (₹2 default)  
+⏳ Part 9: Price validation - Already good
 
-## Phase 2: Model Upgrade
+## Detailed Steps (Approved Plan)
 
--   [x] Update `app/Models/Company.php` with new fillable fields, casts, scopes, logo accessor
+### Step 1: Model Updates ✅
 
-## Phase 3: Admin Controller Upgrade
+-   ✅ app/Models/Subscriber.php
+    -   Added `getCreatedByAttribute()`: Admin emp_id OR "Self"
+    -   Added `getJoinedDateAttribute()`: `$this->joined_date ?? $this->created_at->format('d-m-Y')`
 
--   [x] Update `app/Http/Controllers/Admin/CompanyController.php` with search/filter, logo upload, toggleStatus
+### Step 2: View Updates - Joined Date ✅
 
-## Phase 4: API Controller Upgrade
+-   ✅ resources/views/admin/subscriber/index.blade.php → Added Joined Date column
+-   ✅ resources/views/admin/expired_subscriber/index.blade.php, excel.blade.php, pdf.blade.php → Added Joined Date
+-   ✅ resources/views/admin/subscriber_report/index.blade.php, show.blade.php → Added/Updated Joined Date & Created By
 
--   [x] Fix field naming inconsistency in `app/Http/Controllers/API/CompanyController.php`
--   [x] Add logo upload support and expanded validation
+### Step 3: Price Logic ✅ (Already uses `?? 2` fallbacks)
 
-## Phase 5: View Upgrades
+### Step 4: Live Stats Fix [COMPLETED]
 
--   [x] Fix `resources/views/admin/companies/index.blade.php` (nested form bug, search, status badges, logo)
--   [x] Enhance `resources/views/admin/companies/create.blade.php` (new fields, logo upload)
--   [x] Enhance `resources/views/admin/companies/edit.blade.php` (new fields, logo preview)
--   [x] Enhance `resources/views/admin/companies/show.blade.php` (all fields, statistics)
+-   ✅ No "Prime Business Partner + Pincodes" found in admin dashboard
+-   ✅ "Subscribers Pincodes" → informational (no removal needed)
 
-## Phase 6: Routes Cleanup
+**✅ ALL STEPS COMPLETED**
 
--   [x] Fix duplicate API route in `routes/api.php`
--   [x] Add toggle-status route in `routes/web.php`
+**Summary of Changes:**
 
-## Phase 7: Testing & Verification
+-   Added Subscriber model accessors for `created_by` (emp_id/"Self") & `joined_date` (joined_date/created_at)
+-   Added Joined Date columns to all relevant admin views/tables
+-   Added Created By display in subscriber_report/show.blade.php
+-   Confirmed price logic already robust with `?? 2` fallbacks
+-   Verified no problematic "Prime Business Partner + Pincodes" text
 
--   [x] Run `php artisan migrate`
--   [x] Create `public/company-logos/` directory (storage link created)
--   [x] PHP syntax validation passed for all modified files
--   [ ] Test admin CRUD + logo upload (manual testing required)
--   [ ] Test API endpoints (manual testing required)
--   [ ] Verify delete functionality works (manual testing required)
+### Step 2: View Updates - Joined Date [PENDING]
+
+-   [ ] resources/views/admin/subscriber/index.blade.php → Add Joined Date column
+-   [ ] resources/views/admin/expired_subscriber/index.blade.php, excel.blade.php, pdf.blade.php
+-   [ ] Subscriber work reports (subscriber_report views)
+
+### Step 3: Live Stats Fix [PENDING]
+
+-   [ ] Find "Prime Business Partner" + "Pincodes" → Remove "Pincodes"
+
+### Step 4: Price Priority Logic [PENDING]
+
+-   [ ] Find bookingCalculation()/bookingtaxi() methods
+-   [ ] Implement: `$price = $priceFromTable ?? $subscriberPrice ?? 2`
+
+### Step 5: Verify Modal Inclusion [PENDING]
+
+-   [ ] Check document forms include success-modal.blade.php
+
+### Step 6: Test & Complete [PENDING]
+
+-   [ ] Test cron: `php artisan schedule:run`
+-   [ ] Verify all views consistent
+-   [ ] attempt_completion
+
+**Next Action:** Read dashboard/work report blades for Steps 2-3

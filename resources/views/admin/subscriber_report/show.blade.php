@@ -18,6 +18,9 @@
                 <div class="row">
                     <div class="col-md-12">
                         <h6 class="text-primary">Subscribers Pincodes</h6>
+                        <p><strong>Joined Date:</strong>
+                            {{ $subscriber->joined_date ?? $subscriber->created_at->format('d-m-Y') }}</p>
+                        <p><strong>Created By:</strong> {{ $subscriber->created_by ?? 'Self' }}</p>
                         <p class="text-muted">
                             @foreach ($pincodes as $data)
                                 {{ $data->pincode }} &nbsp;
@@ -59,8 +62,7 @@
                             <select class="form-control" name="status">
                                 <option value="">Select Status</option>
                                 @foreach ($statuses as $status)
-                                    <option {{ request('status') == $status ? 'selected' : '' }}
-                                        value="{{ $status }}">
+                                    <option {{ request('status') == $status ? 'selected' : '' }} value="{{ $status }}">
                                         {{ $statusValues[$status] }}
                                     </option>
                                 @endforeach
@@ -91,8 +93,7 @@
                             <button class="btn btn-primary m-btn m-btn--air m-btn--custom" type="submit"><i
                                     class="fa fa-search "></i></button>
                             <a class="btn btn-danger m-btn m-btn--air m-btn--custom"
-                                href="{{ route('subscriberReport.show', $subscriber->id) }}"><i
-                                    class="fa fa-times"></i></a>
+                                href="{{ route('subscriberReport.show', $subscriber->id) }}"><i class="fa fa-times"></i></a>
                         </div>
                     </form>
                 </div>
@@ -274,7 +275,7 @@
     <script src="https://technext.github.io/tinydash/js/jquery.dataTables.min.js"></script>
     <script src='https://technext.github.io/tinydash/js/dataTables.bootstrap4.min.js'></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#dataTable-1').DataTable({
                 autoWidth: true,
                 "lengthMenu": [
@@ -290,14 +291,14 @@
     <script>
         let elems = Array.prototype.slice.call(document.querySelectorAll('.js-switch'));
 
-        elems.forEach(function(html) {
+        elems.forEach(function (html) {
             let switchery = new Switchery(html, {
                 size: 'small'
             });
         });
     </script>
     <script>
-        $('.delete-confirm').on('click', function(event) {
+        $('.delete-confirm').on('click', function (event) {
             event.preventDefault();
             const url = $(this).attr('href');
             swal({
@@ -305,7 +306,7 @@
                 text: 'This record and it`s details will be permanantly deleted!',
                 icon: 'warning',
                 buttons: ["Cancel", "Yes!"],
-            }).then(function(value) {
+            }).then(function (value) {
                 if (value) {
                     window.location.href = url;
                 }
@@ -313,16 +314,16 @@
         });
     </script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             setInterval(() => {
                 $total = 0;
-                $('.amounts').each(function() {
+                $('.amounts').each(function () {
                     $total = $total + parseInt($(this).val());
                 })
                 $('.showtotal').text($total);
             }, 500);
             $('.statuschangeselecttextarea').slideUp()
-            $('.close1').click(function() {
+            $('.close1').click(function () {
                 window.location.reload();
             });
             // $('.statuschangeselect').on('change', function() {
@@ -333,7 +334,7 @@
             //         $('.statuschangeselecttextarea').hide()
             //     }
             // })
-            $('.js-switch').change(function() {
+            $('.js-switch').change(function () {
                 let status = $(this).prop('checked') === true ? 1 : 0;
                 let userId = $(this).data('id');
                 // $.ajax({
@@ -362,7 +363,7 @@
         });
     </script>
     <script>
-        $(".update_user").click(function() {
+        $(".update_user").click(function () {
 
             var player_id = $(this).attr('data-payer_id');
 
@@ -380,4 +381,3 @@
         }
     </script>
 @endsection
-

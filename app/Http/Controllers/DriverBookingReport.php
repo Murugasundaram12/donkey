@@ -58,7 +58,8 @@ class DriverBookingReport extends Controller
             '1'=> '1',
             '2'=>'2'
         ];
-        $pinnumber = json_decode($subscriber->pincode);
+        $pinnumber = json_decode($subscriber->pincode, true);
+        $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
         $pincodes = Pincode::whereIn('id', $pinnumber)->get();
@@ -162,7 +163,8 @@ class DriverBookingReport extends Controller
     public function downloadExcel(Subscriber $driver)
     {
     $subscriber = $driver;
-        $pinnumber = json_decode($subscriber->pincode);
+        $pinnumber = json_decode($subscriber->pincode, true);
+        $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
         $pincodes = Pincode::whereIn('id', $pinnumber)->get();
@@ -220,7 +222,8 @@ class DriverBookingReport extends Controller
     public function downloadPDF(Subscriber $driver)
     {
     $subscriber = $driver;
-        $pinnumber = json_decode($driver->pincode);
+        $pinnumber = json_decode($driver->pincode, true);
+        $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
         $pincodes = Pincode::whereIn('id', $pinnumber)->get();

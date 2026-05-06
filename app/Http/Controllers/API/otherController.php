@@ -101,13 +101,13 @@ class otherController extends BaseController
         }
 
         $serviceCostMap = [
-            1 => $subscriber->biketaxi_price ?? 0,
-            2 => $subscriber->pickup_price ?? 0,
-            3 => $subscriber->buy_price ?? 0,
-            4 => $subscriber->auto_price ?? 0,
-            5 => $subscriber->cab_price ?? 0
+            1 => $subscriber->biketaxi_price ?? 2,
+            2 => $subscriber->pickup_price ?? 2,
+            3 => $subscriber->buy_price ?? 2,
+            4 => $subscriber->auto_price ?? 2,
+            5 => $subscriber->cab_price ?? 2
         ];
-        $service_cost = $serviceCostMap[$request->category] ?? 0;
+        $service_cost = $serviceCostMap[$request->category] ?? 2;
 
         $base_price = round($price->amount * $request->distance, 2);
         $subtotal = $base_price + $service_cost;
@@ -1252,12 +1252,12 @@ class otherController extends BaseController
             }
 
             $service_cost = match ($category) {
-                1 => $subscriber->biketaxi_price,
-                2 => $subscriber->pickup_price,
-                3 => $subscriber->buy_price,
-                4 => $subscriber->auto_price,
-                5 => $subscriber->cab_price,
-                default => 0
+                1 => $subscriber->biketaxi_price ?? 2,
+                2 => $subscriber->pickup_price ?? 2,
+                3 => $subscriber->buy_price ?? 2,
+                4 => $subscriber->auto_price ?? 2,
+                5 => $subscriber->cab_price ?? 2,
+                default => 2
             };
 
             $tax = 0.18 * ($service_cost + ($price->amount * $distance));
@@ -1486,20 +1486,14 @@ class otherController extends BaseController
                 $pincodeDetails = Pincode::where('pincode', $d->get('pincode'))?->first();
                 $subscriber = Subscriber::where('id', $pincodeDetails->usedBy)?->first();
                 //return $subscriber;
-                $service_cost = 0;
-                if (($d->get('category') == 1) && (isset($subscriber))) {
-                    $service_cost = $subscriber?->biketaxi_price;
-                } elseif (($d->get('category')) == 2 && (isset($subscriber))) {
-                    $service_cost = $subscriber?->pickup_price;
-                } elseif (($d->get('category')) == 3 && (isset($subscriber))) {
-                    $service_cost = $subscriber?->buy_price;
-                } elseif (($d->get('category')) == 4 && (isset($subscriber))) {
-                    $service_cost = $subscriber?->auto_price;
-                } elseif (($d->get('category')) == 5 && (isset($subscriber))) {
-                    $service_cost = $subscriber?->cab_price;
-                } else {
-                    $service_cost = 0;
-                }
+                $service_cost = match ((int)$d->get('category')) {
+                    1 => $subscriber?->biketaxi_price ?? 2,
+                    2 => $subscriber?->pickup_price ?? 2,
+                    3 => $subscriber?->buy_price ?? 2,
+                    4 => $subscriber?->auto_price ?? 2,
+                    5 => $subscriber?->cab_price ?? 2,
+                    default => 2
+                };
                 //return $service_cost;
                 //return round(($price[0]->amount * $d->get('distance')));
                 $tax = 23 / 100 * ($service_cost + ($price[0]->amount * $d->get('distance')));

@@ -50,7 +50,8 @@ class SubscriberHomeController extends Controller
 
         if (isset($subscriber->subscriberId)) {
 
-            $subscribersPin = json_decode($subscriber->pincode);
+            $subscribersPin = json_decode($subscriber->pincode, true);
+            $subscribersPin = is_array($subscribersPin) ? $subscribersPin : [];
 
             $pincodes = Pincode::whereIn('id', $subscribersPin)->get()->pluck('pincode');
             // dd($pincodes);
@@ -169,7 +170,8 @@ class SubscriberHomeController extends Controller
         } else {
             // dd($subscriber);
             $subscriber = Subscriber::where('id', $subscriber->subscriber_id)?->first();
-            $subscribersPin = json_decode($subscriber->pincode);
+            $subscribersPin = json_decode($subscriber->pincode, true);
+            $subscribersPin = is_array($subscribersPin) ? $subscribersPin : [];
             $pincodes = Pincode::whereIn('id', $subscribersPin)->get()->pluck('pincode');
             $enquiryCount = Enquiry::where('subscriberId', $subscriber->id)->get()->count();
             $employeeCount = Employee::where('subscriber_id', $subscriber->subscriber_id)->get()->count();
@@ -458,7 +460,7 @@ class SubscriberHomeController extends Controller
             return view('subscriber.403');
         }
     }
-    
+
     public function driverstore(Request $request)
     {
         // dd($request->all());
@@ -479,7 +481,7 @@ class SubscriberHomeController extends Controller
                 'aadharFrontImage' => 'required',
                 'aadharBackImage' => 'required',
                 'rcbook' => 'required',
-               // 'insurance' => 'required',
+                // 'insurance' => 'required',
                 'bike' => 'nullable',
                 'drivingLicence' => 'required',
                 'customerdocument' => 'nullable|mimes:pdf|required',
@@ -551,9 +553,9 @@ class SubscriberHomeController extends Controller
             $driver->drivingLicence = $drivingLicence;
 
             //$insurance = time() . '.' . $request->insurance->extension();
-           // $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
-           // $driver->insurance = $insurance;
-            
+            // $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
+            // $driver->insurance = $insurance;
+
             if ($request->hasFile('bike')) {
                 $bike = time() . '.' . $request->bike->extension();
                 $request->bike->move(public_path('subscriber/driver/bike'), $bike);
@@ -681,8 +683,8 @@ class SubscriberHomeController extends Controller
         //  dd($user->id);
         // dd($request);
 
-    }    
-    
+    }
+
     public function driverstorebackup(Request $request)
     {
         $employee = Session::get('subscribers');
@@ -944,7 +946,7 @@ class SubscriberHomeController extends Controller
 
         return view('subscriber.403');
     }
-    
+
     public function update(Request $request, $id)
     {
         $driver = Driver::find($id);
@@ -1085,7 +1087,7 @@ class SubscriberHomeController extends Controller
         }
         return redirect('subscribers/driver')->with('success', 'Driver Updated');
     }
-    
+
     public function updatebackup(Request $request, $id)
     {
         $driver = Driver::find($id);
@@ -1283,7 +1285,7 @@ class SubscriberHomeController extends Controller
             return view('subscriber.profile', ['employee' => $user]);
         }
     }
-    
+
     public function updateProfile(Request $request)
     {
         $user = Session::get('subscribers');
@@ -1344,7 +1346,7 @@ class SubscriberHomeController extends Controller
         }
         return redirect('subscribers/profile')->with('success', 'Profile Updated!');
     }
-    
+
     public function price()
 
     {
@@ -1376,31 +1378,31 @@ class SubscriberHomeController extends Controller
         // dd($request);
         // dd($request->get('pincode'));
         $this->validate($request, [
-            'biketaxi_price' => 'required',
-            'pickup_price' => 'required',
-            'buy_price' => 'required',
-            'auto_price' => 'required',
-            'cab_price' => 'required',
-            'bt_price1' => 'required|numeric',
-            'bt_price2' => 'required|numeric',
-            'bt_price3' => 'required|numeric',
-            'bt_price4' => 'required|numeric',
-            'pk_price1' => 'required|numeric',
-            'pk_price2' => 'required|numeric',
-            'pk_price3' => 'required|numeric',
-            'pk_price4' => 'required|numeric',
-            'bd_price1' => 'required|numeric',
-            'bd_price2' => 'required|numeric',
-            'bd_price3' => 'required|numeric',
-            'bd_price4' => 'required|numeric',
-            'at_price1' => 'required|numeric',
-            'at_price2' => 'required|numeric',
-            'at_price3' => 'required|numeric',
-            'at_price4' => 'required|numeric',
-            'cab_price1' => 'required|numeric',
-            'cab_price2' => 'required|numeric',
-            'cab_price3' => 'required|numeric',
-            'cab_price4' => 'required|numeric',
+            'biketaxi_price' => 'nullable|numeric|min:0',
+            'pickup_price' => 'nullable|numeric|min:0',
+            'buy_price' => 'nullable|numeric|min:0',
+            'auto_price' => 'nullable|numeric|min:0',
+            'cab_price' => 'nullable|numeric|min:0',
+            'bt_price1' => 'nullable|numeric|min:0',
+            'bt_price2' => 'nullable|numeric|min:0',
+            'bt_price3' => 'nullable|numeric|min:0',
+            'bt_price4' => 'nullable|numeric|min:0',
+            'pk_price1' => 'nullable|numeric|min:0',
+            'pk_price2' => 'nullable|numeric|min:0',
+            'pk_price3' => 'nullable|numeric|min:0',
+            'pk_price4' => 'nullable|numeric|min:0',
+            'bd_price1' => 'nullable|numeric|min:0',
+            'bd_price2' => 'nullable|numeric|min:0',
+            'bd_price3' => 'nullable|numeric|min:0',
+            'bd_price4' => 'nullable|numeric|min:0',
+            'at_price1' => 'nullable|numeric|min:0',
+            'at_price2' => 'nullable|numeric|min:0',
+            'at_price3' => 'nullable|numeric|min:0',
+            'at_price4' => 'nullable|numeric|min:0',
+            'cab_price1' => 'nullable|numeric|min:0',
+            'cab_price2' => 'nullable|numeric|min:0',
+            'cab_price3' => 'nullable|numeric|min:0',
+            'cab_price4' => 'nullable|numeric|min:0',
 
         ]);
 

@@ -141,11 +141,11 @@
                                                     </td>
                                                     <td>
                                                         @php
-                                                            $subId =
-                                                                App\Models\Pincode::where(
-                                                                    'pincode',
-                                                                    $booking->pincode,
-                                                                )->first()->usedBy ?? null;
+                                                            $pincodeRow = App\Models\Pincode::where(
+                                                                'pincode',
+                                                                $booking->pincode,
+                                                            )->first();
+                                                            $subId = $pincodeRow?->usedBy;
                                                             $subscriber = App\Models\Subscriber::find($subId);
                                                         @endphp
                                                         @if (isset($booking->bookingPayment[0]))

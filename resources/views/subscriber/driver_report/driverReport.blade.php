@@ -70,7 +70,7 @@
                             0 => 'Wallet',
                             1 => 'Cash',
                             2 => 'Online',
-                            3 =? 'QR'
+                            3 => 'QR',
                         ];
                     @endphp
 

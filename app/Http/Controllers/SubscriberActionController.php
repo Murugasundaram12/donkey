@@ -17,7 +17,7 @@ class SubscriberActionController extends Controller
     public function complaints()
     {
         $user = Session::get('subscribers');
-       // dd($user);
+        // dd($user);
         if (isset($user->subscriberId)) {
             if ($user->hasPermissionTo('complaint-list')) {
                 $complaints = Complaints::where('subscriberId', session('subscribers')['id'])->get();
@@ -92,8 +92,13 @@ class SubscriberActionController extends Controller
             // dd($validatedData);
             $show = Complaints::create($validatedData);
 
+            $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
             return redirect('subscribers/complaints')
-                ->with('success', 'Complaints registered successfully.');
+                ->with([
+                    'success' => 'Complaints registered successfully.',
+                    'success_message' => $message,
+                    'show_success_modal' => true
+                ]);
         } else {
             //    dd($user);
             $roleName = $user->roles;
@@ -120,8 +125,13 @@ class SubscriberActionController extends Controller
 
             $show = Complaints::create($validatedData);
             // dd($show);
+            $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
             return redirect('subscribers/complaints')
-                ->with('success', 'Complaints registered successfully.');
+                ->with([
+                    'success' => 'Complaints registered successfully.',
+                    'success_message' => $message,
+                    'show_success_modal' => true
+                ]);
         }
     }
 
@@ -166,7 +176,7 @@ class SubscriberActionController extends Controller
                 $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
                 $subscriberId = $subscriber->id;
                 $subscriberPin = $subscriber->pincode;
-                $enquiry = Enquiry::where(function ($query) use ( $subscriberId, $subscriberPin) {
+                $enquiry = Enquiry::where(function ($query) use ($subscriberId, $subscriberPin) {
                     $query->where('subscriberId', $subscriberId)
                         ->orWhere(function ($query) use ($subscriberPin) {
                             $query->where('subscriberId', 0)
@@ -238,8 +248,13 @@ class SubscriberActionController extends Controller
         }
 
         $show = Enquiry::create($validatedData);
+        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
         return redirect('subscribers/enquiry')
-            ->with('success', 'enquiry registered successfully.');
+            ->with([
+                'success' => 'enquiry registered successfully.',
+                'success_message' => $message,
+                'show_success_modal' => true
+            ]);
     }
 
 

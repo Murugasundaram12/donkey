@@ -36,12 +36,14 @@
 
 <body>
     <table>
-        <caption>Expiring Subscriber's List</caption>        
+        <caption>Expiring Subscriber's List</caption>
         <thead>
             <tr>
                 <th>S.No</th>
                 <th>Subscriber ID</th>
                 <th>Created By</th>
+                <th>Joined Date</th>
+                <th>Joined Date</th>
                 <th>Name</th>
                 <th>Location</th>
                 <th>Pincode</th>
@@ -54,28 +56,29 @@
             @php
                 $totalAmount = 0;
             @endphp
-             @foreach ($expiredSubscribers as $subscriber)
-             <tr>
+            @foreach ($expiredSubscribers as $subscriber)
+                    <tr>
 
 
                  <td>{{ $loop->iteration }}</td>
                  <td>{{ $subscriber->subscriberId }}</td>
                  <td>{{ $id[0] }}</td>
-                 <td>{{ $subscriber->name }}</td>
-                 <td>{{ $subscriber->location }}</td>
-                 <td>
-             @php $subspin=json_decode($subscriber->pincode);
-             foreach($pincode as $pin) { @endphp
-             @if (in_array($pin->id, $subspin))
-             {{ $pin->pincode }}
-             @endif
-             @php } @endphp
-         </td>
-                 <td>{{ $subscriber->account_type ? $subscriber->account_type : 'N/A' }}</td>
-                 <td>{{ $subscriber->mobile }}</td>
-                 <td>{{ $subscriber->expiryDate->format('d-m-Y') }}</td>
+                 <td>{{ $subscriber->joined_date }}</td>
+                        <td>{{ $subscriber->name }}</td>
+                        <td>{{ $subscriber->location }}</td>
+                        <td>
+                            @php $subspin = json_decode($subscriber->pincode);
+                            foreach ($pincode as $pin) { @endphp
+                            @if (in_array($pin->id, $subspin))
+                                {{ $pin->pincode }}
+                            @endif
+                            @php } @endphp
+                </td>
+                        <td>{{ $subscriber->account_type ? $subscriber->account_type : 'N/A' }}</td>
+                        <td>{{ $subscriber->mobile }}</td>
+                             <td>{{ $subscriber->expiryDate->format('d-m-Y') }}</td>
             @endforeach
-        </tbody>       
+        </tbody>
     </table>
 </body>
 

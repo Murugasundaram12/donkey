@@ -205,25 +205,29 @@ class Booking extends BaseController
 	public function taxCalculation($price, $taxRate, $category, $id)
 	{
 		//return $id;
+		$service_tax = 0;
+		$subscriber = Subscriber::find($id);
+		if (!$subscriber) {
+			$price = (float)$price;
+			$taxRate = (float)$taxRate;
+			$tax = $price * $taxRate / 100;
+			return (float) round($tax, 2);
+		}
+
 		if ($category == 1) {
-			$p = Subscriber::find($id)->select(['biketaxi_price'])->first();
-			$service_tax = $p->biketaxi_price;
+			$service_tax = (float) $subscriber->biketaxi_price;
 		}
 		if ($category == 2) {
-			$p = Subscriber::find($id)->select(['pickup_price'])->first();
-			$service_tax = $p->pickup_price;
+			$service_tax = (float) $subscriber->pickup_price;
 		}
 		if ($category == 3) {
-			$p = Subscriber::find($id)->select(['buy_price'])->first();
-			$service_tax = $p->buy_price;
+			$service_tax = (float) $subscriber->buy_price;
 		}
 		if ($category == 4) {
-			$p = Subscriber::find($id)->select(['auto_price'])->first();
-			$service_tax = $p->auto_price;
+			$service_tax = (float) $subscriber->auto_price;
 		}
 		if ($category == 5) {
-			$p = Subscriber::find($id)->select(['cab_price'])->first();
-			$service_tax = $p->cab_price;
+			$service_tax = (float) $subscriber->cab_price;
 		}
 
 		$price = (float)$price;
@@ -244,14 +248,11 @@ class Booking extends BaseController
 
 		$base_price = 0;
 		$service_cost = 0;
+		$fallbackSubscriber = null;
 		$data =  DB::table('price')->where(['category' => $category, 'pincode' => $pincode])
 			->where('range_from', '<', $distance)
 			->where('range_to', '>=', $distance)
 			->select('amount', 'tax_split_1', 'tax_split_2', 'tax', 'category', 'subscriber_id')->latest()->first();
-		if ($data == "") {
-			// return $this->sendError('Error.', 'Pincode is Not available');
-			return 0;
-		}
 
 		/*old logic*/
 		/*$to_check_column = $this->getToCheckColumn($category, $distance, $pincode);
@@ -267,12 +268,21 @@ class Booking extends BaseController
 			}			
 		}*/
 
-		$base_price = isset($data->amount) && $data->amount && $distance ?  round($data->amount * $distance, 2) : 0;
-		$tax_split_amount_1 = isset($data->tax_split_1) ? $data->tax_split_1 : 0;
-		$tax_split_amount_2 = isset($data->tax_split_2) ? $data->tax_split_2 : 0;
-		$tax = isset($data->tax) ? $data->tax : 0;
-		$id = $data->subscriber_id;
-		$subscriber = Subscriber::where('id', $data->subscriber_id)?->first();
+		$toCheckColumn = $this->getToCheckColumn($category, $distance, $pincode);
+		$fallbackSubscriber = Subscriber::where('pincode', 'like', '%' . $pincode . '%')->first();
+
+		$priceFromTable = isset($data?->amount) && $data->amount !== '' ? (float) $data->amount : null;
+		$subscriberPrice = ($toCheckColumn && $fallbackSubscriber && isset($fallbackSubscriber->$toCheckColumn) && $fallbackSubscriber->$toCheckColumn !== '')
+			? (float) $fallbackSubscriber->$toCheckColumn
+			: null;
+		$effectiveUnitPrice = $priceFromTable ?? $subscriberPrice ?? 2;
+		$base_price = $distance ? round($effectiveUnitPrice * $distance, 2) : 0;
+
+		$tax_split_amount_1 = isset($data?->tax_split_1) ? $data->tax_split_1 : 0;
+		$tax_split_amount_2 = isset($data?->tax_split_2) ? $data->tax_split_2 : 0;
+		$tax = isset($data?->tax) ? $data->tax : 0;
+		$id = $data->subscriber_id ?? ($fallbackSubscriber->id ?? 0);
+		$subscriber = Subscriber::where('id', $id)->first();
 		//return $subscriber;
 		if (isset($subscriber)) {
 			if ($category == 1) {
