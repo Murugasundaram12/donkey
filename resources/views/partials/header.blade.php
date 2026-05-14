@@ -86,10 +86,16 @@
 @php
     $admin = Auth::user();
     $site = App\Models\site::where('id', 1)->first();
+    $faviconPath = $site && $site->favicon ? public_path('site/' . $site->favicon) : null;
+    $logoPath = $site && $site->main_logo ? public_path('site/' . $site->main_logo) : null;
+    $faviconUrl = ($faviconPath && file_exists($faviconPath))
+        ? url('public/site/' . $site->favicon)
+        : asset('assets/images/favicon.png');
+    $logoUrl = ($logoPath && file_exists($logoPath))
+        ? url('public/site/' . $site->main_logo)
+        : asset('admin/assets/images/logo.svg');
 @endphp
-<link rel="icon" href="{{ url('public/site/' . $site->favicon) }}" type="image/x-icon">
-
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<link rel="icon" href="{{ $faviconUrl }}" type="image/x-icon">
 <nav class="topnav navbar navbar-light">
     <button type="button" class="navbar-toggler text-muted mt-2 p-0 mr-3 collapseSidebar">
         <i class="fe fe-menu navbar-toggler-icon"></i>
@@ -121,33 +127,35 @@
             </div>
         </li>
 
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink" role="button"
-                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="avatar avatar-sm mt-2">
-                    <div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%;">
-                        <img src="{{ asset('admin/admin/profile/' . $admin->profile) }}" alt="..."
-                            class="avatar-img rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                </span>
-            </a>
-
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                <a class="dropdown-item" href="{{ route('profile.edit', $admin->id) }}">Profile</a>
-                @if ($admin->roles[0]->name == 'Admin')
-                    <a class="dropdown-item" href="{{ route('getAppVerision', ['site' => 1]) }}">General Settings</a>
-                    <a class="dropdown-item" href="{{ route('crypto.settings.edit', ['site' => 1]) }}">Crypto
-                        Settings</a>
-                @endif
-                <a class="dropdown-item" href="{{ route('logout') }}"
-                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    {{ __('Logout') }}
+        @auth
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink" role="button"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="avatar avatar-sm mt-2">
+                        <div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%;">
+                            <img src="{{ asset('admin/admin/profile/' . ($admin->profile ?? '')) }}" alt="..."
+                                class="avatar-img rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    </span>
                 </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                    @csrf
-                </form>
-            </div>
-        </li>
+
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" href="{{ route('profile.edit', $admin->id) }}">Profile</a>
+                    @if (isset($admin->roles[0]) && $admin->roles[0]->name == 'Admin')
+                        <a class="dropdown-item" href="{{ route('getAppVerision', ['site' => 1]) }}">General Settings</a>
+                        <a class="dropdown-item" href="{{ route('crypto.settings.edit', ['site' => 1]) }}">Crypto
+                            Settings</a>
+                    @endif
+                    <a class="dropdown-item" href="{{ route('logout') }}"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        {{ __('Logout') }}
+                    </a>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
+                </div>
+            </li>
+        @endauth
     </ul>
 </nav>
 
@@ -159,7 +167,7 @@
 
         <div class="w-100 d-flex flex-column align-items-center">
             <a class="navbar-brand mx-auto flex-fill text-center" href="https://www.donkeydeliveries.com/">
-                <img src="{{ url('public/site/' . $site->main_logo) }}" style="height: 60px;width:60px;"
+                <img src="{{ $logoUrl }}" style="height: 60px;width:60px;"
                     alt="do N key Admin Panel">
                 <h3><span class="mt-2 font-weight-bold">Control Center</span></h3>
             </a>

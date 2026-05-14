@@ -29,9 +29,9 @@ class SubscriberController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except(['create', 'subscriberstore']);
         $this->middleware('permission:subscriber-list|subscriber-create|subscriber-edit|subscriber-delete', ['only' => ['subscriber', 'createsubscriber']]);
-        $this->middleware('permission:subscriber-create', ['only' => ['create', 'subscriberstore']]);
+        $this->middleware('permission:subscriber-create', ['only' => ['subscriber']]);
         $this->middleware('permission:subscriber-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:subscriber-delete', ['only' => ['destroy']]);
         // $this->middleware('permission:driver-driverblock', ['only' => ['driverblock']]);
@@ -74,7 +74,7 @@ class SubscriberController extends Controller
 
     public function create()
     {
-        $pincode = Pincode::where('usedBy', 0)->get();
+        $pincode = Pincode::all();
         return view('admin.subscriber.create', compact('pincode'));
     }
     public function subscriberstore(Request $request)
@@ -134,11 +134,24 @@ class SubscriberController extends Controller
         $pincode = json_encode($request->pincode);
         $date = $request->get('subscriptionDate');
         $date1 = $request->get('expiryDate');
-        //$subscriptionDate = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date)
-        //->format('d-m-Y');
-        $subscriptionDate  = $date;
-        $expiryDate = \Carbon\Carbon::createFromFormat('d/m/Y', $date1)
-            ->format('d-m-Y');
+        $subscriptionDate = $date;
+
+        $expiryDate = null;
+        if (!empty($date1)) {
+            try {
+                $expiryDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date1)->format('d-m-Y');
+            } catch (\Exception $e) {
+                try {
+                    $expiryDate = \Carbon\Carbon::createFromFormat('Y-m-d', $date1)->format('d-m-Y');
+                } catch (\Exception $e) {
+                    $expiryDate = null;
+                }
+            }
+        }
+
+        if ($expiryDate === null) {
+            $expiryDate = \Carbon\Carbon::parse($subscriptionDate)->addDays(28)->format('d-m-Y');
+        }
 
         $subscriber = new Subscriber();
         $subscriber->account_type = $request->get('account_type');
@@ -156,7 +169,7 @@ class SubscriberController extends Controller
         $subscriber->aadharNo = $request->get('aadharNo');
         $subscriber->bankacno = $request->get('bankacno');
         $subscriber->ifsccode = $request->get('ifsccode');
-        $subscriber->created_by = Auth::id();
+        $subscriber->created_by = Auth::id() ?? 'public';
         $aadharImage = time() . '.' . $request->aadharImage->extension();
         $request->aadharImage->move(public_path('admin/subscriber/aadhar'), $aadharImage);
         $subscriber->aadharImage = $aadharImage;
@@ -225,45 +238,25 @@ class SubscriberController extends Controller
         $insertPric = $this->storePrice($subid, $zipcode, $request);
         // dd($subscriber);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'mobile' => $request->mobile,
-            // 'gender' => $request->gender,
-            'password' => $request->password,
-            'address' => $request->description,
-            'aadhar' => $request->aadharNo,
-            'emp_id' => "PBP Employee ID - " . str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT),
-            'role' => 'Subscriber Admin'
-        ];
-        $role = Role::where('guard_name', 'subscriber')->where('name', $data['role'])->first();
-        // dd($data);
-        $employee = Employee::create($data);
-        // dd($employee);
-        $subscriber->assignRole($role->name);
-        // $price=new Price();
-        //   foreach($zipcode as $zip){
-        //     $getZip=Pincode::find($zip);
-        //     $zipcode=$getZip->pincode;
-        //     //Bike taxi
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,0,5,$request->get('bt_price1')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,5,8,$request->get('bt_price2')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,8,10,$request->get('bt_price3')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,10,50,$request->get('bt_price4')]);
-        //     //PickUp
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,0,5,$request->get('pk_price1')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,5,8,$request->get('pk_price2')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,8,10,$request->get('pk_price3')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,10,50,$request->get('pk_price4')]);
-        //     //Drop and delivery
-        //      //PickUp
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,0,5,$request->get('bd_price1')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,5,8,$request->get('bd_price2')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,8,10,$request->get('bd_price3')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,10,50,$request->get('bd_price4')]);
-
-
-        //   }
+        if (Auth::check()) {
+            $data = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'mobile' => $request->mobile,
+                // 'gender' => $request->gender,
+                'password' => $request->password,
+                'address' => $request->description,
+                'aadhar' => $request->aadharNo,
+                'emp_id' => "PBP Employee ID - " . str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT),
+                'role' => 'Subscriber Admin'
+            ];
+            $role = Role::where('guard_name', 'subscriber')->where('name', $data['role'])->first();
+            Employee::create($data);
+            if ($role) {
+                $subscriber->assignRole($role->name);
+            }
+        }
+        
         $categories = Category::pluck('id');
         foreach ($zipcode as $code) {
             foreach ($categories as $category) {
@@ -276,7 +269,8 @@ class SubscriberController extends Controller
         }
 
         $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
-        return redirect('subscriberList')->with([
+        $redirectTo = Auth::check() ? 'subscriberList' : 'createSubscriber';
+        return redirect($redirectTo)->with([
             'success' => 'Subscriber added!',
             'success_message' => $message,
             'show_success_modal' => true
@@ -460,56 +454,7 @@ class SubscriberController extends Controller
         $notify->save();
         $insertPric = $this->storePrice($subid, $zipcode, $request);
 
-        // dd($data);
-        // dd($employee);
-        //  foreach($zipcode as $zip){
-        //         $getZip=Pincode::find($zip);
-        //         $zipcode=$getZip->pincode;
-        //         $check=Price::where([['pincode',$zipcode],['subscriber_id',$subid ]])->count();
-        //         if($check == 0)
-        //         {
-        //               //Bike taxi
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,0,5,$request->get('bt_price1')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,5,8,$request->get('bt_price2')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,8,10,$request->get('bt_price3')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,1,10,50,$request->get('bt_price4')]);
-        //     //PickUp
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,0,5,$request->get('pk_price1')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,5,8,$request->get('pk_price2')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,8,10,$request->get('pk_price3')]);
-        //     DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,2,10,50,$request->get('pk_price4')]);
-        //     //Drop and delivery
-        //      //PickUp
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,0,5,$request->get('bd_price1')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,5,8,$request->get('bd_price2')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,8,10,$request->get('bd_price3')]);
-        //      DB::insert('insert into `price` (subscriber_id,pincode,category,range_from,range_to,amount) values (?, ?, ?, ?, ?, ?)', [$subid,$zipcode,3,10,50,$request->get('bd_price4')]);
 
-
-        //         }
-        //         else{
-        //         //Bike taxi
-
-        //         $bt1=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bt_price1').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =1 and range_from=0 and range_to=5 '));
-
-        //         $bt2=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bt_price2').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =1 and range_from=5 and range_to=8 ')) ;
-        //         $bt3=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bt_price3').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =1 and range_from=8 and range_to=10 ') );
-        //         $bt4=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bt_price4').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =1 and range_from=10 and range_to=50 ')) ;
-
-        //         //PickUp
-        //         $pk1=DB::statement( DB::raw('update  `price` SET amount='.$request->get('pk_price1').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =2 and range_from=0 and range_to=5 ')) ;
-        //         $pk2=DB::statement(DB::raw('update  `price` SET amount='.$request->get('pk_price2').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =2 and range_from=5 and range_to=8 ')) ;
-        //         $pk3= DB::statement(DB::raw('update  `price` SET amount='.$request->get('pk_price3').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =2 and range_from=8 and range_to=10 ')) ;
-        //         $pk4=DB::statement(DB::raw('update  `price` SET amount='.$request->get('pk_price4').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =2 and range_from=10 and range_to=50 ') );
-        //         //Drop and delivery
-
-        //         $bd1=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bd_price1').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =3 and range_from=0 and range_to=5 ')) ;
-        //         $bd2=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bd_price2').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =3 and range_from=5 and range_to=8 ')) ;
-        //         $bd3=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bd_price3').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =3 and range_from=8 and range_to=10 ')) ;
-        //         $bd4=DB::statement(DB::raw('update  `price` SET amount='.$request->get('bd_price4').' where subscriber_id='.$subid.' and pincode = '.$zipcode.' and category =3 and range_from=10 and range_to=50 ')) ;
-        //         }
-
-        //       }
         $existingpincodebasedcategory = Pincodebasedcategory::where('subscriber_id', $subscriber->id)
             ->select('pincode_id')
             ->distinct('pincode_id')
@@ -648,7 +593,7 @@ class SubscriberController extends Controller
         //   $booking->update([
         //     'status' => 2,
         //   ]);
-        // }  
+        // }
         foreach ($bookings as $booking) {
             $booking->update([
                 'status' => 2,

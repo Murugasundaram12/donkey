@@ -25,8 +25,9 @@
 
 
 
-                                <form class="needs-validation" method="post" action="{{ url('subscriberstore') }}"
-                                    enctype="multipart/form-data" novalidate>
+                                <form method="post" action="{{ url('subscriberstore') }}"
+                                    autocomplete="off"
+                                    enctype="multipart/form-data">
                                     {{ csrf_field() }}
                                     <div class="form-row">
                                         <div class="col-md-6 mb-3">
@@ -56,7 +57,7 @@
                                             <label for="password">Password</label>
                                             <input type="password"
                                                 class="form-control @error('password') is-invalid @enderror " id="password"
-                                                name="password" value="{{ old('password') }}" required>
+                                                name="password" value="{{ old('password') }}" autocomplete="new-password" required>
                                             @error('password')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -140,12 +141,14 @@
                                                 <select name="pincode[]"
                                                     class="form-control @error('pincode') is-invalid @enderror" id="pincode"
                                                     multiple multiselect-search="true" value=""
-                                                    multiselect-select-all="true" multiselect-max-items="3"
+                                                    multiselect-select-all="true"
                                                     onchange="console.log(this.selectedOptions)">
                                                     @foreach ($pincode as $pin)
                                                         <option value="{{ $pin->id }}"
-                                                            {{ (is_array(old('pincode')) and in_array($pin->id, old('pincode'))) ? ' selected' : '' }}>
-                                                            {{ $pin->pincode }}</option>
+    {{ is_array(old('pincode')) && in_array($pin->id, old('pincode')) ? 'selected' : '' }}>
+    {{ $pin->pincode }}
+</option>
+
                                                     @endforeach
                                                 </select>
 
@@ -201,7 +204,7 @@
                                                 id="aadharImage" value="{{ old('aadharImage') }}" accept=".pdf"
                                                 name="aadharImage" required>
                                             <small id="aadharBackImage" class="form-text text-muted">Note:Please upload
-                                                Pdf format </span></small>
+                                                Pdf format </small>
                                             @error('aadharImage')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -216,7 +219,7 @@
                                                 id="aadharBackImage" value="{{ old('aadharBackImage') }}" accept=".pdf"
                                                 name="aadharBackImage" required>
                                             <small id="aadharBackImage" class="form-text text-muted">Note:Please upload
-                                                Pdf format </span></small>
+                                                Pdf format </small>
                                             @error('aadharBackImage')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -231,7 +234,7 @@
                                                 id="pancardImage" value="{{ old('pancardImage') }}" accept=".pdf"
                                                 name="pancardImage" required>
                                             <small id="pancardImage" class="form-text text-muted">Note:Please upload
-                                                Pdf format </span></small>
+                                                Pdf format </small>
                                             @error('pancardImage')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -271,7 +274,7 @@
                                                 id="bankstatement" value="{{ old('bankstatement') }}"
                                                 accept="application/pdf" name="bankstatement" required>
                                             <small id="bankstatement" class="form-text text-muted">Note:Please upload .pdf
-                                                format </span></small>
+                                                format </small>
                                             @error('bankstatement')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -294,7 +297,7 @@
                                                     value="Savings">
                                                     Savings</option>
                                             </select>
-                                            {{-- <small id="account_type" class="form-text text-muted"></span></small> --}}
+                                            {{-- <small id="account_type" class="form-text text-muted"></small> --}}
                                             @error('account_type')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -310,7 +313,7 @@
                                                 accept="image/png,image/jpeg,image/jpg,image/gif" name="image" required>
                                             <small id="image" class="form-text text-muted">Note:Please upload
                                                 Jpeg,Jpg,Png,gif
-                                                format </span></small>
+                                                format </small>
                                             @error('image')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -325,7 +328,7 @@
                                                 class="form-control @error('video') is-invalid @enderror" id="video"
                                                 value="{{ old('video') }}" accept=".mp4" name="video">
                                             <small id="video" class="form-text text-muted">Note:Please upload mp4
-                                                format </span></small>
+                                                format </small>
                                             @error('video')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -342,7 +345,7 @@
                                                 accept=".pdf" name="customerdocument">
                                             <small id="customerdocument" class="form-text text-muted">Note:Please upload
                                                 pdf
-                                                format </span></small>
+                                                format </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -351,20 +354,22 @@
                                             <div class="invalid-feedback"> Please upload bike image </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                        <!--    <label for="qr">QR</label>
+                                            {{--
+                                            <label for="qr">QR</label>
                                             <input type="file"
                                                 class="form-control @error('qr') is-invalid @enderror"
                                                 id="qr" value="{{ old('qr') }}"
                                                 accept="image/*" name="qr">
                                             <small id="qr" class="form-text text-muted">Note:Please upload
                                                 image
-                                                format </span></small>
+                                                format </small>
                                             @error('qr')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
                                                 </span>
                                             @enderror
-                                            <div class="invalid-feedback"> Please upload bike image </div> -->
+                                            <div class="invalid-feedback"> Please upload bike image </div>
+                                            --}}
                                         </div>
                                         <div class="col-md-4 mb-4">
                                             <label for="biketaxi_price">Bike Taxi Service Fare</label>
@@ -748,262 +753,117 @@
         </div> <!-- .row -->
     </div> <!-- .container-fluid -->
 @endsection
-{{-- @section('scripts')
-    <script>
-        // Default hidden; show only when backend indicates empty pincode search result.
-        // Current page UI uses AJAX pincode search, so backend must trigger this via JS.
-
-        function setPincodeEmptyMessage(show) {
-            const el = document.getElementById('pincodeEmptyMessage');
-            if (!el) return;
-            el.style.display = show ? 'block' : 'none';
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-    const select = document.getElementById('pincode');
-
-    function toggleMessage() {
-        const selected = select.selectedOptions.length;
-        setPincodeEmptyMessage(selected === 0);
-    }
-
-    // Initial check
-    toggleMessage();
-
-    // On change
-    select.addEventListener('change', toggleMessage);
-});
-
-        // If server-side computed empty flag is provided (fallback).
-        @if(isset($pincodeEmpty) && $pincodeEmpty)
-            setPincodeEmptyMessage(true);
-        @endif
-
+@section('scripts')
+<script>
 document.addEventListener('DOMContentLoaded', function () {
     const select = document.getElementById('pincode');
     let modalShown = false;
+    const subscriptionDateInput = document.getElementById('subscriptionDate');
+    const expiryDateInput = document.getElementById('expiryDate');
 
-    function setPincodeEmptyMessage(show) {
+    function setMessage(show) {
         const el = document.getElementById('pincodeEmptyMessage');
-        if (!el) return;
-        el.style.display = show ? 'block' : 'none';
+        if (el) el.style.display = show ? 'block' : 'none';
     }
 
-    function toggleMessage() {
-        const selected = select.selectedOptions.length;
+    function formatAsDDMMYYYY(date) {
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return dd + '-' + mm + '-' + yyyy;
+    }
 
-        if (selected === 0) {
-            setPincodeEmptyMessage(true);
+    function setExpiryDate() {
+        if (!subscriptionDateInput || !expiryDateInput) return;
+        if (!subscriptionDateInput.value) {
+            expiryDateInput.value = '';
+            return;
+        }
 
-            if (!modalShown) {
-                $('#pincodeNotListedModal').modal('show');
-                modalShown = true;
+        const date = new Date(subscriptionDateInput.value + 'T00:00:00');
+        if (Number.isNaN(date.getTime())) {
+            expiryDateInput.value = '';
+            return;
+        }
+
+        date.setDate(date.getDate() + 28);
+        expiryDateInput.value = formatAsDDMMYYYY(date);
+    }
+
+    if (subscriptionDateInput && expiryDateInput) {
+        subscriptionDateInput.addEventListener('change', setExpiryDate);
+        if (subscriptionDateInput.value && !expiryDateInput.value) {
+            setExpiryDate();
+        }
+    }
+
+    function getDropdownFromSearch(searchBox) {
+        const wrap = searchBox.closest('.btn-group, .dropdown, .multiselect-native-select');
+        if (wrap) {
+            const scoped = wrap.querySelector('.multiselect-container');
+            if (scoped) return scoped;
+        }
+        return document.querySelector('.multiselect-container');
+    }
+
+    function hasVisibleOptions(dropdown) {
+        const items = Array.from(dropdown.querySelectorAll('li'));
+        return items.some(function (li) {
+            const style = window.getComputedStyle(li);
+            const visible = style.display !== 'none' && style.visibility !== 'hidden';
+            const hasCheckbox = !!li.querySelector('input[type="checkbox"]');
+            const isSelectAll = li.classList.contains('multiselect-all') || li.classList.contains('multiselect-item');
+            return visible && hasCheckbox && !isSelectAll;
+        });
+    }
+
+    setMessage(false);
+
+    document.addEventListener('keyup', function (e) {
+        const searchBox = e.target.classList && e.target.classList.contains('multiselect-search')
+            ? e.target
+            : document.querySelector('.multiselect-search');
+
+        if (!searchBox) return;
+
+        const dropdown = getDropdownFromSearch(searchBox);
+        if (!dropdown) return;
+
+        const value = searchBox.value.trim();
+
+        if (value.length >= 3) {
+            const hasOptions = hasVisibleOptions(dropdown);
+
+            if (!hasOptions) {
+                setMessage(true);
+
+                if (!modalShown && window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    window.jQuery('#pincodeNotListedModal').modal('show');
+                    modalShown = true;
+                }
+            } else {
+                setMessage(false);
             }
         } else {
-            setPincodeEmptyMessage(false);
+            setMessage(false);
         }
+    });
+
+    if (select) {
+        select.addEventListener('change', function () {
+            setMessage(false);
+            modalShown = false;
+        });
     }
-
-    // initial
-    toggleMessage();
-
-    // change (when selecting)
-    select.addEventListener('change', toggleMessage);
-
-    // 👇 IMPORTANT: detect typing (multiselect search)
-    select.addEventListener('keyup', function () {
-        const dropdown = document.querySelector('.multiselect-container');
-
-        // check if no results shown
-        if (dropdown && dropdown.innerText.trim() === '') {
-            setPincodeEmptyMessage(true);
-        }
-    });
 });
 
-        function isNumberKey(evt) {
-            var charCode = (evt.which) ? evt.which : evt.keyCode
-            if (charCode > 31 && (charCode < 48 || charCode > 57))
-                return false;
-            return true;
-        }
-        $('#subscriptionDate').change(function() {
-            var date_input = document.getElementById("subscriptionDate").value;
-            var myDate = new Date(date_input);
-            var future = myDate.setDate(myDate.getDate() + 28);
-            var f1 = new Date(future);
-            var exp = f1.toLocaleDateString("id-ID");
-            document.getElementById("expiryDate").value = exp;
-            console.log(f1.toLocaleDateString("id-ID"));
+function isNumberKey(evt) {
+    var charCode = evt.which ? evt.which : evt.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        return false;
+    }
+    return true;
+}
 
-
-
-
-        })
-    </script>
-@endsection --}}
-@section('scripts')
-{{-- <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const selectEl = document.getElementById('pincode');
-    const messageEl = document.getElementById('pincodeEmptyMessage');
-    const modalEl = $('#pincodeNotListedModal');
-
-    if (!selectEl || !messageEl) return;
-
-    let modalShown = false;
-
-    const hasSelected = () => {
-        return selectEl.selectedOptions && selectEl.selectedOptions.length > 0;
-    };
-
-    const isSearchResultEmpty = () => {
-        const dropdown = document.querySelector('.multiselect-container');
-        if (!dropdown) return false;
-
-        // Multiselect renders list items for results.
-        const items = dropdown.querySelectorAll('li');
-        if (!items || items.length === 0) {
-            return dropdown.innerText.trim().length === 0;
-        }
-
-        // If there is at least one visible list item with non-empty text => not empty.
-        for (const li of items) {
-            const style = window.getComputedStyle(li);
-            if (style && style.display !== 'none' && style.visibility !== 'hidden') {
-                if (li.innerText && li.innerText.trim().length > 0) return false;
-            }
-        }
-
-        return true;
-    };
-
-    const setMessage = (show) => {
-        messageEl.style.display = show ? 'block' : 'none';
-    };
-
-    const evaluate = () => {
-        const selectedCount = (selectEl.selectedOptions ? selectEl.selectedOptions.length : 0);
-        const emptySearch = isSearchResultEmpty();
-
-        // Requirement:
-        // 1) When user searches: show message only if search result is empty.
-        // 2) On page load: do not show if pincodes exist.
-        // 3) If no pincode is selected (and user hasn't searched yet), show message.
-        //
-        // We approximate ("has searched") by checking whether multiselect search box currently has value.
-        const searchInput = document.querySelector('.multiselect-search');
-        const hasSearchText = !!(searchInput && searchInput.value && searchInput.value.trim().length > 0);
-
-        const show = (selectedCount === 0 && !hasSearchText) || (hasSearchText && emptySearch);
-        setMessage(show);
-
-        // Modal only ONCE when no pincode is found due to empty search.
-        // If selectedCount === 0 but user is just on load, do not open modal repeatedly.
-        if (hasSearchText && emptySearch && show && !modalShown) {
-            modalEl.modal('show');
-            modalShown = true;
-        }
-    };
-
-    // Backend fallback: if controller indicates empty, ensure message is visible.
-    @if(isset($pincodeEmpty) && $pincodeEmpty)
-        setMessage(true);
-        // avoid opening modal multiple times on render
-        modalShown = true;
-    @endif
-
-    evaluate();
-
-    selectEl.addEventListener('change', evaluate);
-
-    // Re-evaluate during user typing/search.
-    document.addEventListener('input', function (e) {
-        if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-search')) {
-            evaluate();
-        }
-    });
-
-    // Re-evaluate after multiselect dropdown interactions.
-    document.addEventListener('click', function (e) {
-        if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-dropdown')) {
-            setTimeout(evaluate, 0);
-        }
-    });
-});
-</script> --}}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectEl = document.getElementById('pincode');
-        const messageEl = document.getElementById('pincodeEmptyMessage');
-        const modalEl = $('#pincodeNotListedModal');
-
-        if (!selectEl || !messageEl) return;
-
-        let modalShown = false;
-
-        const setPincodeEmptyMessage = (show) => {
-            messageEl.style.display = show ? 'block' : 'none';
-        };
-
-        const getIsSearchActive = () => {
-            const searchInput = document.querySelector('.multiselect-search');
-            return !!(searchInput && searchInput.value && searchInput.value.trim().length > 0);
-        };
-
-        const isSearchResultEmpty = () => {
-            const dropdown = document.querySelector('.multiselect-container');
-            if (!dropdown) return false;
-
-            const items = dropdown.querySelectorAll('li');
-            if (!items || items.length === 0) return true;
-
-            // If at least one visible item has text => not empty
-            for (const li of items) {
-                const style = window.getComputedStyle(li);
-                const visible = style && style.display !== 'none' && style.visibility !== 'hidden';
-                if (visible && li.innerText && li.innerText.trim().length > 0) return false;
-            }
-
-            return true;
-        };
-
-        const evaluate = () => {
-            const searchActive = getIsSearchActive();
-            if (!searchActive) {
-                // Requirement: do not show message on page load / without typing
-                setPincodeEmptyMessage(false);
-                return;
-            }
-
-            const emptySearch = isSearchResultEmpty();
-            setPincodeEmptyMessage(emptySearch);
-
-            if (emptySearch && !modalShown) {
-                modalEl.modal('show');
-                modalShown = true;
-            }
-        };
-
-        // Initial: do not show
-        setPincodeEmptyMessage(false);
-
-        // When user types
-        document.addEventListener('input', function (e) {
-            if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-search')) {
-                evaluate();
-            }
-        });
-
-        // When multiselect updates results
-        document.addEventListener('click', function (e) {
-            if (e && e.target && e.target.classList && e.target.classList.contains('multiselect-dropdown')) {
-                setTimeout(evaluate, 0);
-            }
-        });
-    });
 </script>
-
 @endsection
-
-

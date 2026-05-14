@@ -31,17 +31,10 @@
     <!-- Color File -->
     <link href="{{ url('public/assets/css/color.css') }}" rel="stylesheet">
 
-    <!-- WhatsApp Banner -->
-    <div class="alert alert-info alert-dismissible fade show bg-primary text-white mb-0 border-0" role="alert"
-        style="font-size: 0.9rem; position: fixed; top: 0; left: 0; right: 0; z-index: 9999;">
-        <i class="fas fa-info-circle me-2"></i>
-        If your pincode is not listed, <a href="https://wa.me/919069067008"
-            class="text-white fw-bold text-decoration-none" target="_blank">send it via WhatsApp</a> to 9069067008. We
-        will add it and notify you!
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-    </div>
+
 
     <link
+
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&amp;family=Yantramanav:wght@300;400;500;700;900&amp;display=swap"
         rel="stylesheet">
 

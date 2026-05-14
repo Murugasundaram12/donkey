@@ -470,11 +470,15 @@
     <script>
         let elems = Array.prototype.slice.call(document.querySelectorAll('.js-switchs'));
 
-        elems.forEach(function (html) {
-            let switchery = new Switchery(html, {
-                size: 'small'
+        if (typeof window.Switchery !== 'undefined') {
+            elems.forEach(function (html) {
+                let switchery = new Switchery(html, {
+                    size: 'small'
+                });
             });
-        });
+        } else {
+            console.warn('Switchery library not loaded. Toggle styling skipped.');
+        }
     </script>
     <script>
         $('.delete-confirm').on('click', function (event) {
@@ -552,19 +556,29 @@
             }
         }
     </script>
-    @if (session('show_success_modal') || session('success_message'))
+    @if (session('show_success_modal'))
         <script>
-            $(window).on('load', function () {
-                setTimeout(function () {
-                    if ($('#successModal').length) {
-                        $('#successModal').modal('show');
+            document.addEventListener('DOMContentLoaded', function () {
+                var successText = @json(session('success_message'));
+
+                function showPopup() {
+                    if (typeof window.swal === 'function') {
+                        window.swal({
+                            title: 'Success!',
+                            text: successText,
+                            icon: 'success',
+                            button: 'OK'
+                        });
+                    } else {
+                        alert(successText);
                     }
-                }, 200);
+                }
+
+                // Delay to ensure full page load
+                setTimeout(showPopup, 300);
             });
         </script>
     @endif
 @endsection
 @section('scripts')
-
-
 @endsection

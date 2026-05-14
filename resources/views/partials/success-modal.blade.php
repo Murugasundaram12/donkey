@@ -15,13 +15,7 @@
                     Success!
                 </h5>
                 <p class="mb-4">
-                    {{ session('success_message', 'Your document has been submitted successfully. Our team will verify it and get back to you shortly.') }}
-                </p>
-                <p class="mb-4">
-                    <strong>For follow-up, WhatsApp us:</strong><br>
-                    <a href="https://wa.me/919069067008" class="btn btn-success btn-lg" target="_blank">
-                        <i class="fab fa-whatsapp"></i> 9069067008
-                    </a>
+                    {{ session('success_message', 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.') }}
                 </p>
             </div>
             <div class="modal-footer border-0 justify-content-center">
@@ -30,17 +24,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    @if(session('show_success_modal'))
-        (function showSuccessModalWhenReady() {
-            if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-                window.jQuery(function() {
-                    window.jQuery('#successModal').modal('show');
-                });
-                return;
-            }
-            setTimeout(showSuccessModalWhenReady, 100);
-        })();
-    @endif
-</script>
