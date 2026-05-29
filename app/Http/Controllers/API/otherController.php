@@ -40,14 +40,27 @@ use Kutia\Larafirebase\Facades\Larafirebase;
 
 class otherController extends BaseController
 {
+    private function isExternalBookingRequest(Request $request, ?string $externalRouteName = null): bool
+    {
+        if ((bool) $request->get('is_external', false)) {
+            return true;
+        }
+
+        if ($externalRouteName && $request->routeIs($externalRouteName)) {
+            return true;
+        }
+
+        return str_starts_with((string) $request->path(), 'api/external/');
+    }
 
     public function bookingCalculation(Request $request)
     {
+        $source = (int) $request->get('source', 0);
         $request->merge([
-            'source' => (int) $request->source
+            'source' => $source
         ]);
         $validator = Validator::make($request->all(), [
-            'source' => 'required|in:0,1',
+            'source' => 'nullable|in:0,1',
             'user_id' => 'required_if:source,0|nullable|string|exists:users,user_id',
             'external_phone' => 'required_if:source,1|nullable|string',
             'company_id' => 'required_if:source,1|integer|exists:companies,id',
@@ -174,10 +187,13 @@ class otherController extends BaseController
 
     public function driverarrived(Request $request)
     {
+        $isExternal = $this->isExternalBookingRequest($request, 'external.driverarrived');
+        $request->merge(['source' => $isExternal ? 1 : (int) $request->get('source', 0)]);
+
         $validator = Validator::make($request->all(), [
-            'source' => 'required|in:0,1',
-            'user_id' => 'required_if:source,0|nullable',
-            'external_phone' => 'required_if:source,1|nullable',
+            'source' => 'nullable|in:0,1',
+            'user_id' => $isExternal ? 'nullable' : 'required',
+            'external_phone' => $isExternal ? 'required' : 'nullable',
             'booking_id' => 'required|exists:booking,booking_id',
         ]);
 
@@ -1845,10 +1861,13 @@ class otherController extends BaseController
 
     public function bookingaccept(Request $request)
     {
+        $isExternal = $this->isExternalBookingRequest($request, 'external.bookingaccept');
+        $request->merge(['source' => $isExternal ? 1 : (int) $request->get('source', 0)]);
+
         $validator = Validator::make($request->all(), [
-            'source' => 'required|in:0,1',
-            'user_id' => 'required_if:source,0|nullable',
-            'external_phone' => 'required_if:source,1|nullable',
+            'source' => 'nullable|in:0,1',
+            'user_id' => $isExternal ? 'nullable' : 'required',
+            'external_phone' => $isExternal ? 'required' : 'nullable',
             'booking_id' => 'required',
             'driver_id' => 'required',
         ]);
@@ -3409,15 +3428,33 @@ class otherController extends BaseController
     // }
     public function bookingdetailsoftheuser(Request $d)
     {
+        // Treat the plain donkey route as internal by default.
+        // Only the dedicated /api/external/* route should require external_phone.
+        $isExternal = $d->routeIs('external.bookingdetailsoftheuser')
+            || str_starts_with((string) $d->path(), 'api/external/');
+
+        // Accept both snake_case and camelCase payloads from different clients.
+        if (!$d->filled('user_id') && $d->filled('userId')) {
+            $d->merge(['user_id' => $d->input('userId')]);
+        }
+        if (!$d->filled('external_phone') && $d->filled('externalPhone')) {
+            $d->merge(['external_phone' => $d->input('externalPhone')]);
+        }
+        if (!$d->filled('external_name') && $d->filled('externalName')) {
+            $d->merge(['external_name' => $d->input('externalName')]);
+        }
+
+        $d->merge(['source' => $isExternal ? 1 : 0]);
+
         $validator = Validator::make($d->all(), [
-            'source' => 'required|in:0,1',
-            'user_id' => 'required_if:source,0',
-            'external_phone' => 'required_if:source,1',
+            'source' => 'nullable|in:0,1',
+            'user_id' => $isExternal ? 'nullable' : 'required',
+            'external_phone' => $isExternal ? 'required' : 'nullable',
         ]);
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         } else {
-            $source = (int) $d->get('source', 0);
+            $source = $isExternal ? 1 : (int) $d->get('source', 0);
             $booking = null;
             $user = null;
             $external_name = $d->external_name;
@@ -3911,17 +3948,21 @@ class otherController extends BaseController
 
     public function bookinghistory(Request $d)
     {
+        $isExternal = (bool) $d->get('is_external', false)
+            || $d->routeIs('external.bookinghistory')
+            || str_starts_with((string) $d->path(), 'api/external/');
+
         $validator = Validator::make($d->all(), [
-            'source' => 'required|in:0,1',
-            'user_id' => 'required_if:source,0',
-            'external_phone' => 'required_if:source,1',
+            'source' => 'nullable|in:0,1',
+            'user_id' => $isExternal ? 'nullable' : 'required',
+            'external_phone' => $isExternal ? 'required' : 'nullable',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
 
-        $source = (int) $d->get('source', 0);
+        $source = $isExternal ? 1 : (int) $d->get('source', 0);
 
         if ($source === 0) {
             $user = User::where('id', $d->user_id)
