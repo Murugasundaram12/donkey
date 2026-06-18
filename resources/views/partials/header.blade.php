@@ -167,8 +167,7 @@
 
         <div class="w-100 d-flex flex-column align-items-center">
             <a class="navbar-brand mx-auto flex-fill text-center" href="https://www.donkeydeliveries.com/">
-                <img src="{{ $logoUrl }}" style="height: 60px;width:60px;"
-                    alt="do N key Admin Panel">
+                <img src="{{ $logoUrl }}" style="height: 60px;width:60px;" alt="do N key Admin Panel">
                 <h3><span class="mt-2 font-weight-bold">Control Center</span></h3>
             </a>
         </div>
@@ -181,346 +180,353 @@
                     {{-- <span class="badge badge-pill badge-primary">New</span> --}}
                 </a>
             </li>
-            <li class="nav-item dropdown">
-                <a href="#pincode" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-grid fe-16"></i>
-                    <span class="ml-3 item-text">Pincode</span><span class="sr-only">(current)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="pincode">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ url('pincode') }}"><span
-                                class="ml-1 item-text">List</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('createpincode') }}"><span class="ml-1 item-text">Create
-                                New</span></a>
-                    </li>
-
-
-
-                </ul>
-            </li>
-            @can('category-list')
+            @if(Auth::guard()->check())
                 <li class="nav-item dropdown">
-                    <a href="#category" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                        <i class="fe fe-briefcase fe-16"></i>
-                        <span class="ml-3 item-text">Categories</span><span class="sr-only">(Pincode)</span>
+                    <a href="#pincode" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-grid fe-16"></i>
+                        <span class="ml-3 item-text">Pincode</span><span class="sr-only">(current)</span>
                     </a>
-                    <ul class="collapse list-unstyled pl-4 w-100" id="category">
+                    <ul class="collapse list-unstyled pl-4 w-100" id="pincode">
                         <li class="nav-item active">
-                            <a class="nav-link pl-3" href="{{ url('category') }}"><span style="margin-left: 40px;"
-                                    class="ml-1 item-text">Category List</span></a>
+                            <a class="nav-link pl-3" href="{{ url('pincode') }}"><span
+                                    class="ml-1 item-text">List</span></a>
                         </li>
-                        <li class="nav-item active">
-                            <a class="nav-link pl-3" href="{{ route('usedPincodes') }}"><span style="margin-left: 40px;"
-                                    class="ml-1 item-text">Category Settings</span><span style="font-size: 8px;">(Pincode
-                                    Wise)</span></a>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('createpincode') }}"><span class="ml-1 item-text">Create
+                                    New</span></a>
                         </li>
+
+
+
                     </ul>
                 </li>
-            @endcan
-
-            <li class="nav-item dropdown">
-                <a href="#subscriber" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-award fe-16"></i>
-                    <span class="ml-3 item-text">Subscriber</span><span class="sr-only">(current)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="subscriber">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ url('subscriberList') }}"><span style="margin-left: 40px;"
-                                class="ml-1 item-text">Subscribers List</span></a>
+                @can('category-list')
+                    <li class="nav-item dropdown">
+                        <a href="#category" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                            <i class="fe fe-briefcase fe-16"></i>
+                            <span class="ml-3 item-text">Categories</span><span class="sr-only">(Pincode)</span>
+                        </a>
+                        <ul class="collapse list-unstyled pl-4 w-100" id="category">
+                            <li class="nav-item active">
+                                <a class="nav-link pl-3" href="{{ url('category') }}"><span style="margin-left: 40px;"
+                                        class="ml-1 item-text">Category List</span></a>
+                            </li>
+                            <li class="nav-item active">
+                                <a class="nav-link pl-3" href="{{ route('usedPincodes') }}"><span style="margin-left: 40px;"
+                                        class="ml-1 item-text">Category Settings</span><span style="font-size: 8px;">(Pincode
+                                        Wise)</span></a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('createSubscriber') }}"><span style="margin-left: 40px;"
-                                class="ml-1 item-text">Create New</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('expiredsubscriber') }}"><span style="margin-left: 40px;"
-                                class="ml-1 item-text">Subscription Queue</span></a>
-                    </li>
+                @endcan
 
-
-
-                </ul>
-            </li>
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ url('driver') }}">
-                    <i class="fe fe-truck fe-16"></i>
-                    <span class="ml-3 item-text">Riders</span>
-
-                </a>
-            </li>
-            @can('Chat')
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('chatwithadmin') }}">
-
-                        <i class="fe fe-message-circle fe-16"></i>
-                        <span class="ml-3 item-text">Team Chat</span>
-                        <span class="dotadmin" hidden><span style="font-size:20px;padding-left: 20px;">&#x2022<span></span>
+                <li class="nav-item dropdown">
+                    <a href="#subscriber" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-award fe-16"></i>
+                        <span class="ml-3 item-text">Subscriber</span><span class="sr-only">(current)</span>
                     </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="subscriber">
+                        <li class="nav-item active">
+                            <a class="nav-link pl-3" href="{{ url('subscriberList') }}"><span style="margin-left: 40px;"
+                                    class="ml-1 item-text">Subscribers List</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('createSubscriber') }}"><span style="margin-left: 40px;"
+                                    class="ml-1 item-text">Create New</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ route('subscriber.withoutEmployeeId') }}"><span
+                                    style="margin-left: 40px;" class="ml-1 item-text">Self Registered Subscribers</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('expiredsubscriber') }}"><span style="margin-left: 40px;"
+                                    class="ml-1 item-text">Subscription Queue</span></a>
+                        </li>
+
+
+
+                    </ul>
                 </li>
-            @endcan
-
-
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ url('chatsupport') }}">
-
-                    <i class="fe fe-message-circle fe-16"></i>
-                    <span class="ml-3 item-text">Customer Support </span>
-                    <span class="dotadminsupport" hidden><span
-                            style="font-size:20px;padding-left: 20px;">&#x2022<span></span>
-
-                </a>
-            </li>
-            @can('push-notification')
                 <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('pushnotification.index') }}">
-                        <i class="fe fe-bell fe-16"></i>
-                        <span class="ml-3 item-text ">Push Notification</span>
-                    </a>
-                </li>
-            @endcan
-            @can('notification-list')
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ url('driverNotification') }}">
-                        <i class="fe fe-bell fe-16 new-notification-dot"></i>
-                        <span class="ml-3 item-text dot">Driver Notification</span>
-                        <!-- <div class="new-notification-dot"></div> -->
-                        {{-- <span class="badge badge-pill badge-primary"></span> --}}
-                    </a>
-                </li>
-            @endcan
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ route('subscriberNotification') }}">
-                    <i class="fe fe-bell fe-16 new-sub-dot"></i>
-                    <span class="ml-3 item-text ">Subscriber Notification</span>
-                </a>
-            </li>
-            <li class="nav-item w-100 {{ request()->routeIs('admin.companies.*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.companies.index') }}">
-                    <i class="fe fe-home fe-16"></i>
-                    <span class="ml-3 item-text">Companies</span>
-                </a>
-            </li>
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ route('report.index') }}">
-                    <i class="fe fe-alert-circle fe-16"></i>
-                    <span class="ml-3 item-text ">Booking Issue</span>
-                </a>
-            </li>
-            <li class="nav-item dropdown">
-                <a href="#report" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-clipboard fe-16"></i>
-                    <span class="ml-3 item-text">Reports</span><span class="sr-only">(current)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="report">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ route('bookingReport') }}"><span
-                                class="ml-1 item-text">Booking Report</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ route('subscriberReport.index') }}"><span
-                                class="ml-1 item-text">Subscriber Work Report</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ route('subscriberExpiry') }}"><span
-                                class="ml-1 item-text">Expired Subscriptions</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ route('employeePerformance.index') }}"><span
-                                class="ml-1 item-text">Employee Report</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ route('paymenthistory.index') }}"><span
-                                class="ml-1 item-text">Payment History</span></a>
-                    </li>
-                    {{-- <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ route('employeeReport.index') }}"><span
-                                class="ml-1 item-text">Employee Attendance Report</span></a>
-                    </li> --}}
-                </ul>
-            </li>
-            <li class="nav-item dropdown">
-                <a href="#blocklist" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-user-x fe-16"></i>
-                    <span class="ml-3 item-text">Block List</span><span class="sr-only">(current)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="blocklist">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ url('subscriberblockList') }}"><span
-                                class="ml-1 item-text">Subscribers</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('driverblockList') }}"><span class="ml-1 item-text">Riders
-                            </span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('adminBlocked') }}"><span class="ml-1 item-text">Riders
-                                (Admin)</span></a>
-                    </li>
-
-
-
-                </ul>
-            </li>
-            <li class="nav-item dropdown">
-                <a href="#unblocklist" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-user-check fe-16"></i>
-                    <span class="ml-3 item-text">Unblock List</span><span class="sr-only">(current)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="unblocklist">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ url('subscriberunblockList') }}"><span
-                                class="ml-1 item-text">Subscribers</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('driverunblockList') }}"><span
-                                class="ml-1 item-text">Riders</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link pl-3" href="{{ url('adminUnblocked') }}"><span class="ml-1 item-text">Riders
-                                (Admin)</span></a>
-                    </li>
-
-
-
-                </ul>
-            </li>
-            @can('Enquiry and Complaints')
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('enquiry.index') }}">
-                        <i class="fa fa-question-circle fe-16"></i>
-                        <span class="ml-3 item-text">Enquiries</span>
+                    <a class="nav-link" href="{{ url('driver') }}">
+                        <i class="fe fe-truck fe-16"></i>
+                        <span class="ml-3 item-text">Riders</span>
 
                     </a>
                 </li>
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('complaints.index') }}">
-                        <i class="fe fe-thumbs-up fe-16"></i>
-                        <span class="ml-3 item-text">Complaints</span>
-
-                    </a>
-                </li>
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('feed.index') }}">
-                        <i class="fe fe-message-circle fe-16"></i>
-
-                        <span class="ml-3 item-text">Feedback</span>
-
-                    </a>
-                </li>
-                @can('pricing-list')
+                @can('Chat')
                     <li class="nav-item w-100">
-                        <a class="nav-link" href="{{ route('excelpincode.index') }}">
-                            <i class="fe fe-grid fe-16"></i>
+                        <a class="nav-link" href="{{ route('chatwithadmin') }}">
 
-                            <span class="ml-3 item-text">Pricing</span>
-
+                            <i class="fe fe-message-circle fe-16"></i>
+                            <span class="ml-3 item-text">Team Chat</span>
+                            <span class="dotadmin" hidden><span style="font-size:20px;padding-left: 20px;">&#x2022<span></span>
                         </a>
                     </li>
                 @endcan
 
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('newsletter') }}">
-                        <i class="fe fe-message-circle fe-16"></i>
 
-                        <span class="ml-3 item-text">News Letters</span>
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ url('chatsupport') }}">
+
+                        <i class="fe fe-message-circle fe-16"></i>
+                        <span class="ml-3 item-text">Customer Support </span>
+                        <span class="dotadminsupport" hidden><span
+                                style="font-size:20px;padding-left: 20px;">&#x2022<span></span>
 
                     </a>
                 </li>
-            @endcan
-            @can('site-manage')
-                <li class="nav-item dropdown">
-                    <a href="#site" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                        <i class="fe fe-briefcase fe-16"></i>
-                        <span class="ml-3 item-text">Site Manage</span><span class="sr-only">(current)</span>
+                @can('push-notification')
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('pushnotification.index') }}">
+                            <i class="fe fe-bell fe-16"></i>
+                            <span class="ml-3 item-text ">Push Notification</span>
+                        </a>
+                    </li>
+                @endcan
+                @can('notification-list')
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ url('driverNotification') }}">
+                            <i class="fe fe-bell fe-16 new-notification-dot"></i>
+                            <span class="ml-3 item-text dot">Driver Notification</span>
+                            <!-- <div class="new-notification-dot"></div> -->
+                            {{-- <span class="badge badge-pill badge-primary"></span> --}}
+                        </a>
+                    </li>
+                @endcan
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ route('subscriberNotification') }}">
+                        <i class="fe fe-bell fe-16 new-sub-dot"></i>
+                        <span class="ml-3 item-text ">Subscriber Notification</span>
                     </a>
-                    <ul class="collapse list-unstyled pl-4 w-100" id="site">
+                </li>
+                <li class="nav-item w-100 {{ request()->routeIs('admin.companies.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.companies.index') }}">
+                        <i class="fe fe-home fe-16"></i>
+                        <span class="ml-3 item-text">Companies</span>
+                    </a>
+                </li>
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ route('report.index') }}">
+                        <i class="fe fe-alert-circle fe-16"></i>
+                        <span class="ml-3 item-text ">Booking Issue</span>
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#report" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-clipboard fe-16"></i>
+                        <span class="ml-3 item-text">Reports</span><span class="sr-only">(current)</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="report">
                         <li class="nav-item active">
-                            <a class="nav-link pl-3" href="{{ url('admin/details') }}"><span class="ml-1 item-text">Details
-                                    Manage</span></a>
+                            <a class="nav-link pl-3" href="{{ route('bookingReport') }}"><span
+                                    class="ml-1 item-text">Booking Report</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link pl-3" href="{{ url('admin/slider') }}"><span class="ml-1 item-text">Slider
-                                    Manage </span></a>
+                            <a class="nav-link pl-3" href="{{ route('subscriberReport.index') }}"><span
+                                    class="ml-1 item-text">Subscriber Work Report</span></a>
                         </li>
                         <li class="nav-item">
-                            <!-- <a class="nav-link pl-3" href="{{ url('admin/about') }}"><span class="ml-1 item-text">About
-                                                                            Manage </span></a> -->
+                            <a class="nav-link pl-3" href="{{ route('subscriberExpiry') }}"><span
+                                    class="ml-1 item-text">Expired Subscriptions</span></a>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ route('employeePerformance.index') }}"><span
+                                    class="ml-1 item-text">Employee Report</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ route('paymenthistory.index') }}"><span
+                                    class="ml-1 item-text">Payment History</span></a>
+                        </li>
+                        {{-- <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ route('employeeReport.index') }}"><span
+                                    class="ml-1 item-text">Employee Attendance Report</span></a>
+                        </li> --}}
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#blocklist" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-user-x fe-16"></i>
+                        <span class="ml-3 item-text">Block List</span><span class="sr-only">(current)</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="blocklist">
+                        <li class="nav-item active">
+                            <a class="nav-link pl-3" href="{{ url('subscriberblockList') }}"><span
+                                    class="ml-1 item-text">Subscribers</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('driverblockList') }}"><span class="ml-1 item-text">Riders
+                                </span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('adminBlocked') }}"><span class="ml-1 item-text">Riders
+                                    (Admin)</span></a>
+                        </li>
 
 
 
                     </ul>
                 </li>
-            @endcan
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ url('users') }}">
-                    <i class="fa fa-user fe-16"></i>
-                    <span class="ml-3 item-text">Employees</span>
-
-                </a>
-            </li>
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ route('role.index') }}">
-                    <i class="fa fa-user fe-16"></i>
-                    <span class="ml-3 item-text">Roles</span>
-
-                </a>
-            </li>
-            <li class="nav-item w-100">
-                <a class="nav-link" href="{{ url('enduser') }}">
-                    <i class="fe fe-user fe-16"></i>
-                    <span class="ml-3 item-text">End User</span>
-                    {{-- <span class="badge badge-pill badge-primary">New</span> --}}
-                </a>
-            </li>
-            @can('Banner and voucher')
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ url('admin/banner') }}">
-                        <i class="fa fa-user fe-16"></i>
-                        <span class="ml-3 item-text">Banner</span>
-
+                <li class="nav-item dropdown">
+                    <a href="#unblocklist" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-user-check fe-16"></i>
+                        <span class="ml-3 item-text">Unblock List</span><span class="sr-only">(current)</span>
                     </a>
-                </li>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="unblocklist">
+                        <li class="nav-item active">
+                            <a class="nav-link pl-3" href="{{ url('subscriberunblockList') }}"><span
+                                    class="ml-1 item-text">Subscribers</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('driverunblockList') }}"><span
+                                    class="ml-1 item-text">Riders</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" href="{{ url('adminUnblocked') }}"><span class="ml-1 item-text">Riders
+                                    (Admin)</span></a>
+                        </li>
 
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ url('Voucher') }}">
-                        <i class="fa fa-user fe-16"></i>
-                        <span class="ml-3 item-text">Voucher</span>
 
-                    </a>
-                </li>
-            @endcan
-            @can('coupon-index')
-                <li class="nav-item w-100">
-                    <a class="nav-link" href="{{ route('coupon.index') }}">
-                        <i class="fa fa-ticket fe-16"></i>
-                        <span class="ml-3 item-text">coupon</span>
-                    </a>
-                </li>
-            @endcan
 
-            {{-- @can('coupon-index') --}}
-            <li class="nav-item dropdown">
-                <a href="#site" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
-                    <i class="fe fe-briefcase fe-16"></i>
-                    <span class="ml-3 item-text">App</span><span class="sr-only">(settings)</span>
-                </a>
-                <ul class="collapse list-unstyled pl-4 w-100" id="site">
-                    <li class="nav-item active">
-                        <a class="nav-link pl-3" href="{{ route('admin.info.index') }}"><span
-                                class="ml-1 item-text">Info</span></a>
+                    </ul>
+                </li>
+                @can('Enquiry and Complaints')
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('enquiry.index') }}">
+                            <i class="fa fa-question-circle fe-16"></i>
+                            <span class="ml-3 item-text">Enquiries</span>
+
+                        </a>
                     </li>
-                </ul>
-            </li>
-            {{-- @endcan --}}
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('complaints.index') }}">
+                            <i class="fe fe-thumbs-up fe-16"></i>
+                            <span class="ml-3 item-text">Complaints</span>
+
+                        </a>
+                    </li>
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('feed.index') }}">
+                            <i class="fe fe-message-circle fe-16"></i>
+
+                            <span class="ml-3 item-text">Feedback</span>
+
+                        </a>
+                    </li>
+                    @can('pricing-list')
+                        <li class="nav-item w-100">
+                            <a class="nav-link" href="{{ route('excelpincode.index') }}">
+                                <i class="fe fe-grid fe-16"></i>
+
+                                <span class="ml-3 item-text">Pricing</span>
+
+                            </a>
+                        </li>
+                    @endcan
+
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('newsletter') }}">
+                            <i class="fe fe-message-circle fe-16"></i>
+
+                            <span class="ml-3 item-text">News Letters</span>
+
+                        </a>
+                    </li>
+                @endcan
+                @can('site-manage')
+                    <li class="nav-item dropdown">
+                        <a href="#site" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                            <i class="fe fe-briefcase fe-16"></i>
+                            <span class="ml-3 item-text">Site Manage</span><span class="sr-only">(current)</span>
+                        </a>
+                        <ul class="collapse list-unstyled pl-4 w-100" id="site">
+                            <li class="nav-item active">
+                                <a class="nav-link pl-3" href="{{ url('admin/details') }}"><span class="ml-1 item-text">Details
+                                        Manage</span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link pl-3" href="{{ url('admin/slider') }}"><span class="ml-1 item-text">Slider
+                                        Manage </span></a>
+                            </li>
+                            <li class="nav-item">
+                                <!-- <a class="nav-link pl-3" href="{{ url('admin/about') }}"><span class="ml-1 item-text">About
+                                                                                            Manage </span></a> -->
+                            </li>
+
+
+
+
+                        </ul>
+                    </li>
+                @endcan
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ url('users') }}">
+                        <i class="fa fa-user fe-16"></i>
+                        <span class="ml-3 item-text">Employees</span>
+
+                    </a>
+                </li>
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ route('role.index') }}">
+                        <i class="fa fa-user fe-16"></i>
+                        <span class="ml-3 item-text">Roles</span>
+
+                    </a>
+                </li>
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="{{ url('enduser') }}">
+                        <i class="fe fe-user fe-16"></i>
+                        <span class="ml-3 item-text">End User</span>
+                        {{-- <span class="badge badge-pill badge-primary">New</span> --}}
+                    </a>
+                </li>
+                @can('Banner and voucher')
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ url('admin/banner') }}">
+                            <i class="fa fa-user fe-16"></i>
+                            <span class="ml-3 item-text">Banner</span>
+
+                        </a>
+                    </li>
+
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ url('Voucher') }}">
+                            <i class="fa fa-user fe-16"></i>
+                            <span class="ml-3 item-text">Voucher</span>
+
+                        </a>
+                    </li>
+                @endcan
+                @can('coupon-index')
+                    <li class="nav-item w-100">
+                        <a class="nav-link" href="{{ route('coupon.index') }}">
+                            <i class="fa fa-ticket fe-16"></i>
+                            <span class="ml-3 item-text">coupon</span>
+                        </a>
+                    </li>
+                @endcan
+
+                {{-- @can('coupon-index') --}}
+                <li class="nav-item dropdown">
+                    <a href="#site" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                        <i class="fe fe-briefcase fe-16"></i>
+                        <span class="ml-3 item-text">App</span><span class="sr-only">(settings)</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="site">
+                        <li class="nav-item active">
+                            <a class="nav-link pl-3" href="{{ route('admin.info.index') }}"><span
+                                    class="ml-1 item-text">Info</span></a>
+                        </li>
+                    </ul>
+                </li>
+                {{-- @endcan --}}
+            @endif
         </ul>
 
 
     </nav>
 </aside>
+
 <div class="loader-container">
     <div class="loader"></div>
 </div>

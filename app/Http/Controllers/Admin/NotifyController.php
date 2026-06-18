@@ -21,7 +21,7 @@ class NotifyController extends Controller
             // Debugging output
             // dd($daysDifference);
             if ($daysDifference == 5 && $subscriber->notify == 0) {
-                // dd(5, $subscriber);  
+                // dd(5, $subscriber);
                 $name = "remainder5day";
                 $before23Days = $subscriber->expiryDate->subDays(23);
                 $result = $this->sendNotofication($subscriber, $before23Days, $name);
@@ -46,12 +46,16 @@ class NotifyController extends Controller
                 // $expiryDate = Carbon::parse($expiryDate)->format('Y-m-d'); // Ensure you are using Carbon
                 $before28DaysExipryDate = $expiryDate->subDays(28)->startOfDay();
                 $currentDate = now()->format('Y-m-d'); // Get current date in the correct format
-                $decodePincodes = json_decode($subscriber->pincode);
+                $decodePincodes = json_decode($subscriber->pincode, true);
                 $pincodes = [];
-                foreach ($decodePincodes as $pincodeId) {
-                    $pincode = Pincode::where('id', $pincodeId)->first()?->pincode; // Fetch the pincode
-                    if ($pincode) {
-                        $pincodes[] = $pincode; // Add the pincode to the array if it exists
+
+                // Backward compatible: subscriber->pincode can be null/invalid JSON
+                if (is_array($decodePincodes)) {
+                    foreach ($decodePincodes as $pincodeId) {
+                        $pincode = Pincode::where('id', $pincodeId)->first()?->pincode; // Fetch the pincode
+                        if ($pincode) {
+                            $pincodes[] = $pincode; // Add the pincode to the array if it exists
+                        }
                     }
                 }
                 // dd($pincodes);
@@ -81,7 +85,7 @@ class NotifyController extends Controller
                 // dd($Date3);
                 $mobile = $subscriber->mobile;
                 $name = $subscriber->name;
-                $Price1 = $subscriber->subscription_price; //supscrition price                
+                $Price1 = $subscriber->subscription_price; //supscrition price
                 $Date1 = Carbon::parse($expiredDate)->startOfDay()->format('d-m-Y');
                 // dd($Dated1);
                 $Price2 = $platFormFee; // 23% of completetd bookings
@@ -111,12 +115,16 @@ class NotifyController extends Controller
         $currentDate = now()->format('Y-m-d'); // Get current date in the correct format
         $token = "226b3bc6338f9de4107cc93016924fb2868113776165b8d4b9a76914930e2fa2e47ff2906d87e0281121e425dccf62d856496f752b5c8cb518c3bd50f72dc8e63bd17167076160d0b7785d2ba49d0a6ee302316d26170b942b2bd903ec284621ddf64661122a1161b34d6908a3eff8d050e55bbc757c325d1139366d685e5a52ac1a34b8981f809ae7189e3791c43f9376299621f6a379b16b6883aaca42251753bd2c7ce3a4e7b09d29bb9acfd72145c615614ce039f6e30ef5b8923ae6e6fa00e43523a7b287c4f1cbac18e7ef96667d5df3c431dcef8a048996a1158f702b";
         $url = 'http://backend.wacto.ai/v1/message/send-message?token=' . $token; // Replace <sample-token> with your actual token
-        $decodePincodes = json_decode($subscriber->pincode);
+        $decodePincodes = json_decode($subscriber->pincode, true);
         $pincodes = [];
-        foreach ($decodePincodes as $pincodeId) {
-            $pincode = Pincode::where('id', $pincodeId)->first()?->pincode; // Fetch the pincode
-            if ($pincode) {
-                $pincodes[] = $pincode; // Add the pincode to the array if it exists
+
+        // Backward compatible: subscriber->pincode can be null/invalid JSON
+        if (is_array($decodePincodes)) {
+            foreach ($decodePincodes as $pincodeId) {
+                $pincode = Pincode::where('id', $pincodeId)->first()?->pincode; // Fetch the pincode
+                if ($pincode) {
+                    $pincodes[] = $pincode; // Add the pincode to the array if it exists
+                }
             }
         }
         // dd($pincodes);

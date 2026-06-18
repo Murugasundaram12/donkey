@@ -351,7 +351,10 @@ class SubscriberHomeController extends Controller
     public function logout()
     {
         //Subscriber::where('id', Session::get('subscribers')['id'])->update(['activestatus' => 0]);
-        session()->flush();
+        Auth::guard('subscriber')->logout();
+        Auth::guard('employee')->logout();
+        session()->invalidate();
+        session()->regenerateToken();
         return redirect('subscribers/login');
     }
 
@@ -391,7 +394,8 @@ class SubscriberHomeController extends Controller
                 // foreach($subscriber as $subscriber){
                 //$pin=json_decode($subscriber->pincode);
                 //}
-                $pin = json_decode(session('subscribers')['pincode']);
+                $pin = json_decode(session('subscribers')['pincode'] ?? '[]', true);
+                $pin = is_array($pin) ? $pin : [];
                 $pincode = Pincode::whereIn('id', $pin)->get();
                 $languages = [
                     'Assamese',
@@ -426,7 +430,8 @@ class SubscriberHomeController extends Controller
         } else {
             if ($user->hasPermissionTo('rider-create')) {
                 $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-                $pin = json_decode($subscriber->pincode);
+                $pin = json_decode($subscriber->pincode ?? '[]', true);
+                $pin = is_array($pin) ? $pin : [];
                 $pincode = Pincode::whereIn('id', $pin)->get();
                 $languages = [
                     'Assamese',
@@ -489,11 +494,19 @@ class SubscriberHomeController extends Controller
                 'vehicleModelNo' => 'required',
                 'licenceexpiry' => 'nullable',
                 'profile' => 'nullable',
-                'type' => 'required',
+                'type' => ['required', 'array'],
+                'type.*' => ['required'],
                 'description' => 'nullable',
                 'bankacno' => 'nullable',
                 'ifsccode' => 'nullable'
             ]);
+
+            $selectedTypes = $request->input('type', []);
+            if (!is_array($selectedTypes)) {
+                $selectedTypes = [$selectedTypes];
+            }
+            $typeString = implode(',', $selectedTypes);
+
             $input = $request->all();
             $input['password'] = bcrypt($input['password']);
             $input['user_id'] = 'DK-' . uniqid();
@@ -566,9 +579,8 @@ class SubscriberHomeController extends Controller
             $driver->vehicleModelNo = $request->get('vehicleModelNo');
             // dd($user->id);
             $driver->subscriberId = $subscriber ? $employee->subscriber_id : session('subscribers')['id'];
-            $driver->type = $request->get('type');
+            $driver->type = $typeString;
             $driver->save();
-
 
             //return back()->with('success', 'You have just created one pincode');
             return redirect('subscribers/driver')->with('success', 'Driver added!');
@@ -596,11 +608,19 @@ class SubscriberHomeController extends Controller
                 'vehicleModelNo' => 'required',
                 'licenceexpiry' => 'nullable',
                 'profile' => 'nullable',
-                'type' => 'required',
+                'type' => ['required', 'array'],
+                'type.*' => ['required'],
                 'description' => 'nullable',
                 'bankacno' => 'nullable',
                 'ifsccode' => 'nullable'
             ]);
+
+            $selectedTypes = $request->input('type', []);
+            if (!is_array($selectedTypes)) {
+                $selectedTypes = [$selectedTypes];
+            }
+            $typeString = implode(',', $selectedTypes);
+
             $input = $request->all();
             $input['password'] = bcrypt($input['password']);
             $input['user_id'] = 'DK-' . uniqid();
@@ -673,9 +693,8 @@ class SubscriberHomeController extends Controller
             $driver->vehicleModelNo = $request->get('vehicleModelNo');
             // dd($user->id);
             $driver->subscriberId =  session('subscribers')['id'];
-            $driver->type = $request->get('type');
+            $driver->type = $typeString;
             $driver->save();
-
 
             //return back()->with('success', 'You have just created one pincode');
             return redirect('subscribers/driver')->with('success', 'Driver added!');
@@ -684,6 +703,7 @@ class SubscriberHomeController extends Controller
         // dd($request);
 
     }
+
 
     public function driverstorebackup(Request $request)
     {
@@ -909,7 +929,8 @@ class SubscriberHomeController extends Controller
             // foreach($subscriber as $subscriber){
             //$pin=json_decode($subscriber->pincode);
             //}
-            $pin = json_decode(session('subscribers')['pincode']);
+            $pin = json_decode(session('subscribers')['pincode'] ?? '[]', true);
+            $pin = is_array($pin) ? $pin : [];
             $pincode = Pincode::whereIn('id', $pin)->get();
             $languages = [
                 'Assamese',
@@ -976,18 +997,25 @@ class SubscriberHomeController extends Controller
             'vehicleModelNo' => 'required',
             'licenceexpiry' => 'nullable',
             'profile' => 'nullable',
-            'type' => 'required',
+            'type' => ['required', 'array'],
+            'type.*' => ['required'],
+
             'customerdocument' => 'nullable',
             'description' => 'nullable',
             'bankacno' => 'nullable',
             'ifsccode' => 'nullable'
         ]);
+
         $pincode = array();
         $pincode = json_encode($request->pincode);
         $language = $request->language;
         $languageString = implode(',', $language);
 
+        $selectedTypes = $request->input('type', []);
         $driver = Driver::findorFail($id);
+
+        $driver->type = implode(',', $selectedTypes);
+
         $driver->name = $request->get('name');
         $driver->location = $request->get('location');
         $driver->email = $request->get('email');
@@ -1041,8 +1069,8 @@ class SubscriberHomeController extends Controller
         if ($request->get('password') != "") {
             $driver->password = Hash::make($request->get('password'));
         }
+
         $changes = $driver->getDirty();
-        $driver->type = $request->get('type');
         $driver->update();
         $data = json_encode($changes, true);
         $myself = Session::get('subscribers');
@@ -1117,7 +1145,8 @@ class SubscriberHomeController extends Controller
             'vehicleModelNo' => 'required',
             'licenceexpiry' => 'required',
             'profile' => 'nullable',
-            'type' => 'required',
+            'type' => ['required', 'array'],
+            'type.*' => ['required'],
         ]);
         $pincode = array();
         $pincode = json_encode($request->pincode);
@@ -1178,8 +1207,12 @@ class SubscriberHomeController extends Controller
         if ($request->get('password') != "") {
             $driver->password = Hash::make($request->get('password'));
         }
+        $selectedTypes = $request->input('type', []);
+        if (!is_array($selectedTypes)) {
+            $selectedTypes = [$selectedTypes];
+        }
+        $driver->type = implode(',', $selectedTypes);
         $changes = $driver->getDirty();
-        $driver->type = $request->get('type');
         $driver->update();
         $data = json_encode($changes, true);
         $myself = Session::get('subscribers');
@@ -1245,7 +1278,8 @@ class SubscriberHomeController extends Controller
         // $subscriber = Subscriber::all();
         $employees = Employee::all();
         $admins = Admin::all();
-        $pin = json_decode($driver->pincode);
+        $pin = json_decode($driver->pincode ?? '[]', true);
+        $pin = is_array($pin) ? $pin : [];
         $pincode = Pincode::whereIn('id', $pin)->get();
         //  $notification=Drivernotify::where([['modifiedBy',$subs_id],['modifiedId',$id]])->get();
         $notification = Drivernotify::where([['modifiedId', $id]])->get();

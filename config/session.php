@@ -3,7 +3,7 @@
 use Illuminate\Support\Str;
 
 return array( 	'driver' => 'file',  	
-'lifetime' => 120,  	
+'lifetime' => env('SESSION_LIFETIME', 5256000),  	
 'expire_on_close' => false,  	
 'files' => storage_path().'/framework/sessions',  	
 'connection' => null, 

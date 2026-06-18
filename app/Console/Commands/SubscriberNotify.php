@@ -29,10 +29,6 @@ class SubscriberNotify extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $controller = new NotifyController();
-        // Directly call the controller's method
-        $response = $controller->subscriberWhatsappNotify();
     }
 
     /**
@@ -42,6 +38,9 @@ class SubscriberNotify extends Command
      */
     public function handle()
     {
+        $controller = new NotifyController();
+        $controller->subscriberWhatsappNotify();
+
         return 0;
     }
 }

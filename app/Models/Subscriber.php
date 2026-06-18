@@ -23,7 +23,7 @@ class Subscriber extends Authenticatable
             return "Self";
         }
         $admin = \App\Models\Admin::where('id', $createdBy)->first();
-        return $admin ? $admin->emp_id : "Unknown";
+        return $admin ? $admin->emp_id : "Self";
     }
 
     /**

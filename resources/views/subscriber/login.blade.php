@@ -164,7 +164,9 @@
 
                 <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="">
                     <img src="{{ url('public/site/' . $site->main_logo) }}" height="50" alt="do N key PBP Panel">
-                    {{-- <svg version="1.1" id="logo" class="navbar-brand-img brand-md" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 120 120" xml:space="preserve">
+                    {{-- <svg version="1.1" id="logo" class="navbar-brand-img brand-md"
+                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                        viewBox="0 0 120 120" xml:space="preserve">
                         <g>
                             <polygon class="st0" points="78,105 15,105 24,87 87,87 	" />
                             <polygon class="st0" points="96,69 33,69 42,51 105,51 	" />
@@ -177,7 +179,8 @@
                     <!-- Small table -->
                     <div class="col-md-12">
                         <div class="alert alert-success alert-dismissible fade show" role="alert"
-                            x-data="{ showMessage: true }" x-show="showMessage" x-init="setTimeout(() => showMessage = false, 3000)">
+                            x-data="{ showMessage: true }" x-show="showMessage"
+                            x-init="setTimeout(() => showMessage = false, 3000)">
                             <strong> </strong> {{ Session::get('success') }} <button type="button" class="close"
                                 data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">×</span>
@@ -189,7 +192,8 @@
                     <!-- Small table -->
                     <div class="col-md-12">
                         <div class="alert alert-warning alert-dismissible fade show" role="alert"
-                            x-data="{ showMessage: true }" x-show="showMessage" x-init="setTimeout(() => showMessage = false, 3000)">
+                            x-data="{ showMessage: true }" x-show="showMessage"
+                            x-init="setTimeout(() => showMessage = false, 3000)">
                             <strong> </strong> {{ Session::get('error') }} <button type="button" class="close"
                                 data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">×</span>
@@ -201,12 +205,12 @@
                         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
                         <script>
                             swal({
-                                    title: "Payment Due Is over",
-                                    text: "{{ Session::get('error') }}",
-                                    icon: "warning",
-                                    buttons: true,
-                                    dangerMode: true,
-                                })
+                                title: "Payment Due Is over",
+                                text: "{{ Session::get('error') }}",
+                                icon: "warning",
+                                buttons: true,
+                                dangerMode: true,
+                            })
                                 .then((willDelete) => {
                                     if (willDelete) {
                                         // window.location = "https://rzp.io/l/qrQYctwmo";
@@ -223,8 +227,7 @@
                 <div class="form-group">
                     <label for="inputEmail" class="sr-only">Email address</label>
                     <input type="email" class="form-control form-control-lg @error('email') is-invalid @enderror"
-                        id="email" name="email" value="{{ old('email') }}" placeholder="Email Address"
-                        required>
+                        id="email" name="email" value="{{ old('email') }}" placeholder="Email Address" required>
                     @error('email')
                         <span class="invalid-feedback">
                             <strong>{{ $message }}</strong>
@@ -244,7 +247,7 @@
                 </div>
                 <div class="checkbox mb-3">
                     <label>
-                        {{-- <input type="checkbox" value="remember-me"> Stay logged in </label> --}}
+                        <input type="checkbox" name="remember" value="1"> Stay logged in </label>
                 </div>
                 <button class="btn btn-lg btn-primary btn-block" type="submit">Let me in</button><br><br>
                 <a href="{{ route('subscriberForgotPassword') }}">Forgot Password?</a>
@@ -286,7 +289,7 @@
                     subscriberId: value
                 },
                 dataType: "json",
-                success: function(result) {
+                success: function (result) {
                     //alert(result);
                     $('#subamount').val(result);
                     if (result > 0) {
@@ -298,7 +301,7 @@
             });
         }
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Hide the loader when the page is fully loaded
             $('.loader-container').hide();
             $('.wrapper').removeClass('blur');

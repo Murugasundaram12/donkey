@@ -377,6 +377,10 @@
                                             <small id="customerdocument" class="form-text text-muted">Note:Please upload
                                                 pdf
                                                 format </span></small>
+                                            <small class="form-text text-muted">
+                                                Note: Download, sign and upload the Rider Agreement available under Point No. 7 before onboarding riders.
+                                                <a href="/assets/document/Bikers%20-%20Rider%20Agreement%20with%20do%20N%20key.pdf" target="_blank" rel="noopener noreferrer">Click here.</a>
+                                            </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -384,33 +388,76 @@
                                             @enderror
                                             <div class="invalid-feedback"> Please upload bike image </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
+
+<div class="col-md-12 mb-3">
+                                            <div class="card" style="border: 1px solid #e9ecef;">
+                                                <div class="card-body">
+                                                    <strong>Rider Agreement</strong>
+                                                    <div class="text-muted mb-2">
+                                                        Note: Download, sign and upload the Rider Agreement available under Point No. 7 before onboarding riders.
+                                                    </div>
+
+                                                    <a href="/assets/document/Bikers%20-%20Rider%20Agreement%20with%20do%20N%20key.pdf"
+                                                       target="_blank" rel="noopener noreferrer">
+                                                        Download Rider Agreement PDF
+                                                    </a>
+
+                                                    <div class="mt-3">
+                                                        <label for="riderAgreement">Upload signed Rider Agreement (PDF)</label>
+                                                        <input type="file"
+                                                               class="form-control @error('riderAgreement') is-invalid @enderror"
+                                                               id="riderAgreement"
+                                                               name="riderAgreement"
+                                                               accept="application/pdf">
+                                                        @error('riderAgreement')
+                                                            <span class="invalid-feedback d-block">
+                                                                <strong>{{ $message }}</strong>
+                                                            </span>
+                                                        @enderror
+                                                        <div class="invalid-feedback">Please upload Rider Agreement PDF</div>
+
+                                                        @if (isset($driver->riderAgreement) && !empty($driver->riderAgreement))
+                                                            <div class="text-muted mt-2">
+                                                                <span>Existing uploaded file:</span>
+                                                                <a href="{{ asset('subscriber/driver/riderAgreement/' . $driver->riderAgreement) }}"
+                                                                   target="_blank" rel="noopener noreferrer">
+                                                                    View/Download
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+<div class="col-md-6 mb-3">
                                             <fieldset>
                                                 <legend class="col-form-label">Driver Type</legend>
+
+                                                @php
+                                                    $oldTypes = old('type', $driver->type ?? '');
+                                                    $selectedTypes = is_array($oldTypes) ? $oldTypes : explode(',', $oldTypes);
+                                                @endphp
                                                 <div class="form-check">
                                                     <input class="form-check-input @error('type') is-invalid @enderror"
-                                                        type="radio" id="bike" name="type" value="1"
-                                                        {{ old('type', $driver->type) == '1' ? 'checked' : '' }} required>
-                                                    <label class="form-check-label" for="bike">
-                                                        Bike
-                                                    </label>
+                                                        type="checkbox" id="type_bike" name="type[]" value="1"
+                                                        {{ in_array('1', $selectedTypes) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="type_bike">Bike</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input @error('type') is-invalid @enderror"
-                                                        type="radio" id="auto" name="type" value="2"
-                                                        {{ old('type', $driver->type) == '2' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="auto">
-                                                        Auto
-                                                    </label>
+                                                        type="checkbox" id="type_auto" name="type[]" value="2"
+                                                        {{ in_array('2', $selectedTypes) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="type_auto">Auto</label>
                                                 </div>
                                                 <div class="form-check">
                                                     <input class="form-check-input @error('type') is-invalid @enderror"
-                                                        type="radio" id="cab" name="type" value="3"
-                                                        {{ old('type', $driver->type) == '3' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="cab">
-                                                        Cab
-                                                    </label>
+                                                        type="checkbox" id="type_cab" name="type[]" value="3"
+                                                        {{ in_array('3', $selectedTypes) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="type_cab">Cab</label>
                                                 </div>
+
                                                 @error('type')
                                                     <span class="invalid-feedback">
                                                         <strong>{{ $message }}</strong>
@@ -518,5 +565,3 @@
         })
     </script>
 @endsection
-
-

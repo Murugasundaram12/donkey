@@ -1,4 +1,15 @@
 @extends('layouts.master')
+<style>
+    #pincode + .multiselect-dropdown {
+        width: 100% !important;
+        display: block !important;
+    }
+
+    #pincode + .multiselect-dropdown .multiselect-dropdown-list-wrapper {
+        left: 0 !important;
+        right: 0 !important;
+    }
+</style>
 @section('content')
     <div class="container-fluid">
         <div class="row justify-content-center">
@@ -14,21 +25,28 @@
                             </div>
                             <div class="card-body">
 
-                                <div id="pincodeEmptyMessage" class="alert alert-info" role="alert" style="display:none;">
-                                    If your pincode is not listed, send it via WhatsApp to 9069067008.<br>
-                                    We will add it and notify you!
-                                </div>
-
                                 <input type="hidden" id="pincodeSearchApiUrl" value="{{ route('pincode.search') ?? url('pincode/search') }}">
-
-
-
-
-
                                 <form method="post" action="{{ url('subscriberstore') }}"
                                     autocomplete="off"
                                     enctype="multipart/form-data">
                                     {{ csrf_field() }}
+                                    <div id="pincodeTopAlert" class="alert alert-warning alert-dismissible fade show" style="display:none;">
+                                        📍 Can't find your pincode? WhatsApp 9069067008 with your preferred pincode. We'll check and update you.
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div id="subscriberClientSuccessMessage" class="alert alert-success alert-dismissible fade show" role="alert" style="display:none;">
+                                        Application Submitted Successfully<br>
+                                        Your application has been received and is under review.<br>
+                                        The review process typically takes 5-7 business days.<br>
+                                        You will receive a WhatsApp notification if your application is approved or rejected. If additional information is required, our team may contact you through our official WhatsApp number: 9069067008.<br>
+                                        If your application remains under review beyond 7 business days, you may contact us through our official WhatsApp number using your registered mobile number and Service Provider ID.<br>
+                                        To ensure timely processing for all applicants, please avoid sending repeated follow-up messages during the review period.
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
                                     <div class="form-row">
                                         <div class="col-md-6 mb-3">
                                             <label for="name">Name</label>
@@ -68,7 +86,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label for="subscriptionDate">Subscription Date</label>
                                             <input class="form-control @error('subscriptionDate') is-invalid @enderror"
-                                                id="subscriptionDate" type="date" value="{{ old('subscriptionDate') }}"
+                                                id="subscriptionDate" type="date" value="{{ old('subscriptionDate', now()->format('Y-m-d')) }}"
                                                 name="subscriptionDate" required>
                                             @error('subscriptionDate')
                                                 <span class="invalid-feedback">
@@ -79,8 +97,7 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="expiryDate">Expiry Date</label>
-                                            <input class="form-control @error('expiryDate') is-invalid @enderror"
-                                                id="expiryDate" type="text" value="{{ old('expiryDate') }}"
+                                            <input class="form-control @error('expiryDate') is-invalid @enderror" id="expiryDate" type="text" value="{{ old('expiryDate') }}"
                                                 name="expiryDate" readonly>
                                             @error('expiryDate')
                                                 <span class="invalid-feedback">
@@ -116,8 +133,8 @@
                                             <label for="subscriptionPrice">Price for Subscription</label>
                                             <input type="text"
                                                 class="form-control @error('subscriptionPrice') is-invalid @enderror"
-                                                id="subscriptionPrice" value="{{ old('subscriptionPrice') }}"
-                                                onkeypress="return isNumberKey(event)" name="subscriptionPrice" required>
+                                                id="subscriptionPrice" value="{{ old('subscriptionPrice', 2) }}"
+                                                onkeypress="return isNumberKey(event)" name="subscriptionPrice" readonly>
                                             @error('subscriptionPrice')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -135,7 +152,7 @@
                                             @enderror
                                             <div class="invalid-feedback"> Please enter description </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        {{-- <div class="col-md-6 mb-3">
                                             <div>
                                                 <label for="pincode">Pincode</label>
                                                 <select name="pincode[]"
@@ -145,10 +162,9 @@
                                                     onchange="console.log(this.selectedOptions)">
                                                     @foreach ($pincode as $pin)
                                                         <option value="{{ $pin->id }}"
-    {{ is_array(old('pincode')) && in_array($pin->id, old('pincode')) ? 'selected' : '' }}>
-    {{ $pin->pincode }}
-</option>
-
+                                                            {{ is_array(old('pincode')) && in_array($pin->id, old('pincode')) ? 'selected' : '' }}>
+                                                            {{ $pin->pincode }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
 
@@ -158,6 +174,36 @@
                                                     </span>
                                                 @enderror
                                                 <div class="invalid-feedback"> Please select a valid pincode. </div>
+                                            </div>
+                                        </div> --}}
+
+                                        <div class="col-md-6 mb-3">
+                                            <div>
+                                                <label for="pincode">Pincode</label>
+                                                <select name="pincode[]"
+                                                    class="form-control @error('pincode') is-invalid @enderror"
+                                                    id="pincode"
+                                                    multiple
+                                                    multiselect-search="true"
+                                                    multiselect-select-all="true">
+
+                                                    @foreach ($pincode as $pin)
+                                                        <option value="{{ $pin->id }}"
+                                                            {{ is_array(old('pincode')) && in_array($pin->id, old('pincode')) ? 'selected' : '' }}>
+                                                            {{ $pin->pincode }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                @error('pincode')
+                                                    <span class="invalid-feedback">
+                                                        <strong>{{ $message }}</strong>
+                                                    </span>
+                                                @enderror
+
+                                                <div class="invalid-feedback">
+                                                    Please select a valid pincode.
+                                                </div>
                                             </div>
                                         </div>
 
@@ -173,8 +219,7 @@
                                                         </button>
                                                     </div>
                                                     <div class="modal-body">
-                                                        If your pincode is not listed, send it via WhatsApp to 9069067008. We will add it
-                                                        and notify you
+                                                        📍 Can't find your pincode? WhatsApp 9069067008 with your preferred pincode. We'll check and update you.
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -327,8 +372,9 @@
                                             <input type="file"
                                                 class="form-control @error('video') is-invalid @enderror" id="video"
                                                 value="{{ old('video') }}" accept=".mp4" name="video">
-                                            <small id="video" class="form-text text-muted">Note:Please upload mp4
-                                                format </small>
+                                            <small id="video" class="form-text text-muted">
+                                                Note: Uploading video verification now may speed up approval. Ensure your face and ID proof are clearly visible and state, "This ID belongs to me." If not uploaded, our team may request it through our official WhatsApp number (9069067008) to complete your onboarding process. Please do not share documents with any other number claiming to represent DO N KEY.
+                                            </small>
                                             @error('video')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -343,9 +389,7 @@
                                                 class="form-control @error('customerdocument') is-invalid @enderror"
                                                 id="customerdocument" value="{{ old('customerdocument') }}"
                                                 accept=".pdf" name="customerdocument">
-                                            <small id="customerdocument" class="form-text text-muted">Note:Please upload
-                                                pdf
-                                                format </small>
+                                            <small id="customerdocument" class="form-text text-muted">Note: Reserved for official use by DO N KEY for agreements and related records. </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -409,12 +453,12 @@
                                             @enderror
                                             <div class="invalid-feedback"> Please enter buy and delivery km price</div>
                                         </div>
-                                        <div class="col-md-2 mb-2"></div>
-                                        <div class="col-md-4 mb-4">
+                                        <div class="col-md-2 mb-2 d-none"></div>
+                                        <div class="col-md-4 mb-4 d-none">
                                             <label for="auto_price">Auto Service Fare</label>
                                             <input type="text"
                                                 class="form-control @error('auto_price') is-invalid @enderror "
-                                                name="auto_price" value="{{ old('auto_price') }}" required>
+                                                name="auto_price" value="{{ old('auto_price', 0) }}" required>
                                             @error('auto_price')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -423,11 +467,11 @@
                                             <div class="invalid-feedback"> Please enter auto km price</div>
                                         </div>
 
-                                        <div class="col-md-4 mb-4">
+                                        <div class="col-md-4 mb-4 d-none">
                                             <label for="cab_price">Cab Service Fare</label>
                                             <input type="text"
                                                 class="form-control @error('cab_price') is-invalid @enderror "
-                                                name="cab_price" value="{{ old('cab_price') }}" required>
+                                                name="cab_price" value="{{ old('cab_price', 0) }}" required>
                                             @error('cab_price')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -620,13 +664,13 @@
                                                         Price</div>
                                                 </div>
                                             </div>
-                                            <p class="mb-2"><strong>Auto Fare</strong></p>
-                                            <div class="row">
+                                            <p class="mb-2 d-none"><strong>Auto Fare</strong></p>
+                                            <div class="row d-none">
                                                 <div class="col-md-3 mb-3">
                                                     <label for="bd_price1">1 to 5 km</label>
                                                     <input type="text"
                                                         class="form-control @error('at_price1') is-invalid @enderror "
-                                                        name="at_price1" value="{{ old('at_price1') }}" required>
+                                                        name="at_price1" value="{{ old('at_price1', 0) }}" required>
                                                     @error('at_price1')
                                                         <span class="invalid-feedback">
                                                             <strong>{{ $message }}</strong>
@@ -639,7 +683,7 @@
                                                     <label for="bd_price2">5 to 8 km</label>
                                                     <input type="text"
                                                         class="form-control @error('at_price2') is-invalid @enderror "
-                                                        id="at_price2" name="at_price2" value="{{ old('at_price2') }}"
+                                                        id="at_price2" name="at_price2" value="{{ old('at_price2', 0) }}"
                                                         required>
                                                     @error('at_price2')
                                                         <span class="invalid-feedback">
@@ -653,7 +697,7 @@
                                                     <label for="bd_price3">8 to 10 km</label>
                                                     <input type="text"
                                                         class="form-control @error('at_price3') is-invalid @enderror "
-                                                        id="at_price3" name="at_price3" value="{{ old('at_price3') }}"
+                                                        id="at_price3" name="at_price3" value="{{ old('at_price3', 0) }}"
                                                         required>
                                                     @error('at_price3')
                                                         <span class="invalid-feedback">
@@ -667,7 +711,7 @@
                                                     <label for="bd_price4">Above 10 km</label>
                                                     <input type="text"
                                                         class="form-control @error('at_price4') is-invalid @enderror "
-                                                        id="at_price4" name="at_price4" value="{{ old('at_price4') }}"
+                                                        id="at_price4" name="at_price4" value="{{ old('at_price4', 0) }}"
                                                         required>
                                                     @error('at_price4')
                                                         <span class="invalid-feedback">
@@ -678,13 +722,13 @@
                                                         Price</div>
                                                 </div>
                                             </div>
-                                            <p class="mb-2"><strong>Cab Fare</strong></p>
-                                            <div class="row">
+                                            <p class="mb-2 d-none"><strong>Cab Fare</strong></p>
+                                            <div class="row d-none">
                                                 <div class="col-md-3 mb-3">
                                                     <label for="cab_price1">1 to 5 km</label>
                                                     <input type="text"
                                                         class="form-control @error('cab_price1') is-invalid @enderror "
-                                                        name="cab_price1" value="{{ old('cab_price1') }}" required>
+                                                        name="cab_price1" value="{{ old('cab_price1', 0) }}" required>
                                                     @error('cab_price1')
                                                         <span class="invalid-feedback">
                                                             <strong>{{ $message }}</strong>
@@ -698,7 +742,7 @@
                                                     <input type="text"
                                                         class="form-control @error('cab_price2') is-invalid @enderror "
                                                         id="cab_price2" name="cab_price2"
-                                                        value="{{ old('cab_price2') }}" required>
+                                                        value="{{ old('cab_price2', 0) }}" required>
                                                     @error('cab_price2')
                                                         <span class="invalid-feedback">
                                                             <strong>{{ $message }}</strong>
@@ -712,7 +756,7 @@
                                                     <input type="text"
                                                         class="form-control @error('cab_price3') is-invalid @enderror "
                                                         id="cab_price3" name="cab_price3"
-                                                        value="{{ old('cab_price3') }}" required>
+                                                        value="{{ old('cab_price3', 0) }}" required>
                                                     @error('cab_price3')
                                                         <span class="invalid-feedback">
                                                             <strong>{{ $message }}</strong>
@@ -726,7 +770,7 @@
                                                     <input type="text"
                                                         class="form-control @error('cab_price4') is-invalid @enderror "
                                                         id="cab_price4" name="cab_price4"
-                                                        value="{{ old('cab_price4') }}" required>
+                                                        value="{{ old('cab_price4', 0) }}" required>
                                                     @error('cab_price4')
                                                         <span class="invalid-feedback">
                                                             <strong>{{ $message }}</strong>
@@ -744,6 +788,31 @@
 
                                     <center><button class="btn btn-primary mt-2" type="submit">Submit form</button></center>
                                 </form>
+                                <div class="modal fade" id="subscriberSuccessModal" tabindex="-1" role="dialog"
+                                    aria-labelledby="subscriberSuccessModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title text-success" id="subscriberSuccessModalLabel">
+                                                    Application Submitted Successfully
+                                                </h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Your application has been received and is under review.</p>
+                                                <p>The review process typically takes 5&ndash;7 business days.</p>
+                                                <p>You will receive a WhatsApp notification if your application is approved or rejected. If additional information is required, our team may contact you through our official WhatsApp number: 9069067008.</p>
+                                                <p>If your application remains under review beyond 7 business days, you may contact us through our official WhatsApp number using your registered mobile number and Service Provider ID.</p>
+                                                <p class="mb-0">To ensure timely processing for all applicants, please avoid sending repeated follow-up messages during the review period.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-success" id="subscriberSuccessOkBtn">OK</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div> <!-- /.card-body -->
                         </div> <!-- /.card -->
                     </div> <!-- /.col -->
@@ -756,15 +825,265 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form[action="{{ url('subscriberstore') }}"]');
     const select = document.getElementById('pincode');
-    let modalShown = false;
     const subscriptionDateInput = document.getElementById('subscriptionDate');
     const expiryDateInput = document.getElementById('expiryDate');
+    const pincodeDebugPrefix = '[Pincode Debug]';
+    const draftKey = 'subscriber_onboarding_draft:' + window.location.pathname;
+    const submitPendingKey = draftKey + ':submitted';
+    const hasValidationErrors = @json($errors->any());
+    const hasServerSuccess = @json(session()->has('success') || session()->has('show_success_modal'));
+    const subscriberIndexUrl = @json(route('subscriber'));
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    const isReload = navEntry && navEntry.type === 'reload';
+    const isFreshEntry = new URLSearchParams(window.location.search).get('fresh') === '1'
+        || (!isReload && document.referrer.indexOf('/subscriberList') !== -1);
+    let pincodeModalShown = false;
 
     function setMessage(show) {
-        const el = document.getElementById('pincodeEmptyMessage');
-        if (el) el.style.display = show ? 'block' : 'none';
+        $('#pincodeTopAlert').hide();
+        if (show) {
+            if (!pincodeModalShown && window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                $('#pincodeNotListedModal').modal('show');
+                pincodeModalShown = true;
+            }
+        } else {
+            pincodeModalShown = false;
+        }
     }
+
+    function getFieldKey(field) {
+        return field.name || field.id;
+    }
+
+    function showClientSuccessMessage() {
+        if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+            $('#subscriberSuccessModal').modal('show');
+            return;
+        }
+
+        const successMessage = document.getElementById('subscriberClientSuccessMessage');
+        if (successMessage) {
+            successMessage.style.display = 'block';
+        }
+    }
+
+    $(document).on('click', '#subscriberSuccessOkBtn', function () {
+        window.location.href = subscriberIndexUrl;
+    });
+
+    function refreshMultiselect(field) {
+        if (typeof field.loadOptions === 'function') {
+            field.loadOptions();
+        }
+        const widget = field.nextElementSibling;
+        if (widget && typeof widget.refresh === 'function') {
+            widget.refresh();
+        }
+    }
+
+    function clearSavedForm() {
+        if (!form || !window.localStorage) return;
+        localStorage.removeItem(draftKey);
+        form.reset();
+        form.querySelectorAll('select').forEach(function (field) {
+            if (field.multiple) {
+                Array.from(field.options).forEach(function (option) {
+                    option.selected = false;
+                });
+            }
+            refreshMultiselect(field);
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        if (subscriptionDateInput && !subscriptionDateInput.value) {
+            subscriptionDateInput.value = @json(now()->format('Y-m-d'));
+        }
+        setExpiryDate();
+    }
+
+    function saveDraft() {
+        if (!form || !window.localStorage) return;
+
+        const draft = {};
+        form.querySelectorAll('input, select, textarea').forEach(function (field) {
+            if (!field.name || field.type === 'file' || field.name === '_token') return;
+
+            const key = getFieldKey(field);
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                if (!draft[key]) draft[key] = [];
+                if (field.checked) draft[key].push(field.value);
+                return;
+            }
+
+            if (field.tagName === 'SELECT' && field.multiple) {
+                draft[key] = Array.from(field.selectedOptions).map(function (option) {
+                    return option.value;
+                });
+                return;
+            }
+
+            draft[key] = field.value;
+        });
+
+        localStorage.setItem(draftKey, JSON.stringify(draft));
+    }
+
+    function restoreDraft() {
+        if (!form || !window.localStorage) return;
+
+        const hadSubmitPending = window.sessionStorage && sessionStorage.getItem(submitPendingKey) === '1';
+
+        if (isFreshEntry && !hasValidationErrors) {
+            clearSavedForm();
+            if (window.sessionStorage) {
+                sessionStorage.removeItem(submitPendingKey);
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+
+        if (hasValidationErrors) {
+            if (window.sessionStorage) {
+                sessionStorage.removeItem(submitPendingKey);
+            }
+        } else if (hasServerSuccess || hadSubmitPending) {
+            clearSavedForm();
+            if (window.sessionStorage) {
+                sessionStorage.removeItem(submitPendingKey);
+            }
+            showClientSuccessMessage();
+            return;
+        }
+
+        const rawDraft = localStorage.getItem(draftKey);
+        if (!rawDraft) return;
+
+        let draft = {};
+        try {
+            draft = JSON.parse(rawDraft);
+        } catch (e) {
+            localStorage.removeItem(draftKey);
+            return;
+        }
+
+        form.querySelectorAll('input, select, textarea').forEach(function (field) {
+            if (!field.name || field.type === 'file' || field.name === '_token') return;
+
+            const key = getFieldKey(field);
+            if (!Object.prototype.hasOwnProperty.call(draft, key)) return;
+
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                field.checked = Array.isArray(draft[key]) && draft[key].includes(field.value);
+                return;
+            }
+
+            if (field.tagName === 'SELECT' && field.multiple && Array.isArray(draft[key])) {
+                Array.from(field.options).forEach(function (option) {
+                    option.selected = draft[key].includes(option.value);
+                });
+                refreshMultiselect(field);
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+                return;
+            }
+
+            field.value = draft[key];
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
+
+    function getDropdownContainer(searchInput) {
+        const $wrap = $(searchInput).closest('.multiselect-dropdown-list-wrapper, .multiselect-dropdown');
+        if ($wrap.length) {
+            const $list = $wrap.find('.multiselect-dropdown-list').first();
+            if ($list.length) return $list;
+        }
+        return $('#pincode').next('.multiselect-dropdown').find('.multiselect-dropdown-list').first();
+    }
+
+    function getVisiblePincodeOptions(searchInput) {
+        const $dropdown = getDropdownContainer(searchInput);
+        if (!$dropdown.length) return $();
+        return $dropdown.children('div').filter(function () {
+            const $row = $(this);
+            const isSelectAll = $row.hasClass('multiselect-dropdown-all-selector');
+            const hasCheckbox = $row.find('input[type="checkbox"]').length > 0;
+            const isHiddenByPluginClass = $row.hasClass('multiselect-filter-hidden');
+            const isVisible = $row.is(':visible') && $row.css('display') !== 'none';
+            return !isSelectAll && hasCheckbox && !isHiddenByPluginClass && isVisible;
+        });
+    }
+
+    function evaluatePincodeSearch(searchInput) {
+        const $input = $(searchInput);
+        const value = $input.val().trim();
+        const visibleOptions = getVisiblePincodeOptions(searchInput);
+        const $dropdown = getDropdownContainer(searchInput);
+        const hiddenByFilterCount = $dropdown.children('div.multiselect-filter-hidden').length;
+
+        console.log(pincodeDebugPrefix, 'search event fired', {
+            value: value,
+            length: value.length,
+            visibleOptions: visibleOptions.length,
+            hiddenByFilterCount: hiddenByFilterCount,
+            jqueryLoaded: typeof window.jQuery !== 'undefined'
+        });
+
+        if (value.length >= 3 && visibleOptions.length === 0) {
+            setMessage(true);
+        } else {
+            setMessage(false);
+        }
+    }
+
+    $(document).on('keyup input', '.multiselect-dropdown-search, .multiselect-search', function () {
+        evaluatePincodeSearch(this);
+    });
+
+    $(document).on('click', '.multiselect-dropdown-search, .multiselect-search', function () {
+        console.log(pincodeDebugPrefix, 'search input focused/clicked');
+    });
+
+    $(document).on('change', '#pincode', function () {
+        console.log(pincodeDebugPrefix, '#pincode changed, hiding alert');
+        setMessage(false);
+    });
+
+    function initPincodeSearchDebug() {
+        console.log(pincodeDebugPrefix, 'Init started', {
+            alertExists: $('#pincodeTopAlert').length > 0,
+            jqueryLoaded: typeof window.jQuery !== 'undefined',
+            multiselectSearchCount: $('.multiselect-dropdown-search, .multiselect-search').length,
+            pluginDropdownCount: $('.multiselect-dropdown').length,
+            selectExists: $('#pincode').length > 0
+        });
+    }
+
+    function waitForMultiselectInit(retries) {
+        if ($('.multiselect-dropdown-search, .multiselect-search').length > 0) {
+            console.log(pincodeDebugPrefix, 'Multiselect initialized');
+            initPincodeSearchDebug();
+            return;
+        }
+        if (retries <= 0) {
+            console.warn(pincodeDebugPrefix, 'Multiselect search input not found after retries');
+            initPincodeSearchDebug();
+            return;
+        }
+        setTimeout(function () {
+            waitForMultiselectInit(retries - 1);
+        }, 200);
+    }
+
+    waitForMultiselectInit(20);
+
+    // Keep this to ensure initial hidden state.
+    setMessage(false);
+
+    $(document).on('keyup', '.multiselect-dropdown-search, .multiselect-search', function () {
+        const value = $(this).val().trim();
+        console.log(pincodeDebugPrefix, 'keyup length check:', value.length);
+    });
 
     function formatAsDDMMYYYY(date) {
         const dd = String(date.getDate()).padStart(2, '0');
@@ -797,64 +1116,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function getDropdownFromSearch(searchBox) {
-        const wrap = searchBox.closest('.btn-group, .dropdown, .multiselect-native-select');
-        if (wrap) {
-            const scoped = wrap.querySelector('.multiselect-container');
-            if (scoped) return scoped;
-        }
-        return document.querySelector('.multiselect-container');
-    }
+    restoreDraft();
 
-    function hasVisibleOptions(dropdown) {
-        const items = Array.from(dropdown.querySelectorAll('li'));
-        return items.some(function (li) {
-            const style = window.getComputedStyle(li);
-            const visible = style.display !== 'none' && style.visibility !== 'hidden';
-            const hasCheckbox = !!li.querySelector('input[type="checkbox"]');
-            const isSelectAll = li.classList.contains('multiselect-all') || li.classList.contains('multiselect-item');
-            return visible && hasCheckbox && !isSelectAll;
-        });
-    }
-
-    setMessage(false);
-
-    document.addEventListener('keyup', function (e) {
-        const searchBox = e.target.classList && e.target.classList.contains('multiselect-search')
-            ? e.target
-            : document.querySelector('.multiselect-search');
-
-        if (!searchBox) return;
-
-        const dropdown = getDropdownFromSearch(searchBox);
-        if (!dropdown) return;
-
-        const value = searchBox.value.trim();
-
-        if (value.length >= 3) {
-            const hasOptions = hasVisibleOptions(dropdown);
-
-            if (!hasOptions) {
-                setMessage(true);
-
-                if (!modalShown && window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-                    window.jQuery('#pincodeNotListedModal').modal('show');
-                    modalShown = true;
-                }
-            } else {
-                setMessage(false);
+    if (form) {
+        form.addEventListener('submit', function () {
+            if (!form.checkValidity()) return;
+            if (window.sessionStorage) {
+                sessionStorage.setItem(submitPendingKey, '1');
             }
-        } else {
-            setMessage(false);
-        }
-    });
+        });
+        form.addEventListener('input', saveDraft);
+        form.addEventListener('change', saveDraft);
+    }
 
     if (select) {
         select.addEventListener('change', function () {
             setMessage(false);
-            modalShown = false;
         });
     }
+
 });
 
 function isNumberKey(evt) {

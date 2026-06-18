@@ -785,11 +785,18 @@ class HomeController extends Controller
             'licenceexpiry' => 'nullable',
             'customerdocument' => 'nullable|mimes:pdf',
             'profile' => 'nullable',
-            'type' => 'required',
+            'type' => ['required', 'array'],
+            'type.*' => ['required'],
             'bankacno' => 'nullable',
             'description' => 'nullable',
             'ifsccode' => 'nullable'
         ]);
+
+        $selectedTypes = $request->input('type', []);
+        if (!is_array($selectedTypes)) {
+            $selectedTypes = [$selectedTypes];
+        }
+        $typeString = implode(',', $selectedTypes);
 
         $input = $request->all();
         // dd($input);
@@ -861,7 +868,7 @@ class HomeController extends Controller
         $driver->vehicleNo = $request->get('vehicleNo');
         $driver->vehicleModelNo = $request->get('vehicleModelNo');
         $driver->subscriberId = $request->get('subscriber');
-        $driver->type = $request->get('type');
+        $driver->type = $typeString;
         $driver->save();
         $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
         return redirect()->route('drivers')->with([
@@ -1070,7 +1077,8 @@ class HomeController extends Controller
             'vehicleModelNo' => 'required',
             'licenceexpiry' => 'nullable',
             'profile' => 'nullable',
-            'type' => 'required',
+            'type' => ['required', 'array'],
+            'type.*' => ['required'],
             'description' => 'nullable',
             'bankacno' => 'nullable',
             'ifsccode' => 'nullable',
@@ -1097,7 +1105,11 @@ class HomeController extends Controller
         $driver->description = $request->get('description');
         $driver->bankacno = $request->get('bankacno');
         $driver->ifsccode = $request->get('ifsccode');
-        $driver->type = $request->get('type');
+        $selectedTypes = $request->input('type', []);
+        if (!is_array($selectedTypes)) {
+            $selectedTypes = [$selectedTypes];
+        }
+        $driver->type = implode(',', $selectedTypes);
         if ($request->get('password') != "") {
             $driver->password = Hash::make($request->get('password'));
         }

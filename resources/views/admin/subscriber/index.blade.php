@@ -50,11 +50,24 @@
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="row">
-                    <h2 class="mb-2 page-title">Subscribers List</h2>
+                    <h2 class="mb-2 page-title">{{ $pageTitle ?? 'Subscribers List' }}</h2>
                     @can('subscriber-create')
                         <div class="col ml-auto">
                             <div class="dropdown float-right">
-                                <a href="{{ url('createSubscriber') }}"><button class="btn btn-primary float-right ml-3"
+                                @if ($showMissingEmployeeList ?? true)
+                                    <a href="{{ route('subscriber.withoutEmployeeId') }}">
+                                        <button class="btn btn-outline-warning float-right ml-3" type="button">
+                                            Self Registered
+                                        </button>
+                                    </a>
+                                @else
+                                    <a href="{{ route('subscriber') }}">
+                                        <button class="btn btn-outline-secondary float-right ml-3" type="button">
+                                            All Subscribers
+                                        </button>
+                                    </a>
+                                @endif
+                                <a href="{{ route('createSubscriber', ['fresh' => 1]) }}"><button class="btn btn-primary float-right ml-3"
                                         type="button">Add more +</button></a>
 
                             </div>

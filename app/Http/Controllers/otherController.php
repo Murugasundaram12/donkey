@@ -67,7 +67,69 @@ class otherController extends Controller
         $user->activestatus = $request->get('status');
         //dd($user);
         $user->save();
+
+        if ((string) $request->get('status') === '0') {
+            $this->sendSubscriberStatusWhatsapp($user, 'inactive');
+        }
+
         return redirect()->back()->with('success', "Status Updated Successfully");
+    }
+
+    private function sendSubscriberStatusWhatsapp(Subscriber $subscriber, string $status): void
+    {
+        $templateName = $status === 'banned'
+            ? env('WHATSAPP_SUBSCRIBER_BANNED_TEMPLATE')
+            : env('WHATSAPP_SUBSCRIBER_INACTIVE_TEMPLATE');
+
+        if (!$templateName) {
+            Log::info('Subscriber status WhatsApp template not configured yet.', [
+                'subscriber_id' => $subscriber->id,
+                'status' => $status,
+            ]);
+            return;
+        }
+
+        $token = env('WACTO_WHATSAPP_TOKEN');
+        if (!$token) {
+            Log::warning('WACTO_WHATSAPP_TOKEN is not configured.');
+            return;
+        }
+
+        $payload = [
+            'campaignId' => env('WACTO_WHATSAPP_CAMPAIGN_ID', '101'),
+            'to' => $subscriber->mobile,
+            'type' => 'template',
+            'template' => [
+                'language' => [
+                    'policy' => 'deterministic',
+                    'code' => 'en',
+                ],
+                'name' => $templateName,
+                'components' => [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $subscriber->name],
+                            ['type' => 'text', 'text' => $subscriber->subscriberId],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $ch = curl_init('http://backend.wacto.ai/v1/message/send-message?token=' . $token);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            Log::warning('Subscriber status WhatsApp failed.', compact('httpCode', 'response', 'error'));
+        }
     }
 
     // public function makesubscribtionpayment(Request $d)

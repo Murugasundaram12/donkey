@@ -11,6 +11,11 @@ class Driver extends Model
     use HasFactory;
     protected $table = 'driver';
 
+    protected $fillable = [
+        'riderAgreement',
+    ];
+
+
     public function subscriber(): BelongsTo
     {
         return $this->belongsTo(Subscriber::class, 'id', 'subscriberId');

@@ -58,7 +58,14 @@ class SubscriberController extends Controller
     public function subscriber()
 
     {
-        $subscriber = Subscriber::latest()->get();
+        $adminIds = Admin::pluck('id')->map(function ($id) {
+            return (string) $id;
+        })->all();
+
+        $subscriber = Subscriber::whereIn('created_by', $adminIds)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
         //dd($subscriber);
         $pincode = Pincode::all();
         $id = $subscriber->pluck('created_by');
@@ -70,6 +77,40 @@ class SubscriberController extends Controller
         $roleName = $emp_id;
         // dd($roleName);
         return view('admin.subscriber.index', compact('subscriber', 'pincode', 'roleName'));
+    }
+
+    public function subscribersWithoutEmployeeId()
+    {
+        $adminIds = Admin::pluck('id')->map(function ($id) {
+            return (string) $id;
+        })->all();
+
+        $subscriber = Subscriber::where(function ($query) use ($adminIds) {
+            $query->whereNull('created_by')
+                ->orWhere('created_by', '')
+                ->orWhere('created_by', '0')
+                ->orWhere('created_by', 'public');
+
+            if (!empty($adminIds)) {
+                $query->orWhereNotIn('created_by', $adminIds);
+            }
+        })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $pincode = Pincode::all();
+        $roleName = collect();
+        $pageTitle = 'Self Registered Subscribers';
+        $showMissingEmployeeList = false;
+
+        return view('admin.subscriber.index', compact(
+            'subscriber',
+            'pincode',
+            'roleName',
+            'pageTitle',
+            'showMissingEmployeeList'
+        ));
     }
 
     public function create()
@@ -139,10 +180,10 @@ class SubscriberController extends Controller
         $expiryDate = null;
         if (!empty($date1)) {
             try {
-                $expiryDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date1)->format('d-m-Y');
+                $expiryDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date1)->startOfDay()->format('Y-m-d H:i:s');
             } catch (\Exception $e) {
                 try {
-                    $expiryDate = \Carbon\Carbon::createFromFormat('Y-m-d', $date1)->format('d-m-Y');
+                    $expiryDate = \Carbon\Carbon::createFromFormat('Y-m-d', $date1)->startOfDay()->format('Y-m-d H:i:s');
                 } catch (\Exception $e) {
                     $expiryDate = null;
                 }
@@ -150,7 +191,7 @@ class SubscriberController extends Controller
         }
 
         if ($expiryDate === null) {
-            $expiryDate = \Carbon\Carbon::parse($subscriptionDate)->addDays(28)->format('d-m-Y');
+            $expiryDate = \Carbon\Carbon::parse($subscriptionDate)->addDays(28)->format('Y-m-d H:i:s');
         }
 
         $subscriber = new Subscriber();
@@ -247,6 +288,7 @@ class SubscriberController extends Controller
                 'password' => $request->password,
                 'address' => $request->description,
                 'aadhar' => $request->aadharNo,
+                'subscriber_id' => $subscriber->id,
                 'emp_id' => "PBP Employee ID - " . str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT),
                 'role' => 'Subscriber Admin'
             ];
@@ -256,7 +298,7 @@ class SubscriberController extends Controller
                 $subscriber->assignRole($role->name);
             }
         }
-        
+
         $categories = Category::pluck('id');
         foreach ($zipcode as $code) {
             foreach ($categories as $category) {
@@ -268,9 +310,8 @@ class SubscriberController extends Controller
             }
         }
 
-        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
-        $redirectTo = Auth::check() ? 'subscriberList' : 'createSubscriber';
-        return redirect($redirectTo)->with([
+        $message = 'Application Submitted Successfully. Your application has been received and is under review. The review process typically takes 5-7 business days. You will receive a WhatsApp notification if your application is approved or rejected. If additional information is required, our team may contact you through our official WhatsApp number: 9069067008. If your application remains under review beyond 7 business days, you may contact us through our official WhatsApp number using your registered mobile number and Service Provider ID. To ensure timely processing for all applicants, please avoid sending repeated follow-up messages during the review period.';
+        return redirect()->route('createSubscriber')->with([
             'success' => 'Subscriber added!',
             'success_message' => $message,
             'show_success_modal' => true
@@ -844,6 +885,8 @@ class SubscriberController extends Controller
         $block->comments = $request->get('reason');
         $block->save();
 
+        $this->sendSubscriberStatusWhatsapp($subscriber, 'banned');
+
         return redirect('subscriberList')->with('success', 'Subscriber blocked ');
     }
     public function subscriberunblock(Request $request)
@@ -865,5 +908,62 @@ class SubscriberController extends Controller
         $unblock->comments = $request->get('comments');
         $unblock->save();
         return redirect('subscriberList')->with('success', 'Subscriber unblocked ');
+    }
+
+    private function sendSubscriberStatusWhatsapp(Subscriber $subscriber, string $status): void
+    {
+        $templateName = $status === 'banned'
+            ? env('WHATSAPP_SUBSCRIBER_BANNED_TEMPLATE')
+            : env('WHATSAPP_SUBSCRIBER_INACTIVE_TEMPLATE');
+
+        if (!$templateName) {
+            Log::info('Subscriber status WhatsApp template not configured yet.', [
+                'subscriber_id' => $subscriber->id,
+                'status' => $status,
+            ]);
+            return;
+        }
+
+        $token = env('WACTO_WHATSAPP_TOKEN');
+        if (!$token) {
+            Log::warning('WACTO_WHATSAPP_TOKEN is not configured.');
+            return;
+        }
+
+        $payload = [
+            'campaignId' => env('WACTO_WHATSAPP_CAMPAIGN_ID', '101'),
+            'to' => $subscriber->mobile,
+            'type' => 'template',
+            'template' => [
+                'language' => [
+                    'policy' => 'deterministic',
+                    'code' => 'en',
+                ],
+                'name' => $templateName,
+                'components' => [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $subscriber->name],
+                            ['type' => 'text', 'text' => $subscriber->subscriberId],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $ch = curl_init('http://backend.wacto.ai/v1/message/send-message?token=' . $token);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            Log::warning('Subscriber status WhatsApp failed.', compact('httpCode', 'response', 'error'));
+        }
     }
 }

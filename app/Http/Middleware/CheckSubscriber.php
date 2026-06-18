@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class CheckSubscriber
 {
@@ -17,8 +19,13 @@ class CheckSubscriber
     public function handle(Request $request, Closure $next)
     {
         if (!$request->session()->exists('subscribers')) {
-            // user value cannot be found in session
-            return redirect('subscribers/login');
+            if (Auth::guard('subscriber')->check()) {
+                Session::put('subscribers', Auth::guard('subscriber')->user());
+            } elseif (Auth::guard('employee')->check()) {
+                Session::put('subscribers', Auth::guard('employee')->user());
+            } else {
+                return redirect('subscribers/login');
+            }
         }
 
         return $next($request);

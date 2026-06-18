@@ -106,6 +106,7 @@ Route::get('/pincodedelete/{id}', [App\Http\Controllers\PincodeController::class
 
 Route::get('/createSubscriber', [App\Http\Controllers\SubscriberController::class, 'create'])->name('createSubscriber');
 Route::get('/subscriberList', [App\Http\Controllers\SubscriberController::class, 'subscriber'])->name('subscriber');
+Route::get('/subscriberList/without-employee-id', [App\Http\Controllers\SubscriberController::class, 'subscribersWithoutEmployeeId'])->name('subscriber.withoutEmployeeId');
 Route::post('/subscriberstore', [App\Http\Controllers\SubscriberController::class, 'subscriberstore']);
 Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->whereNumber('id')->name('show');
 Route::get('/subscriber/{id}', [App\Http\Controllers\SubscriberController::class, 'edit'])->whereNumber('id');
@@ -355,7 +356,7 @@ Route::get('employeePerformancePdf/{employee}', [EmployeePerformanceController::
 Route::resource('enquiryComment', EnquiryCommentController::class)->only('store');
 Route::resource('feed', FeedbackController::class)->only('index', 'show')->parameter('feed', 'feedback');
 Route::resource('report', ReportController::class)->only('index');
-Route::get('getchartdata', [SubscriberHomeController::class, 'getChartData'])->name('getChartData');
+Route::get('getchartdata', [App\Http\Controllers\SubscriberHomeController::class, 'getChartData'])->name('getChartData');
 Route::resource('paymenthistory', PaymentReportController::class)->parameter('paymenthistory', 'paymentDetail');
 Route::get('invoicedownloadPDF/{paymentDetail}', [PaymentReportController::class, 'downloadPDF'])->name("invoicedownloadPDF");
 Route::get('getAppVerision/{site}', [App\Http\Controllers\HomeController::class, 'appVerision'])->name('getAppVerision');
