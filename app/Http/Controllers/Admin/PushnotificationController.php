@@ -74,7 +74,7 @@ class PushnotificationController extends Controller
             //user
             // dd("user");
             $tokens = User::where('is_driver', 0)->whereNotNull('device_token')->get()->pluck('device_token');
-            $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
+            $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
             $fcm_token = site::where('id', 1)->first()->userToken;
             $result = $this->SendNotificationToUser($tokens, $url, $fcm_token, $title, $content, $imageUrl);
         } elseif ($type == 3) {
@@ -87,7 +87,7 @@ class PushnotificationController extends Controller
             if ($type == 1) {
                 //user
                 $tokens = User::where('is_driver', 0)->whereNotNull('device_token')->get()->pluck('device_token');
-                $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
+                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
                 $fcm_token = site::where('id', 1)->first()->userToken;
                 $result = $this->SendNotificationToUser($tokens, $url, $fcm_token, $title, $content, $imageUrl);
                 //driver

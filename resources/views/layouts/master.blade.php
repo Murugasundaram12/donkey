@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="{{ asset('admin/css/app-light.css') }}" id="lightTheme">
     <link rel="stylesheet" href="{{ asset('admin/css/app-dark.css') }}" id="darkTheme" disabled>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <style>
         a {
@@ -39,7 +41,7 @@
         }
 
         /* margin-bottom: 10px; */
-    
+
     </style>
 </head>
 

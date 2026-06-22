@@ -296,8 +296,7 @@
                                                 pdf
                                                 format </span></small>
                                             <small class="form-text text-muted">
-                                                Note: Download, sign and upload the Rider Agreement available under Point No. 7 before onboarding riders.
-                                                <a href="/assets/document/Bikers%20-%20Rider%20Agreement%20with%20do%20N%20key.pdf" target="_blank" rel="noopener noreferrer">Click here.</a>
+                                                Note: To download the Rider Agreement, please click here and refer to Point 7 on the website. After obtaining the rider's signature, upload the signed copy in the Documents section below.
                                             </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
@@ -447,5 +446,19 @@
     </div> <!-- .container-fluid -->
 @endsection
 @section('scripts')
+    @include('partials.form-refresh-draft', [
+        'formSelector' => 'form[action="' . url('driverstore') . '"]',
+        'draftKey' => 'admin_rider_create_draft:' . Auth::id(),
+    ])
+
+<script>
+    function isNumberKey(evt) {
+            var charCode = evt.which ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        }
+</script>
 @endsection
 

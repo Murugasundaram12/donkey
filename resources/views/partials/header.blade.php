@@ -92,8 +92,8 @@
         ? url('public/site/' . $site->favicon)
         : asset('assets/images/favicon.png');
     $logoUrl = ($logoPath && file_exists($logoPath))
-        ? url('public/site/' . $site->main_logo)
-        : asset('admin/assets/images/logo.svg');
+        ? asset('admin/assets/images/new_logo.png')
+        : url('public/site/' . $site->main_logo);
 @endphp
 <link rel="icon" href="{{ $faviconUrl }}" type="image/x-icon">
 <nav class="topnav navbar navbar-light">
@@ -107,25 +107,27 @@
                 <i class="fe fe-sun fe-16"></i>
             </a>
         </li>
-        <li class="nav-item nav-notif">
+        {{-- <li class="nav-item nav-notif">
             <a class="nav-link text-muted my-2" href="#" id="navbarDropdownNotification" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="fe fe-bell fe-16"></span>
                 @if (
-                        App\Models\Pricenotify::where('read', '0')->where(function ($q) {
-                            $q->where('pricenotify.datas', 'LIKE', '%price%')->orWhere('pricenotify.datas', 'LIKE', '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
-                        })->count() > 0
-                    )
-                    <span class="dot dot-md bg-success"></span>
+                App\Models\Pricenotify::where('read', '0')->where(function ($q) {
+                $q->where('pricenotify.datas', 'LIKE', '%price%')->orWhere('pricenotify.datas', 'LIKE',
+                '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
+                })->count() > 0
+                )
+                <span class="dot dot-md bg-success"></span>
                 @endif
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownNotification">
                 <a class="dropdown-item" href="{{ url('priceNotification') }}">Unread Notification -
                     {{ App\Models\Pricenotify::where('read', '0')->where(function ($q) {
-    $q->where('pricenotify.datas', 'LIKE', '%price%')->orWhere('pricenotify.datas', 'LIKE', '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
-})->count() }}</a>
+                    $q->where('pricenotify.datas', 'LIKE', '%price%')->orWhere('pricenotify.datas', 'LIKE',
+                    '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
+                    })->count() }}</a>
             </div>
-        </li>
+        </li> --}}
 
         @auth
             <li class="nav-item dropdown">
@@ -147,7 +149,7 @@
                             Settings</a>
                     @endif
                     <a class="dropdown-item" href="{{ route('logout') }}"
-                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        onclick="event.preventDefault(); clearSubscriberCreateDrafts(); document.getElementById('logout-form').submit();">
                         {{ __('Logout') }}
                     </a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -167,19 +169,27 @@
 
         <div class="w-100 d-flex flex-column align-items-center">
             <a class="navbar-brand mx-auto flex-fill text-center" href="https://www.donkeydeliveries.com/">
-                <img src="{{ $logoUrl }}" style="height: 60px;width:60px;" alt="do N key Admin Panel">
+                <img src="{{ $logoUrl }}" style="height: 60px;width:100px;" alt="do N key Admin Panel">
                 <h3><span class="mt-2 font-weight-bold">Control Center</span></h3>
             </a>
         </div>
 
         <ul class="navbar-nav flex-fill w-100 mb-2">
             <li class="nav-item w-100">
-                <a class="nav-link" href="{{ url('dashboard') }}">
+                <a class="nav-link" href="{{ Auth::guard()->check() ? url('dashboard') : url('createSubscriber') }}">
                     <i class="fe fe-home fe-16"></i>
-                    <span class="ml-3 item-text">Dashboard</span>
+                    <span class="ml-3 item-text">{{ Auth::guard()->check() ? 'Dashboard' : 'Application Form' }}</span>
                     {{-- <span class="badge badge-pill badge-primary">New</span> --}}
                 </a>
             </li>
+            @if(!Auth::guard()->check())
+                <li class="nav-item w-100">
+                    <a class="nav-link" href="https://donkeydeliveries.com/live-status/dashboard" target="_blank">
+                        <i class="fe fe-activity fe-16"></i>
+                        <span class="ml-3 item-text">Live-status</span>
+                    </a>
+                </li>
+            @endif
             @if(Auth::guard()->check())
                 <li class="nav-item dropdown">
                     <a href="#pincode" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
@@ -450,7 +460,7 @@
                             </li>
                             <li class="nav-item">
                                 <!-- <a class="nav-link pl-3" href="{{ url('admin/about') }}"><span class="ml-1 item-text">About
-                                                                                            Manage </span></a> -->
+                                                                                                                    Manage </span></a> -->
                             </li>
 
 
@@ -526,6 +536,25 @@
 
     </nav>
 </aside>
+<script>
+    function clearSubscriberCreateDrafts() {
+        if (window.localStorage) {
+            Object.keys(localStorage).forEach(function (key) {
+                if (key.indexOf('subscriber_onboarding_draft:') === 0) {
+                    localStorage.removeItem(key);
+                }
+            });
+        }
+
+        if (window.sessionStorage) {
+            Object.keys(sessionStorage).forEach(function (key) {
+                if (key.indexOf('subscriber_onboarding_draft:') === 0) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        }
+    }
+</script>
 
 <div class="loader-container">
     <div class="loader"></div>

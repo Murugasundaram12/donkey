@@ -30,4 +30,17 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'firebase' => [
+        'user_project_id' => env('FCM_USER_PROJECT_ID', 'donkey-user'),
+        'driver_project_id' => env('FCM_DRIVER_PROJECT_ID', 'donkey-driver'),
+    ],
+
+    'whatsapp' => [
+        'onboarding_otp_enabled' => env('WHATSAPP_ONBOARDING_OTP_ENABLED', false),
+        'endpoint' => env('WHATSAPP_API_ENDPOINT', 'https://api.donkeydeliveries.com/v1/message/send-message'),
+        'token' => env('WHATSAPP_API_TOKEN', env('WACTO_WHATSAPP_TOKEN')),
+        'otp_template' => env('WHATSAPP_OTP_TEMPLATE', 'otp_verification'),
+        'country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '91'),
+    ],
+
 ];

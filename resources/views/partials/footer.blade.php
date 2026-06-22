@@ -28,13 +28,13 @@
         margin-top: -15px;
     }
 </style>
-<div class="floatchat sticky-bottom">
+{{-- <div class="floatchat sticky-bottom">
     <div class="floatdot dotadmin1" hidden></div>
     <a href="{{ route('chatwithadmin') }}">
         <i class="fe fe-message-circle fe-16"></i>
     </a>
 
-</div>
+</div> --}}
 
 <script type="module">
     import {
@@ -80,7 +80,7 @@
         var $vall = 0;
         const newmsg = ref(database, 'messageswithadmin/');
 
-        <?php 
+        <?php
 $value = \App\Models\Subscriber::get('subscriberId');
 foreach($value as $v){
 ?>
@@ -118,7 +118,7 @@ foreach($value as $v){
         //     console.log('hai');
         // } else {
         // console.log('hai1');
-        // }    
+        // }
     }, 500);
     // Import the functions you need from the SDKs you need
 </script>

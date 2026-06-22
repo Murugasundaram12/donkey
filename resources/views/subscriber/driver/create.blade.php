@@ -367,7 +367,7 @@
                                                 </span>
                                             @enderror
                                             <div class="invalid-feedback"> Please upload bike image </div>
-                                        </div>                                        
+                                        </div>
                                         <div class="col-md-6 mb-3">
                                             <fieldset class="">
                                                 <label class="col-form-label">Driver Type</label>
@@ -416,6 +416,19 @@
     </div> <!-- .container-fluid -->
 @endsection
 @section('scripts')
+    @include('partials.form-refresh-draft', [
+        'formSelector' => 'form[action="' . url('subscribers/driverstore') . '"]',
+        'draftKey' => 'subscriber_rider_create_draft:' . (session('subscribers')->id ?? session('subscribers')->subscriber_id ?? 'user'),
+    ])
+<script>
+    function isNumberKey(evt) {
+            var charCode = evt.which ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        }
+</script>
 @endsection
 
 

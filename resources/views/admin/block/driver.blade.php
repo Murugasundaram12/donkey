@@ -72,21 +72,30 @@
                                 </thead>
                                 <tbody>
                                     <?php $i = 1; ?>
-                                    @foreach ($blocklist as $blocklist)
+                                    @foreach ($blocklist as $blockEntry)
+                                    @php
+                                        $driver = $blockEntry->driver->first();
+                                        $subscriber = $blockEntry->subscriber->first();
+                                        $driverUserId = $driver
+                                            ? App\Models\Enduser::where('id', $driver->userid)->value('user_id')
+                                            : null;
+                                    @endphp
                                     <tr>
 
 
                                         <td>{{ $i }}</td>
-                                        <td>{{ $blocklist->driver[0]->name }}</td>
-                                        <td>{{ App\Models\Enduser::where('id', $blocklist->driver[0]->userid)->first()?->user_id }}</td>
-                                        <td>{{ $blocklist->subscriber[0]->name }}</td>
-                                        <td>{{ $blocklist->subscriber[0]->subscriberId }}</td>
-                                        <td>{{ $blocklist->comments }}</td>
-                                        <td>{{ $blocklist->created_at->format('d-m-Y h:i:s') }}</td>
+                                        <td>{{ $driver?->name ?? 'Rider not found' }}</td>
+                                        <td>{{ $driverUserId ?? '-' }}</td>
+                                        <td>{{ $subscriber?->name ?? 'Subscriber not found' }}</td>
+                                        <td>{{ $subscriber?->subscriberId ?? '-' }}</td>
+                                        <td>{{ $blockEntry->comments }}</td>
+                                        <td>{{ $blockEntry->created_at?->format('d-m-Y h:i:s') ?? '-' }}</td>
                                         <td>
-                                            @if ($blocklist->driver[0]->status == 2)
+                                            @if (!$driver)
+                                            <p class="badge badge-secondary">Unavailable</p>
+                                            @elseif ($driver->status == 2)
                                             <p class="badge badge-danger">Blocked</p>
-                                            @elseif ($blocklist->driver[0]->status == 1)
+                                            @elseif ($driver->status == 1)
                                             <p class="badge badge-success">Active</p>
                                             @else
                                             <p class="badge badge-warning">Pending</p>

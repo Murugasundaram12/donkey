@@ -11,7 +11,7 @@ class PincodeController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except('searchPincode');
         $this->middleware('permission:pincode-list|pincode-create|pincode-edit|pincode-delete', ['only' => ['index', 'show']]);
         $this->middleware('permission:pincode-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:pincode-edit', ['only' => ['edit', 'update']]);
@@ -26,13 +26,19 @@ class PincodeController extends Controller
         if ($q === '') {
             return response()->json([
                 'status' => false,
+                'exists_in_master' => false,
                 'data' => [],
                 // Backward compatibility
                 'results' => []
             ]);
         }
 
+        $existsInMaster = Pincode::query()
+            ->where('pincode', 'LIKE', '%' . $q . '%')
+            ->exists();
+
         $results = Pincode::query()
+            ->availableForNewSubscriber()
             ->where('pincode', 'LIKE', '%' . $q . '%')
             ->select(['id', 'pincode'])
             ->limit(10)
@@ -44,6 +50,7 @@ class PincodeController extends Controller
 
         return response()->json([
             'status' => $results->isNotEmpty(),
+            'exists_in_master' => $existsInMaster,
             'data' => $results,
             // Backward compatibility
             'results' => $results

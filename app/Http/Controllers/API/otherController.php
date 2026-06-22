@@ -187,14 +187,9 @@ class otherController extends BaseController
 
     public function driverarrived(Request $request)
     {
-        $isExternal = $this->isExternalBookingRequest($request, 'external.driverarrived');
-        $request->merge(['source' => $isExternal ? 1 : (int) $request->get('source', 0)]);
-
         $validator = Validator::make($request->all(), [
-            'source' => 'nullable|in:0,1',
-            'user_id' => $isExternal ? 'nullable' : 'required',
-            'external_phone' => $isExternal ? 'required' : 'nullable',
             'booking_id' => 'required|exists:booking,booking_id',
+            'driver_id' => 'nullable|exists:driver,userid',
         ]);
 
         if ($validator->fails()) {
@@ -209,18 +204,20 @@ class otherController extends BaseController
             ]);
         }
 
-        // Verify authorization
-        $isAuthorized = false;
-        if ($booking->source == 0 && $booking->customer_id == $request->user_id) {
-            $isAuthorized = true;
-        } elseif ($booking->source == 1 && $booking->external_phone == $request->external_phone) {
-            $isAuthorized = true;
-        }
-        if (!$isAuthorized) {
+        if (empty($booking->accepted)) {
             return new JsonResponse([
                 'status' => false,
-                'message' => "Unauthorized"
-            ]);
+                'message' => 'Driver has not been assigned to this booking'
+            ], 409);
+        }
+
+        // Newer driver apps can send driver_id for an additional ownership check.
+        // Older versions send only booking_id, so keep that request compatible.
+        if ($request->filled('driver_id') && (string) $booking->accepted !== (string) $request->driver_id) {
+            return new JsonResponse([
+                'status' => false,
+                'message' => 'Driver is not assigned to this booking'
+            ], 403);
         }
 
         $message = "Driver Arrived Successfully";
@@ -884,7 +881,7 @@ class otherController extends BaseController
     public function driverStatus(Request $request)
     {
         $validated = $request->validate([
-            'source' => 'required|in:0,1',
+            // 'source' => 'required|in:0,1',
             'user_id' => 'required_if:source,0|nullable|exists:users,id',
             'external_phone' => 'required_if:source,1|nullable|string',
             'is_live' => 'required'
@@ -935,13 +932,27 @@ class otherController extends BaseController
     public function currentStatus(Request $request)
     {
         $validated = $request->validate([
-            'source' => 'required|in:0,1',
+            // 'source' => 'required|in:0,1',
             'user_id' => 'required_if:source,0|nullable|exists:users,id',
             'external_phone' => 'required_if:source,1|nullable|string',
         ]);
-        $user = Enduser::where('id', $validated['user_id'] ?? null)
-            ->orWhere('phone', $validated['external_phone'] ?? null)
-            ->select(['id', 'user_id', 'is_driver'])
+
+        if (empty($validated['user_id']) && empty($validated['external_phone'])) {
+            return new JsonResponse([
+                'status' => false,
+                'user_details' => null,
+                'message' => 'user_id or external_phone is required',
+            ]);
+        }
+
+        $user = Enduser::query()
+            ->when(!empty($validated['user_id']), function ($query) use ($validated) {
+                $query->where('id', $validated['user_id']);
+            })
+            ->when(empty($validated['user_id']) && !empty($validated['external_phone']), function ($query) use ($validated) {
+                $query->where('phone', $validated['external_phone']);
+            })
+            ->select(['id', 'user_id', 'is_driver', 'blockedstatus'])
             ->first();
 
         if (!$user) {
@@ -951,43 +962,67 @@ class otherController extends BaseController
             ]);
         }
 
+        $currentStatus = 0;
+        $reasonDetails = null;
+        $statusText = null;
+
         if ($user->is_driver == 0) {
             $reason = EnduserReason::where('user_id', $user->user_id)
                 ->select(['status', 'reason'])
                 ->latest()
                 ->first();
+
+            $currentStatus = $user->blockedstatus == 1 ? 0 : 1;
+            $currentStatusText = $currentStatus == 1 ? 'blocked' : 'unblocked';
+
             if (isset($reason)) {
-                $user->reason = $reason;
-                $user->currentStatus = $reason->status == 'Block' ? 1 : 0;
-            } else {
-                $user->reason = null;
-                $user->currentStatus = $user->blockedstatus == 1 ? 1 : 0;
+                $reasonDetails = [
+                    'reason' => $reason->reason,
+                    'status' => $currentStatusText,
+                ];
             }
+
+            return new JsonResponse([
+                'status' => true,
+                'user_details' => [
+                    'id' => $user->id,
+                    'user_id' => $user->user_id,
+                    'currentStatus' => $currentStatus,
+                    'is_driver' => $user->is_driver,
+                    'reason' => $reasonDetails,
+                ],
+            ]);
         } else {
             $driver = Driver::where('userid', $user->id)->first();
             if ($driver) {
                 if ($driver->status == 1) {
-                    $status = 'Unblock';
                     $reason = Unblocklist::where('unblockedId', $driver->id)->where('table', 'driver')->latest()->first();
-                    $user->reason = $reason?->comments ?? "Unblock";
-                    $user->status = $status;
-                    $user->currentStatus = 0;
+                    $statusText = 'Unblock';
+                    $currentStatus = 0;
+                    $reasonDetails = $reason?->comments ?? 'Unblock';
                 } elseif ($driver->status == 2) {
-                    $status = 'Block';
                     $reason = Blocklist::where('blockedId', $driver->id)->where('table', 'driver')->latest()->first();
-                    $user->reason = $reason?->comments ?? "Block";
-                    $user->status = $status;
-                    $user->currentStatus = 1;
+                    $statusText = 'Block';
+                    $currentStatus = 1;
+                    $reasonDetails = $reason?->comments ?? 'Your account has been blocked due to policy violation';
                 } else {
-                    $user->status = 'Driver Status Off Now';
-                    $user->currentStatus = 2;
+                    $statusText = 'Driver Status Off Now';
+                    $currentStatus = 2;
+                    $reasonDetails = 'Driver Status Off Now';
                 }
             }
         }
 
         return new JsonResponse([
             'status' => true,
-            'user_details' => $user
+            'user_details' => [
+                'id' => $user->id,
+                'user_id' => $user->user_id,
+                'is_driver' => $user->is_driver,
+                'reason' => $reasonDetails,
+                'status' => $statusText,
+                'currentStatus' => $currentStatus,
+            ],
         ]);
     }
 
@@ -2191,7 +2226,8 @@ class otherController extends BaseController
     {
         if (isset($user) && $user->device_token != "") {
 
-            $url = 'https://fcm.googleapis.com/v1/projects/doncky-user/messages:send';
+            $projectId = config('services.firebase.user_project_id', 'donkey-user');
+            $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
             // Authorization token (replace with your actual bearer token)
             $userToken = site::where('id', 1)?->first()?->userToken;
             $token = $userToken;
@@ -2230,11 +2266,37 @@ class otherController extends BaseController
                 ]
             ];
 
-            // Make a POST request to FCM API
-            $response = $client->post($url, [
-                'headers' => $headers,
-                'json' => $apiBody,
-            ]);
+            try {
+                // Make a POST request to FCM API.
+                $response = $client->post($url, [
+                    'headers' => $headers,
+                    'json' => $apiBody,
+                ]);
+            } catch (\GuzzleHttp\Exception\RequestException $exception) {
+                $statusCode = $exception->hasResponse()
+                    ? $exception->getResponse()->getStatusCode()
+                    : null;
+                $responseBody = $exception->hasResponse()
+                    ? (string) $exception->getResponse()->getBody()
+                    : $exception->getMessage();
+
+                Log::error('FCM user notification failed', [
+                    'project_id' => $projectId,
+                    'status_code' => $statusCode,
+                    'response' => $responseBody,
+                    'booking_id' => $booking?->booking_id,
+                ]);
+
+                return false;
+            } catch (\Throwable $exception) {
+                Log::error('FCM user notification failed unexpectedly', [
+                    'project_id' => $projectId,
+                    'message' => $exception->getMessage(),
+                    'booking_id' => $booking?->booking_id,
+                ]);
+
+                return false;
+            }
 
             // Check response status code
             if ($response->getStatusCode() === 200) {

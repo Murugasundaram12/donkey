@@ -631,7 +631,7 @@ class HomeController extends Controller
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
+                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
             }
             // Compile headers in one variable
             $headers = array(

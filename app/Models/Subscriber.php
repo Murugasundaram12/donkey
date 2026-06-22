@@ -104,6 +104,7 @@ class Subscriber extends Authenticatable
 
     protected $casts = [
         'subscriptionDate' => 'datetime',
-        'expiryDate' => 'datetime'
+        'expiryDate' => 'datetime',
+        'phone_verified_at' => 'datetime',
     ];
 }

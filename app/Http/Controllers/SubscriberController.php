@@ -18,10 +18,13 @@ use App\Models\User;
 use App\Models\statusnotify;
 use App\Models\Pricenotify;
 use App\Models\Booking;
+use App\Services\WhatsAppOtpService;
 use Validator;
 use App\Models\site;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
 class SubscriberController extends Controller
@@ -29,7 +32,9 @@ class SubscriberController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth')->except(['create', 'subscriberstore']);
+        $this->middleware('auth')->except([
+            'create', 'subscriberstore', 'showOtpVerification', 'verifyOtp', 'resendOtp'
+        ]);
         $this->middleware('permission:subscriber-list|subscriber-create|subscriber-edit|subscriber-delete', ['only' => ['subscriber', 'createsubscriber']]);
         $this->middleware('permission:subscriber-create', ['only' => ['subscriber']]);
         $this->middleware('permission:subscriber-edit', ['only' => ['edit', 'update']]);
@@ -115,12 +120,12 @@ class SubscriberController extends Controller
 
     public function create()
     {
-        $pincode = Pincode::all();
+        $pincode = Pincode::availableForNewSubscriber()->get();
         return view('admin.subscriber.create', compact('pincode'));
     }
-    public function subscriberstore(Request $request)
+    public function subscriberstore(Request $request, WhatsAppOtpService $whatsAppOtp)
     {
-
+        $isPublicRegistration = !Auth::check();
         // dd($request);
         $this->validate($request, [
             'name' => 'required',
@@ -128,7 +133,13 @@ class SubscriberController extends Controller
             'subscriptionDate' => 'required',
             'email' => 'required',
             'mobile' => ['required', 'max:12'],
-            'pincode' => 'required',
+            'pincode' => 'required|array|min:1|max:5',
+            'pincode.*' => [
+                'required',
+                'integer',
+                'exists:pincode,id',
+                Rule::notIn(Pincode::unavailableForNewSubscriberIds()),
+            ],
             'password' => 'required',
 
             'aadharNo' => 'required|numeric|unique:subscriber,aadharNo',
@@ -173,7 +184,14 @@ class SubscriberController extends Controller
         $zipcode = $request->pincode;
         //dd($zipcode);
         $pincode = json_encode($request->pincode);
-        $date = $request->get('subscriptionDate');
+        $date = now()->format('Y-m-d');
+        if (Auth::check()) {
+            try {
+                $date = \Carbon\Carbon::createFromFormat('d-m-Y', $request->get('subscriptionDate'))->format('Y-m-d');
+            } catch (\Exception $e) {
+                $date = \Carbon\Carbon::parse($request->get('subscriptionDate'))->format('Y-m-d');
+            }
+        }
         $date1 = $request->get('expiryDate');
         $subscriptionDate = $date;
 
@@ -274,12 +292,16 @@ class SubscriberController extends Controller
         $subscriber->cab_price3 = $request->get('cab_price3');
         $subscriber->cab_price4 = $request->get('cab_price4');
         $subscriber->blockedstatus = 1;
+        if ($isPublicRegistration) {
+            $subscriber->status = 0;
+            $subscriber->activestatus = 0;
+        }
         $subscriber->save();
         $subid = $subscriber->id;
         $insertPric = $this->storePrice($subid, $zipcode, $request);
         // dd($subscriber);
 
-        if (Auth::check()) {
+        if (!$isPublicRegistration) {
             $data = [
                 'name' => $request->name,
                 'email' => $request->email,
@@ -310,6 +332,19 @@ class SubscriberController extends Controller
             }
         }
 
+        if ($isPublicRegistration && config('services.whatsapp.onboarding_otp_enabled')) {
+            $otp = (string) random_int(100000, 999999);
+            $this->storeOnboardingOtp($subscriber, $otp);
+            $sent = $whatsAppOtp->send($subscriber->mobile, $otp);
+
+            return redirect()->route('subscriber.otp.form')->with(
+                $sent ? 'success' : 'error',
+                $sent
+                    ? 'Verification code sent to your WhatsApp number.'
+                    : 'WhatsApp OTP is not configured yet. Please use Resend OTP after the token is configured.'
+            );
+        }
+
         $message = 'Application Submitted Successfully. Your application has been received and is under review. The review process typically takes 5-7 business days. You will receive a WhatsApp notification if your application is approved or rejected. If additional information is required, our team may contact you through our official WhatsApp number: 9069067008. If your application remains under review beyond 7 business days, you may contact us through our official WhatsApp number using your registered mobile number and Service Provider ID. To ensure timely processing for all applicants, please avoid sending repeated follow-up messages during the review period.';
         return redirect()->route('createSubscriber')->with([
             'success' => 'Subscriber added!',
@@ -317,11 +352,104 @@ class SubscriberController extends Controller
             'show_success_modal' => true
         ]);
     }
+
+    public function showOtpVerification()
+    {
+        $subscriber = $this->pendingOtpSubscriber();
+        if (!$subscriber) {
+            return redirect()->route('createSubscriber')
+                ->with('error', 'Your verification session expired. Please submit the form again.');
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) $subscriber->mobile);
+        $maskedPhone = strlen($digits) > 4
+            ? str_repeat('*', strlen($digits) - 4) . substr($digits, -4)
+            : $digits;
+
+        return view('admin.subscriber.verify-otp', compact('maskedPhone'));
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate(['otp' => ['required', 'digits:6']]);
+
+        $subscriber = $this->pendingOtpSubscriber();
+        $hash = session('subscriber_onboarding_otp.hash');
+        $expiresAt = session('subscriber_onboarding_otp.expires_at');
+        $attempts = (int) session('subscriber_onboarding_otp.attempts', 0);
+
+        if (!$subscriber || !$hash || !$expiresAt || now()->timestamp > (int) $expiresAt) {
+            return back()->with('error', 'OTP expired. Please request a new code.');
+        }
+
+        if ($attempts >= 5) {
+            return back()->with('error', 'Too many incorrect attempts. Please request a new code.');
+        }
+
+        if (!Hash::check($request->otp, $hash)) {
+            session(['subscriber_onboarding_otp.attempts' => $attempts + 1]);
+            return back()->withErrors(['otp' => 'The verification code is incorrect.']);
+        }
+
+        $subscriber->phone_verified_at = now();
+        $subscriber->save();
+        session()->forget('subscriber_onboarding_otp');
+
+        return redirect()->route('createSubscriber')->with([
+            'success' => 'Phone number verified!',
+            'success_message' => 'Application Submitted Successfully. Your phone number has been verified and your application is under review.',
+            'show_success_modal' => true,
+        ]);
+    }
+
+    public function resendOtp(WhatsAppOtpService $whatsAppOtp)
+    {
+        $subscriber = $this->pendingOtpSubscriber();
+        if (!$subscriber) {
+            return redirect()->route('createSubscriber')
+                ->with('error', 'Your verification session expired. Please submit the form again.');
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $this->storeOnboardingOtp($subscriber, $otp);
+
+        if (!$whatsAppOtp->send($subscriber->mobile, $otp)) {
+            return back()->with('error', 'We could not send the WhatsApp code. Please configure the token or try again shortly.');
+        }
+
+        return back()->with('success', 'A new verification code was sent to your WhatsApp number.');
+    }
+
+    private function storeOnboardingOtp(Subscriber $subscriber, string $otp): void
+    {
+        session([
+            'subscriber_onboarding_otp' => [
+                'subscriber_id' => $subscriber->id,
+                'hash' => Hash::make($otp),
+                'expires_at' => now()->addMinutes(10)->timestamp,
+                'attempts' => 0,
+            ],
+        ]);
+    }
+
+    private function pendingOtpSubscriber(): ?Subscriber
+    {
+        $subscriberId = session('subscriber_onboarding_otp.subscriber_id');
+        if (!$subscriberId) {
+            return null;
+        }
+
+        return Subscriber::where('id', $subscriberId)
+            ->where('created_by', 'public')
+            ->whereNull('phone_verified_at')
+            ->first();
+    }
+
     public function edit($id)
     {
         $subscriber = Subscriber::findOrFail($id);
 
-        $pincode = Pincode::where('usedBy', 0)->orWhere('usedBy', $id)->get();
+        $pincode = Pincode::availableForSubscriber($subscriber)->get();
         //dd($pincode);
         return view('admin.subscriber.edit', compact('subscriber', 'pincode'));
     }
@@ -332,6 +460,16 @@ class SubscriberController extends Controller
         $employee = Employee::where('email', $user->email)->first();
         // dd($employee);
 
+        $currentPincodeIds = collect(json_decode((string) $user->pincode, true))
+            ->map(fn ($pincodeId) => (int) $pincodeId)
+            ->filter()
+            ->unique()
+            ->all();
+        $unavailablePincodeIds = array_diff(
+            Pincode::unavailableForNewSubscriberIds($user->id),
+            $currentPincodeIds
+        );
+
         $this->validate($request, [
             'name' => 'required',
             'location' => 'required',
@@ -339,7 +477,13 @@ class SubscriberController extends Controller
             'expiryDate' => 'required',
             'email' => 'required',
             'mobile' => ['required', 'max:12'],
-            'pincode' => 'required',
+            'pincode' => 'required|array|min:1|max:5',
+            'pincode.*' => [
+                'required',
+                'integer',
+                'exists:pincode,id',
+                Rule::notIn($unavailablePincodeIds),
+            ],
             'password' => 'required',
 
             'aadharNo' => 'required|numeric',
@@ -559,7 +703,7 @@ class SubscriberController extends Controller
         $pincode = Pincode::whereIn('id', $pin)->get();
         $pricenotify = Pricenotify::where('modifiedId', $id)->latest()->get();
         $statusnotify = statusnotify::where('modifiedId', $id)->latest()->get();
-        $empolyee_id = Employee::where('email', $subscriber->email)->first()->emp_id;
+        $empolyee_id = Employee::where('email', $subscriber->email)->first()->emp_id ?? null;
         $admin = Admin::all();
         return view('admin.subscriber.show', compact('statusnotify', 'subscriber', 'pincode', "pricenotify", 'admin', 'empolyee_id'));
     }
@@ -687,7 +831,7 @@ class SubscriberController extends Controller
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
+                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
             }
             // Compile headers in one variable
             $headers = array(

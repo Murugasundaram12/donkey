@@ -66,9 +66,9 @@
                                         <label for="subscriptionDate">Date</label>
                                         <input class="form-control @error('subscriptionDate') is-invalid @enderror"
                                             id="subscriptionDate" type="date"
-                                          
+
                                             value="{{ \Carbon\Carbon::parse($subscriber->subscriptionDate)->format('Y-m-d')}}"
-                                            name="subscriptionDate" required readonly>
+                                            name="subscriptionDate" required>
                                         @error('subscriptionDate')
                                         <span class="invalid-feedback">
                                             <strong>{{ $message }}</strong>
@@ -378,7 +378,7 @@
                                         @enderror
                                         <div class="invalid-feedback"> Please enter buy and delivery km price</div>
                                     </div>
-                                    <div class="col-md-2"></div>                                    
+                                    <div class="col-md-2"></div>
                                     <div class="col-md-4 mb-4">
                                         <label for="auto_price">Auto Service Fare</label>
                                         <input type="text"

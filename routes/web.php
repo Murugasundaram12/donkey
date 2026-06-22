@@ -108,6 +108,9 @@ Route::get('/createSubscriber', [App\Http\Controllers\SubscriberController::clas
 Route::get('/subscriberList', [App\Http\Controllers\SubscriberController::class, 'subscriber'])->name('subscriber');
 Route::get('/subscriberList/without-employee-id', [App\Http\Controllers\SubscriberController::class, 'subscribersWithoutEmployeeId'])->name('subscriber.withoutEmployeeId');
 Route::post('/subscriberstore', [App\Http\Controllers\SubscriberController::class, 'subscriberstore']);
+Route::get('/subscriber/verify-otp', [App\Http\Controllers\SubscriberController::class, 'showOtpVerification'])->name('subscriber.otp.form');
+Route::post('/subscriber/verify-otp', [App\Http\Controllers\SubscriberController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('subscriber.otp.verify');
+Route::post('/subscriber/resend-otp', [App\Http\Controllers\SubscriberController::class, 'resendOtp'])->middleware('throttle:3,1')->name('subscriber.otp.resend');
 Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->whereNumber('id')->name('show');
 Route::get('/subscriber/{id}', [App\Http\Controllers\SubscriberController::class, 'edit'])->whereNumber('id');
 Route::put('/subscriberupdate/{id}', [App\Http\Controllers\SubscriberController::class, 'update'])->whereNumber('id');
