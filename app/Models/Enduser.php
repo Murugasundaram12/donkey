@@ -21,4 +21,9 @@ class Enduser extends Model
      {
         return $this->hasMany(EnduserReason::class,'user_id','user_id');
      }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(self::class, 'referred_by', 'referral_code');
+    }
 }

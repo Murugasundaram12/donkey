@@ -296,7 +296,7 @@
                                                 pdf
                                                 format </span></small>
                                             <small class="form-text text-muted">
-                                                Note: To download the Rider Agreement, please click here and refer to Point 7 on the website. After obtaining the rider's signature, upload the signed copy in the Documents section below.
+                                                Note: To download the Rider Agreement, please <a href="https://www.donkeydeliveries.com" target="_blank" rel="noopener noreferrer">click here</a> and refer to Point 7 on the website. After obtaining the rider's signature, upload the signed copy in the Documents section.
                                             </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
@@ -461,4 +461,3 @@
         }
 </script>
 @endsection
-

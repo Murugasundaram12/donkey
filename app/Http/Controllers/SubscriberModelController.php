@@ -9,6 +9,7 @@ use App\Models\Subscriber;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Models\statusnotify;
+use Spatie\Permission\Models\Role;
 
 use Validator;
 
@@ -82,8 +83,10 @@ class SubscriberModelController extends Controller
                                 $subscriber = Subscriber::where('email', $email)->first();
 
                                 if ($subscriber && $subscriber->password == $password) {
+                                    $this->ensureSubscriberAdminSetup($subscriber);
                                     $remember = $request->boolean('remember');
                                     Auth::guard('subscriber')->login($subscriber, $remember);
+                                    Session::put('subscribers', $subscriber->fresh());
                                     return redirect()->route('subscribers.dashboard');
                                 }
                             }
@@ -110,8 +113,10 @@ class SubscriberModelController extends Controller
                                 $subscriber = Subscriber::where('email', $email)->first();
 
                                 if ($subscriber && $subscriber->password == $password) {
+                                    $this->ensureSubscriberAdminSetup($subscriber);
                                     $remember = $request->boolean('remember');
                                     Auth::guard('subscriber')->login($subscriber, $remember);
+                                    Session::put('subscribers', $subscriber->fresh());
                                     return redirect()->route('subscribers.dashboard');
                                 }
                             }
@@ -196,5 +201,35 @@ class SubscriberModelController extends Controller
         } else {
             return back()->with('error', 'Wrong Credentials');
         }
+    }
+
+    private function ensureSubscriberAdminSetup(Subscriber $subscriber): void
+    {
+        if (!in_array((string) $subscriber->getRawOriginal('created_by'), ['', '0', 'public'], true)) {
+            return;
+        }
+
+        $role = Role::where('guard_name', 'subscriber')->where('name', 'Subscriber Admin')->first();
+        if ($role && !$subscriber->hasRole($role->name)) {
+            $subscriber->assignRole($role->name);
+        }
+
+        Employee::firstOrCreate(
+            ['email' => $subscriber->email],
+            [
+                'name' => $subscriber->name,
+                'profile' => 'profile.jpg',
+                'emp_id' => 'PBP Employee ID - SELF' . $subscriber->id,
+                'official_mail' => $subscriber->email,
+                'mobile' => $subscriber->mobile,
+                'official_mobile' => $subscriber->mobile,
+                'address' => $subscriber->description ?: $subscriber->location ?: 'N/A',
+                'current_address' => $subscriber->location,
+                'location' => $subscriber->location,
+                'aadhar' => $subscriber->aadharNo ?: 'N/A',
+                'password' => $subscriber->password,
+                'subscriber_id' => $subscriber->id,
+            ]
+        );
     }
 }

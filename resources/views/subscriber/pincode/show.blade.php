@@ -139,7 +139,7 @@
                 $.ajax({
                     type: "GET",
                     dataType: "json",
-                    url: "{{ route('pincodebasedcategorystatus') }}",
+                    url: "{{ route('subscribers.pincodebasedcategorystatus') }}",
                     data: {
                         'status': status,
                         'id': Id

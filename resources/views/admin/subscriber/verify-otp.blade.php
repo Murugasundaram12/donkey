@@ -17,7 +17,7 @@
                         @endif
 
                         <p>Enter the 6-digit verification code sent to WhatsApp number {{ $maskedPhone }}.</p>
-                        <p class="text-muted">The code is valid for 10 minutes.</p>
+                        <p class="text-muted">The code is valid for 60 seconds.</p>
 
                         <form method="post" action="{{ route('subscriber.otp.verify') }}">
                             @csrf

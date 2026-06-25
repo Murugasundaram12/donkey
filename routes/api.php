@@ -31,14 +31,14 @@ Route::get('getDriversLocation', [DriverLocationController::class, 'index'])->na
 Route::get('driver-arrived', [otherController::class, 'driverarrived'])->name('driverarrived')->middleware('detect.company');
 Route::resource('info', InfoController::class)->only('index');
 Route::get('pincodeDetails', [otherController::class, 'pincodeDetails'])->name('pincodeDetails');
-Route::get('readBy', [MessageControler::class, 'readBy'])->name('readBy');
+Route::get('readBy', [MessageControler::class, 'readBy'])->name('api.readBy');
 Route::get('redDot', [MessageControler::class, 'redDot'])->name('redDot');
 Route::post('userToken', [otherController::class, 'userToken'])->name('userToken');
 Route::post('driverToken', [otherController::class, 'driverToken'])->name('driverToken');
-Route::get('automaticBookingCancel', [otherController::class, 'automaticBookingCancel'])->name('automaticBookingCancel');
-Route::get('automaticBookingComplete', [otherController::class, 'automaticBookingComplete'])->name('automaticBookingComplete');
+Route::get('automaticBookingCancel', [otherController::class, 'automaticBookingCancel'])->name('api.automaticBookingCancel');
+Route::get('automaticBookingComplete', [otherController::class, 'automaticBookingComplete'])->name('api.automaticBookingComplete');
 Route::get('maintainance', [otherController::class, 'maintainance'])->name('maintainance');
-Route::get('coupons', [otherController::class, 'coupons'])->name('coupons');
+Route::get('coupons', [otherController::class, 'coupons'])->name('api.coupons');
 Route::get('couponList', [otherController::class, 'couponList'])->name('couponList');
 Route::get('appVerision', [otherController::class, 'appVerision'])->name('appVerision');
 Route::post('reportDriver', [otherController::class, 'reportDriver'])->name('reportDriver');
@@ -58,12 +58,12 @@ Route::get('availablePincode', [otherController::class, 'availablePincode'])->na
 Route::delete('deleteAddress/{id}', [otherController::class, 'deleteAddress'])->name('deleteAddress');
 Route::get('favouriteAddressList', [otherController::class, 'favouriteAddressList'])->name('favouriteAddressList');
 Route::post('addAddress', [otherController::class, 'addAddress'])->name('addAddress');
-Route::get('userProfile', [otherController::class, 'userProfile'])->name('userProfile');
+Route::get('userProfile', [otherController::class, 'userProfile'])->name('api.userProfile');
 Route::put('updateProfile/{id}', [otherController::class, 'updateProfile'])->name('updateProfile');
 Route::put('updateMobileNumber/{id}', [otherController::class, 'updateMobileNumber'])->name('updateMobileNumber');
-Route::post('forgotPassword', [otherController::class, 'forgot'])->name('forgotPassword');
-Route::post('/register', [App\Http\Controllers\API\RegisterController::class, 'register'])->name('register');
-Route::post('/login', [App\Http\Controllers\API\RegisterController::class, 'login'])->name('login');
+Route::post('forgotPassword', [otherController::class, 'forgot'])->name('api.forgotPassword');
+Route::post('/register', [App\Http\Controllers\API\RegisterController::class, 'register'])->name('api.register');
+Route::post('/login', [App\Http\Controllers\API\RegisterController::class, 'login'])->name('api.login');
 Route::post('sendMessage', [MessageControler::class, 'createMessage'])->name('sendMessage');
 Route::get('reciveMessage', [MessageControler::class, 'reciveMessage'])->name('reciveMessage');
 //Route::middleware('auth:sanctum')->group( function () {

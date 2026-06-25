@@ -458,12 +458,31 @@
                         </a>
                     </li>
                 @endif
-
-
-
+                @php
+                    $canListRiders = false;
+                    foreach (['rider-list', 'emp-rider-list'] as $permissionName) {
+                        try {
+                            if ($user->hasPermissionTo($permissionName)) {
+                                $canListRiders = true;
+                                break;
+                            }
+                        } catch (\Throwable $exception) {
+                        }
+                    }
+                    $canCreateRiders = false;
+                    foreach (['rider-create', 'emp-rider-create'] as $permissionName) {
+                        try {
+                            if ($user->hasPermissionTo($permissionName)) {
+                                $canCreateRiders = true;
+                                break;
+                            }
+                        } catch (\Throwable $exception) {
+                        }
+                    }
+                @endphp
                 @if (
-                        $user->hasPermissionTo('rider-list') ||
-                        $user->hasPermissionTo('rider-create') ||
+                        $canListRiders ||
+                        $canCreateRiders ||
                         $user->hasPermissionTo('rider-blocked')
                     )
                     <li class="nav-item dropdown">
@@ -472,14 +491,14 @@
                             <span class="ml-3 item-text">Riders</span><span class="sr-only">(current)</span>
                         </a>
                         <ul class="collapse list-unstyled pl-4 w-100" id="driver">
-                            @if ($user->hasPermissionTo('rider-list'))
+                            @if ($canListRiders)
                                 <li class="nav-item active">
                                     <a class="nav-link pl-3" href="{{ url('subscribers/driver') }}"><span
                                             class="ml-1 item-text">List</span></a>
                                 </li>
                             @endif
 
-                            @if ($user->hasPermissionTo('rider-create'))
+                            @if ($canCreateRiders)
                                 <li class="nav-item">
                                     <a class="nav-link pl-3" href="{{ url('subscribers/createDriver') }}"><span
                                             class="ml-1 item-text">Create New</span></a>

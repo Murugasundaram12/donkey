@@ -72,22 +72,32 @@
                                 </thead>
                                 <tbody>
                                     <?php $i = 1; ?>
-                                    @foreach ($unblocklist as $unblocklist)
+                                    @foreach ($unblocklist as $unblockEntry)
+                                    @php
+                                        $driver = $unblockEntry->driver->first();
+                                        $subscriber = $unblockEntry->subscriber->first();
+                                        $driverUserId = $driver
+                                            ? App\Models\Enduser::where('id', $driver->userid)->value('user_id')
+                                            : null;
+                                    @endphp
                                     <tr>
 
 
-                                        <td>{{ $i}}</td>
-                                        <td>{{$unblocklist->driver[0]->name}}</td>
-                                        <td>{{ App\Models\Enduser::where('id', $unblocklist->driver[0]->userid)->first()->user_id }}</td>
+                                        <td>{{ $i }}</td>
+                                        <td>{{ $driver?->name ?? 'Rider not found' }}</td>
+                                        <td>{{ $driverUserId ?? '-' }}</td>
                                         {{-- <td>{{$driver->driverId}}</td> --}}
-                                        <td>{{$unblocklist->subscriber[0]->name}}</td>
-                                        <td>{{$unblocklist->subscriber[0]->subscriberId}}</td>
-                                        <td>{{$unblocklist->comments}}</td>
+                                        <td>{{ $subscriber?->name ?? 'Subscriber not found' }}</td>
+                                        <td>{{ $subscriber?->subscriberId ?? '-' }}</td>
+                                        <td>{{ $unblockEntry->comments }}</td>
 
-                                        <td>{{$unblocklist->created_at->format('d-m-Y h:i:s')}}</td>
-                                        <td> @if ($unblocklist->driver[0]->status == 2)
+                                        <td>{{ $unblockEntry->created_at?->format('d-m-Y h:i:s') ?? '-' }}</td>
+                                        <td>
+                                            @if (!$driver)
+                                            <p class="badge badge-secondary">Unavailable</p>
+                                            @elseif ($driver->status == 2)
                                             <p class="badge badge-danger">Blocked</p>
-                                            @elseif ($unblocklist->driver[0]->status == 1)
+                                            @elseif ($driver->status == 1)
                                             <p class="badge badge-success">Active</p>
                                             @else
                                             <p class="badge badge-warning">Pending</p>

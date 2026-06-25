@@ -31,7 +31,6 @@
     <link rel="stylesheet" href="{{ asset('admin/css/app-dark.css') }}" id="darkTheme" disabled>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <style>
     a {
         text-decoration: none !important;
@@ -47,12 +46,8 @@
         @yield('content')
     </main> <!-- main -->
     @include('partials.success-modal')
-    @yield('scripts')
 
     @include('partials.subscriber.footer')
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.js"></script>
-    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <script src="{{ asset('admin/js/jquery.min.js') }}"></script>
     <script src="{{ asset('admin/js/popper.min.js') }}"></script>
     <script src="{{ asset('admin/js/moment.min.js') }}"></script>
@@ -243,6 +238,7 @@
     </script>
 
     <script src="{{ asset('admin/js/apps.js') }}"></script>
+    @yield('scripts')
     <script>
     var timeoutTime = 1800;
     var timeoutTimer = setTimeout(ShowTimeOutWarning, timeoutTime);

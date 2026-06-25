@@ -33,7 +33,7 @@ class SubscriberController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except([
-            'create', 'subscriberstore', 'showOtpVerification', 'verifyOtp', 'resendOtp'
+            'create', 'subscriberstore', 'sendOnboardingOtp', 'verifyOnboardingOtp', 'showOtpVerification', 'verifyOtp', 'resendOtp'
         ]);
         $this->middleware('permission:subscriber-list|subscriber-create|subscriber-edit|subscriber-delete', ['only' => ['subscriber', 'createsubscriber']]);
         $this->middleware('permission:subscriber-create', ['only' => ['subscriber']]);
@@ -126,6 +126,23 @@ class SubscriberController extends Controller
     public function subscriberstore(Request $request, WhatsAppOtpService $whatsAppOtp)
     {
         $isPublicRegistration = !Auth::check();
+        if (
+            $isPublicRegistration &&
+            config('services.whatsapp.onboarding_otp_enabled') &&
+            !$this->hasVerifiedOnboardingOtp($request->get('mobile'))
+        ) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Please verify your WhatsApp OTP before submitting the form.',
+                    'requires_otp' => true,
+                ], 409);
+            }
+
+            return back()
+                ->withInput()
+                ->with('error', 'Please verify your WhatsApp OTP before submitting the form.');
+        }
+
         // dd($request);
         $this->validate($request, [
             'name' => 'required',
@@ -295,6 +312,9 @@ class SubscriberController extends Controller
         if ($isPublicRegistration) {
             $subscriber->status = 0;
             $subscriber->activestatus = 0;
+            if (config('services.whatsapp.onboarding_otp_enabled')) {
+                $subscriber->phone_verified_at = now();
+            }
         }
         $subscriber->save();
         $subid = $subscriber->id;
@@ -333,15 +353,14 @@ class SubscriberController extends Controller
         }
 
         if ($isPublicRegistration && config('services.whatsapp.onboarding_otp_enabled')) {
-            $otp = (string) random_int(100000, 999999);
-            $this->storeOnboardingOtp($subscriber, $otp);
-            $sent = $whatsAppOtp->send($subscriber->mobile, $otp);
+            session()->forget(['subscriber_onboarding_pre_otp', 'subscriber_onboarding_otp_verified']);
+        }
 
-            return redirect()->route('subscriber.otp.form')->with(
-                $sent ? 'success' : 'error',
-                $sent
-                    ? 'Verification code sent to your WhatsApp number.'
-                    : 'WhatsApp OTP is not configured yet. Please use Resend OTP after the token is configured.'
+        if ($isPublicRegistration && config('services.whatsapp.onboarding_message_enabled')) {
+            $whatsAppOtp->sendBodyTemplate(
+                $subscriber->mobile,
+                config('services.whatsapp.submission_template'),
+                $whatsAppOtp->submissionVariables($subscriber)
             );
         }
 
@@ -350,6 +369,87 @@ class SubscriberController extends Controller
             'success' => 'Subscriber added!',
             'success_message' => $message,
             'show_success_modal' => true
+        ]);
+    }
+
+    public function sendOnboardingOtp(Request $request, WhatsAppOtpService $whatsAppOtp)
+    {
+        $request->validate([
+            'mobile' => ['required', 'max:12'],
+        ]);
+
+        $otp = (string) random_int(100000, 999999);
+        $mobile = $request->get('mobile');
+
+        session([
+            'subscriber_onboarding_pre_otp' => [
+                'mobile' => $this->normaliseOtpMobile($mobile),
+                'hash' => Hash::make($otp),
+                'expires_at' => now()->addSeconds(60)->timestamp,
+                'attempts' => 0,
+            ],
+        ]);
+
+        if (!$whatsAppOtp->send($mobile, $otp)) {
+            return response()->json([
+                'message' => 'We could not send the WhatsApp code. Please configure the token or try again shortly.',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Verification code sent to your WhatsApp number.',
+            'masked_phone' => $this->maskedMobile($mobile),
+        ]);
+    }
+
+    public function verifyOnboardingOtp(Request $request)
+    {
+        $request->validate([
+            'mobile' => ['required', 'max:12'],
+            'otp' => ['required', 'digits:6'],
+        ]);
+
+        $otpSession = session('subscriber_onboarding_pre_otp');
+        $mobile = $this->normaliseOtpMobile($request->get('mobile'));
+
+        if (
+            !$otpSession ||
+            ($otpSession['mobile'] ?? null) !== $mobile ||
+            empty($otpSession['hash']) ||
+            empty($otpSession['expires_at']) ||
+            now()->timestamp > (int) $otpSession['expires_at']
+        ) {
+            return response()->json([
+                'message' => 'OTP expired. Please request a new code.',
+            ], 422);
+        }
+
+        $attempts = (int) ($otpSession['attempts'] ?? 0);
+        if ($attempts >= 5) {
+            return response()->json([
+                'message' => 'Too many incorrect attempts. Please request a new code.',
+            ], 422);
+        }
+
+        if (!Hash::check($request->get('otp'), $otpSession['hash'])) {
+            $otpSession['attempts'] = $attempts + 1;
+            session(['subscriber_onboarding_pre_otp' => $otpSession]);
+
+            return response()->json([
+                'message' => 'The verification code is incorrect.',
+            ], 422);
+        }
+
+        session([
+            'subscriber_onboarding_otp_verified' => [
+                'mobile' => $mobile,
+                'verified_at' => now()->timestamp,
+            ],
+        ]);
+        session()->forget('subscriber_onboarding_pre_otp');
+
+        return response()->json([
+            'message' => 'Phone number verified.',
         ]);
     }
 
@@ -369,7 +469,7 @@ class SubscriberController extends Controller
         return view('admin.subscriber.verify-otp', compact('maskedPhone'));
     }
 
-    public function verifyOtp(Request $request)
+    public function verifyOtp(Request $request, WhatsAppOtpService $whatsAppOtp)
     {
         $request->validate(['otp' => ['required', 'digits:6']]);
 
@@ -394,6 +494,14 @@ class SubscriberController extends Controller
         $subscriber->phone_verified_at = now();
         $subscriber->save();
         session()->forget('subscriber_onboarding_otp');
+
+        if (config('services.whatsapp.onboarding_message_enabled')) {
+            $whatsAppOtp->sendBodyTemplate(
+                $subscriber->mobile,
+                config('services.whatsapp.submission_template'),
+                $whatsAppOtp->submissionVariables($subscriber)
+            );
+        }
 
         return redirect()->route('createSubscriber')->with([
             'success' => 'Phone number verified!',
@@ -426,7 +534,7 @@ class SubscriberController extends Controller
             'subscriber_onboarding_otp' => [
                 'subscriber_id' => $subscriber->id,
                 'hash' => Hash::make($otp),
-                'expires_at' => now()->addMinutes(10)->timestamp,
+                'expires_at' => now()->addSeconds(60)->timestamp,
                 'attempts' => 0,
             ],
         ]);
@@ -443,6 +551,35 @@ class SubscriberController extends Controller
             ->where('created_by', 'public')
             ->whereNull('phone_verified_at')
             ->first();
+    }
+
+    private function hasVerifiedOnboardingOtp(?string $mobile): bool
+    {
+        $verified = session('subscriber_onboarding_otp_verified');
+        if (!$verified || empty($verified['mobile']) || empty($verified['verified_at'])) {
+            return false;
+        }
+
+        if ((now()->timestamp - (int) $verified['verified_at']) > 600) {
+            session()->forget('subscriber_onboarding_otp_verified');
+            return false;
+        }
+
+        return $verified['mobile'] === $this->normaliseOtpMobile($mobile);
+    }
+
+    private function normaliseOtpMobile(?string $mobile): string
+    {
+        return preg_replace('/\D+/', '', (string) $mobile);
+    }
+
+    private function maskedMobile(?string $mobile): string
+    {
+        $digits = $this->normaliseOtpMobile($mobile);
+
+        return strlen($digits) > 4
+            ? str_repeat('*', strlen($digits) - 4) . substr($digits, -4)
+            : $digits;
     }
 
     public function edit($id)
@@ -1011,9 +1148,10 @@ class SubscriberController extends Controller
     }
 
 
-    public function block(Request $request, $id)
+    public function block(Request $request, $id, WhatsAppOtpService $whatsApp)
     {
         $subscriber = Subscriber::findorFail($id);
+        $wasUnblocked = (string) $subscriber->blockedstatus === '1';
 
         $subscriber->blockedstatus = '0';
         $subscriber->update();
@@ -1029,7 +1167,13 @@ class SubscriberController extends Controller
         $block->comments = $request->get('reason');
         $block->save();
 
-        $this->sendSubscriberStatusWhatsapp($subscriber, 'banned');
+        if ($wasUnblocked && $this->isSelfRegisteredSubscriber($subscriber)) {
+            $whatsApp->sendBodyTemplate(
+                $subscriber->mobile,
+                config('services.whatsapp.rejection_template'),
+                [$subscriber->subscriberId]
+            );
+        }
 
         return redirect('subscriberList')->with('success', 'Subscriber blocked ');
     }
@@ -1109,5 +1253,10 @@ class SubscriberController extends Controller
         if ($httpCode !== 200) {
             Log::warning('Subscriber status WhatsApp failed.', compact('httpCode', 'response', 'error'));
         }
+    }
+
+    private function isSelfRegisteredSubscriber(Subscriber $subscriber): bool
+    {
+        return in_array((string) $subscriber->getRawOriginal('created_by'), ['', '0', 'public'], true);
     }
 }

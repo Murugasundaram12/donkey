@@ -151,6 +151,15 @@
                                             <input type="text" class="form-control @error('mobile') is-invalid @enderror"
                                                 id="mobile" value="{{ old('mobile') }}"
                                                 onkeypress="return isNumberKey(event)" name="mobile" required>
+                                            @if (!Auth::check() && config('services.whatsapp.onboarding_otp_enabled'))
+                                                <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                                                    id="subscriberSendOtpBtn">
+                                                    Send OTP
+                                                </button>
+                                                <span class="text-success ml-2" id="subscriberOtpVerifiedText"
+                                                    style="display:none;">OTP verified</span>
+                                                <div id="subscriberOtpInlineStatus" class="small mt-1"></div>
+                                            @endif
                                             @error('mobile')
                                                 <span class="invalid-feedback">
                                                     <strong>{{ $message }}</strong>
@@ -883,6 +892,48 @@
 
                                     <center><button class="btn btn-primary mt-2" type="submit">Submit form</button></center>
                                 </form>
+                                <div class="modal fade" id="subscriberOtpModal" tabindex="-1" role="dialog"
+                                    aria-labelledby="subscriberOtpModalLabel" aria-hidden="true" data-backdrop="static"
+                                    data-keyboard="false">
+                                    <div class="modal-dialog modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="subscriberOtpModalLabel">
+                                                    Verify WhatsApp Number
+                                                </h5>
+                                                <button type="button" class="close subscriber-otp-close"
+                                                    aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="subscriberOtpStatus" class="alert" style="display:none;"></div>
+                                                <p class="mb-2">
+                                                    Enter the 6-digit verification code sent to
+                                                    <strong id="subscriberOtpMaskedPhone"></strong>.
+                                                </p>
+                                                <p class="text-muted">The code is valid for 60 seconds.</p>
+                                                <div class="form-group mb-0">
+                                                    <label for="subscriberOtpInput">Verification code</label>
+                                                    <input type="text" inputmode="numeric" autocomplete="one-time-code"
+                                                        pattern="[0-9]{6}" maxlength="6" class="form-control"
+                                                        id="subscriberOtpInput">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-link" id="subscriberOtpResendBtn">
+                                                    Resend OTP
+                                                </button>
+                                                <button type="button" class="btn btn-secondary" id="subscriberOtpCancelBtn">
+                                                    Cancel
+                                                </button>
+                                                <button type="button" class="btn btn-primary" id="subscriberOtpVerifyBtn">
+                                                    Verify OTP
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="modal fade" id="subscriberSuccessModal" tabindex="-1" role="dialog"
                                     aria-labelledby="subscriberSuccessModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -935,8 +986,15 @@
             const pincodeDebugPrefix = '[Pincode Debug]';
             const draftKey = 'subscriber_onboarding_draft:' + window.location.pathname;
             const submitPendingKey = draftKey + ':submitted';
+            const otpVerifiedKey = draftKey + ':otp_verified';
+            const fileDraftDbName = 'subscriber_onboarding_file_drafts';
+            const fileDraftStoreName = 'file_drafts';
+            const fileDraftKey = draftKey + ':files';
             const currentSubscriptionDate = @json(now()->format('d-m-Y'));
             const isPublicSubscriberForm = @json(!Auth::check());
+            const requiresWhatsAppOtp = @json(!Auth::check() && config('services.whatsapp.onboarding_otp_enabled'));
+            const sendOtpUrl = @json(route('subscriber.onboarding.otp.send'));
+            const verifyOtpUrl = @json(route('subscriber.onboarding.otp.verify'));
             const hasValidationErrors = @json($errors->any());
             const hasServerSuccess = @json(session()->has('success') || session()->has('show_success_modal'));
             const subscriberIndexUrl = @json(route('subscriber'));
@@ -947,6 +1005,12 @@
                 || (!isReload && document.referrer.indexOf('/subscriberList') !== -1);
             let pincodeModalShown = false;
             let pincodeSearchRequest = 0;
+            let otpVerifiedForSubmit = false;
+            let otpRequestInProgress = false;
+            let verifiedOtpMobile = '';
+            let otpSentMobile = '';
+            let allowPageLeave = false;
+            let restoringFileDraft = false;
 
             function setMessage(show) {
                 $('#pincodeTopAlert').hide();
@@ -983,6 +1047,127 @@
 
             function getFieldKey(field) {
                 return field.name || field.id;
+            }
+
+            function openFileDraftDb() {
+                return new Promise(function (resolve, reject) {
+                    if (!window.indexedDB) {
+                        reject(new Error('IndexedDB is not available.'));
+                        return;
+                    }
+
+                    const request = indexedDB.open(fileDraftDbName, 1);
+                    request.onupgradeneeded = function () {
+                        request.result.createObjectStore(fileDraftStoreName);
+                    };
+                    request.onsuccess = function () {
+                        resolve(request.result);
+                    };
+                    request.onerror = function () {
+                        reject(request.error || new Error('Unable to open file draft storage.'));
+                    };
+                });
+            }
+
+            async function writeFileDraft(files) {
+                const db = await openFileDraftDb();
+                return new Promise(function (resolve, reject) {
+                    const transaction = db.transaction(fileDraftStoreName, 'readwrite');
+                    transaction.objectStore(fileDraftStoreName).put(files, fileDraftKey);
+                    transaction.oncomplete = function () {
+                        db.close();
+                        resolve();
+                    };
+                    transaction.onerror = function () {
+                        db.close();
+                        reject(transaction.error || new Error('Unable to save file draft.'));
+                    };
+                });
+            }
+
+            async function readFileDraft() {
+                const db = await openFileDraftDb();
+                return new Promise(function (resolve, reject) {
+                    const transaction = db.transaction(fileDraftStoreName, 'readonly');
+                    const request = transaction.objectStore(fileDraftStoreName).get(fileDraftKey);
+                    request.onsuccess = function () {
+                        resolve(request.result || {});
+                    };
+                    request.onerror = function () {
+                        reject(request.error || new Error('Unable to read file draft.'));
+                    };
+                    transaction.oncomplete = function () {
+                        db.close();
+                    };
+                });
+            }
+
+            async function removeFileDraft() {
+                try {
+                    const db = await openFileDraftDb();
+                    await new Promise(function (resolve, reject) {
+                        const transaction = db.transaction(fileDraftStoreName, 'readwrite');
+                        transaction.objectStore(fileDraftStoreName).delete(fileDraftKey);
+                        transaction.oncomplete = function () {
+                            db.close();
+                            resolve();
+                        };
+                        transaction.onerror = function () {
+                            db.close();
+                            reject(transaction.error || new Error('Unable to clear file draft.'));
+                        };
+                    });
+                } catch (error) {
+                    // Missing IndexedDB support should not block the form.
+                }
+            }
+
+            function getFileFields() {
+                return form ? Array.from(form.querySelectorAll('input[type="file"][name]')) : [];
+            }
+
+            async function saveFileDraft() {
+                if (!form || !window.indexedDB || restoringFileDraft) return;
+
+                const files = {};
+                getFileFields().forEach(function (field) {
+                    files[getFieldKey(field)] = Array.from(field.files || []);
+                });
+
+                try {
+                    await writeFileDraft(files);
+                } catch (error) {
+                    // Large files can exceed browser storage quota. Keep normal form behavior.
+                }
+            }
+
+            async function restoreFileDraft() {
+                if (!form || !window.indexedDB || typeof DataTransfer === 'undefined') return;
+
+                let files = {};
+                try {
+                    files = await readFileDraft();
+                } catch (error) {
+                    return;
+                }
+
+                restoringFileDraft = true;
+                try {
+                    getFileFields().forEach(function (field) {
+                        const savedFiles = files[getFieldKey(field)];
+                        if (!Array.isArray(savedFiles) || savedFiles.length === 0) return;
+
+                        const transfer = new DataTransfer();
+                        savedFiles.forEach(function (file) {
+                            transfer.items.add(file);
+                        });
+
+                        field.files = transfer.files;
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                } finally {
+                    restoringFileDraft = false;
+                }
             }
 
             function showClientSuccessMessage() {
@@ -1030,9 +1215,231 @@
 
             $(document).on('click', '#subscriberSuccessOkBtn', function () {
                 closeSubscriberSuccessMessage();
+                allowPageLeave = true;
                 window.location.replace(
                     isPublicSubscriberForm ? createSubscriberUrl + '?fresh=1' : subscriberIndexUrl
                 );
+            });
+
+            function csrfToken() {
+                return form ? form.querySelector('input[name="_token"]')?.value : '';
+            }
+
+            function setOtpStatus(message, type) {
+                const status = document.getElementById('subscriberOtpStatus');
+                if (!status) return;
+
+                status.textContent = message || '';
+                status.className = 'alert alert-' + (type || 'info');
+                status.style.display = message ? 'block' : 'none';
+            }
+
+            function setInlineOtpStatus(message, type) {
+                const status = document.getElementById('subscriberOtpInlineStatus');
+                if (!status) return;
+
+                status.textContent = message || '';
+                status.className = 'small mt-1 text-' + (type || 'muted');
+            }
+
+            function setOtpButtons(disabled) {
+                ['subscriberOtpResendBtn', 'subscriberOtpCancelBtn', 'subscriberOtpVerifyBtn'].forEach(function (id) {
+                    const button = document.getElementById(id);
+                    if (button) button.disabled = disabled;
+                });
+
+                const sendButton = document.getElementById('subscriberSendOtpBtn');
+                if (sendButton) sendButton.disabled = disabled;
+            }
+
+            function setOtpVerifiedState(isVerified, mobile) {
+                otpVerifiedForSubmit = isVerified;
+                verifiedOtpMobile = isVerified ? (mobile || '') : '';
+
+                const sendButton = document.getElementById('subscriberSendOtpBtn');
+                const verifiedText = document.getElementById('subscriberOtpVerifiedText');
+
+                if (sendButton) {
+                    sendButton.textContent = isVerified ? 'Resend OTP' : 'Send OTP';
+                    sendButton.classList.toggle('btn-outline-success', isVerified);
+                    sendButton.classList.toggle('btn-outline-primary', !isVerified);
+                }
+
+                if (verifiedText) {
+                    verifiedText.style.display = isVerified ? 'inline' : 'none';
+                }
+
+                if (window.sessionStorage) {
+                    if (isVerified) {
+                        sessionStorage.setItem(otpVerifiedKey, JSON.stringify({
+                            mobile: verifiedOtpMobile,
+                            verified_at: Date.now()
+                        }));
+                    } else {
+                        sessionStorage.removeItem(otpVerifiedKey);
+                    }
+                }
+            }
+
+            function showOtpModal(maskedPhone) {
+                const maskedPhoneNode = document.getElementById('subscriberOtpMaskedPhone');
+                const input = document.getElementById('subscriberOtpInput');
+
+                if (maskedPhoneNode) maskedPhoneNode.textContent = maskedPhone || '';
+                if (input) input.value = '';
+                setOtpStatus('', 'info');
+
+                if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    $('#subscriberOtpModal').modal('show');
+                    setTimeout(function () {
+                        document.getElementById('subscriberOtpInput')?.focus();
+                    }, 300);
+                    return;
+                }
+
+                const modal = document.getElementById('subscriberOtpModal');
+                if (modal) {
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    modal.removeAttribute('aria-hidden');
+                }
+            }
+
+            function hideOtpModal() {
+                if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    $('#subscriberOtpModal').modal('hide');
+                }
+
+                const modal = document.getElementById('subscriberOtpModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                }
+
+                document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                    backdrop.remove();
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+            }
+
+            async function postOtp(url, payload) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken(),
+                    },
+                    body: payload,
+                });
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (error) {
+                    result = {};
+                }
+
+                if (!response.ok) {
+                    const message = result.message || 'Unable to process OTP request. Please try again.';
+                    throw new Error(message);
+                }
+
+                return result;
+            }
+
+            async function sendOtpForCurrentMobile(showModalAfterSend) {
+                if (!form || otpRequestInProgress) return;
+                const mobile = form.querySelector('[name="mobile"]')?.value || '';
+
+                if (!mobile.trim()) {
+                    setOtpStatus('Please enter mobile number before requesting OTP.', 'danger');
+                    setInlineOtpStatus('Please enter mobile number before requesting OTP.', 'danger');
+                    return;
+                }
+
+                const payload = new FormData();
+                payload.append('mobile', mobile);
+
+                otpRequestInProgress = true;
+                setOtpButtons(true);
+                setOtpStatus('Sending OTP...', 'info');
+                setInlineOtpStatus('Sending OTP...', 'muted');
+
+                try {
+                    const result = await postOtp(sendOtpUrl, payload);
+                    setOtpVerifiedState(false, '');
+                    otpSentMobile = mobile;
+                    if (showModalAfterSend) {
+                        showOtpModal(result.masked_phone || mobile);
+                    }
+                    setOtpStatus(result.message || 'Verification code sent.', 'success');
+                    setInlineOtpStatus(result.message || 'Verification code sent.', 'success');
+                } catch (error) {
+                    if (showModalAfterSend) {
+                        showOtpModal(mobile);
+                    }
+                    setOtpStatus(error.message, 'danger');
+                    setInlineOtpStatus(error.message, 'danger');
+                } finally {
+                    otpRequestInProgress = false;
+                    setOtpButtons(false);
+                }
+            }
+
+            async function verifyCurrentOtp() {
+                if (!form || otpRequestInProgress) return;
+
+                const otpInput = document.getElementById('subscriberOtpInput');
+                const otp = otpInput ? otpInput.value.trim() : '';
+                if (!/^\d{6}$/.test(otp)) {
+                    setOtpStatus('Please enter the 6-digit OTP.', 'danger');
+                    return;
+                }
+
+                const payload = new FormData();
+                payload.append('mobile', form.querySelector('[name="mobile"]')?.value || '');
+                payload.append('otp', otp);
+
+                otpRequestInProgress = true;
+                setOtpButtons(true);
+                setOtpStatus('Verifying OTP...', 'info');
+
+                try {
+                    await postOtp(verifyOtpUrl, payload);
+                    const currentMobile = form.querySelector('[name="mobile"]')?.value || '';
+                    setOtpVerifiedState(true, currentMobile);
+                    setInlineOtpStatus('OTP verified successfully.', 'success');
+                    hideOtpModal();
+                } catch (error) {
+                    setOtpStatus(error.message, 'danger');
+                } finally {
+                    otpRequestInProgress = false;
+                    setOtpButtons(false);
+                }
+            }
+
+            $(document).on('click', '#subscriberSendOtpBtn', function () {
+                sendOtpForCurrentMobile(true);
+            });
+            $(document).on('click', '#subscriberOtpVerifyBtn', verifyCurrentOtp);
+            $(document).on('click', '#subscriberOtpResendBtn', function () {
+                sendOtpForCurrentMobile(false);
+            });
+            $(document).on('click', '#subscriberOtpCancelBtn', function () {
+                hideOtpModal();
+            });
+            $(document).on('click', '.subscriber-otp-close', function () {
+                hideOtpModal();
+            });
+            $(document).on('input', '#subscriberOtpInput', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 6);
+            });
+            $(document).on('keyup', '#subscriberOtpInput', function (event) {
+                if (event.key === 'Enter') {
+                    verifyCurrentOtp();
+                }
             });
 
             function refreshMultiselect(field) {
@@ -1082,6 +1489,7 @@
             function clearSavedForm() {
                 if (!form || !window.localStorage) return;
                 localStorage.removeItem(draftKey);
+                removeFileDraft();
                 form.reset();
                 form.querySelectorAll('select').forEach(function (field) {
                     if (field.multiple) {
@@ -1139,6 +1547,7 @@
                     clearSavedForm();
                     if (window.sessionStorage) {
                         sessionStorage.removeItem(submitPendingKey);
+                        sessionStorage.removeItem(otpVerifiedKey);
                     }
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return;
@@ -1152,6 +1561,7 @@
                     clearSavedForm();
                     if (window.sessionStorage) {
                         sessionStorage.removeItem(submitPendingKey);
+                        sessionStorage.removeItem(otpVerifiedKey);
                     }
                     showClientSuccessMessage();
                     return;
@@ -1191,6 +1601,32 @@
                     field.value = draft[key];
                     field.dispatchEvent(new Event('change', { bubbles: true }));
                 });
+            }
+
+            function restoreOtpVerifiedState() {
+                if (!form || !window.sessionStorage) return;
+
+                const rawVerified = sessionStorage.getItem(otpVerifiedKey);
+                if (!rawVerified) return;
+
+                let verified = {};
+                try {
+                    verified = JSON.parse(rawVerified);
+                } catch (error) {
+                    sessionStorage.removeItem(otpVerifiedKey);
+                    return;
+                }
+
+                const mobile = form.querySelector('[name="mobile"]')?.value || '';
+                const isRecent = verified.verified_at && (Date.now() - Number(verified.verified_at)) < 10 * 60 * 1000;
+
+                if (verified.mobile && verified.mobile === mobile && isRecent) {
+                    setOtpVerifiedState(true, mobile);
+                    setInlineOtpStatus('OTP verified successfully.', 'success');
+                    return;
+                }
+
+                sessionStorage.removeItem(otpVerifiedKey);
             }
 
             function getDropdownContainer(searchInput) {
@@ -1371,6 +1807,8 @@
             }
 
             restoreDraft();
+            restoreFileDraft();
+            restoreOtpVerifiedState();
             if (select) {
                 cleanupBlankPincodeChips(select);
             }
@@ -1380,14 +1818,49 @@
             }
 
             if (form) {
-                form.addEventListener('submit', function () {
+                const mobileInput = form.querySelector('[name="mobile"]');
+                if (mobileInput) {
+                    mobileInput.addEventListener('input', function () {
+                        if (otpVerifiedForSubmit && this.value !== verifiedOtpMobile) {
+                            setOtpVerifiedState(false, '');
+                            setInlineOtpStatus('Mobile number changed. Please send OTP again.', 'warning');
+                        }
+                        if (this.value !== otpSentMobile) {
+                            otpSentMobile = '';
+                        }
+                    });
+                }
+
+                form.addEventListener('submit', function (event) {
                     if (!form.checkValidity()) return;
+                    if (requiresWhatsAppOtp && !otpVerifiedForSubmit) {
+                        event.preventDefault();
+                        const mobile = form.querySelector('[name="mobile"]')?.value || '';
+                        if (otpSentMobile !== mobile) {
+                            const message = 'OTP verification is required. Sending OTP to your WhatsApp number.';
+                            setInlineOtpStatus(message, 'danger');
+                            showOtpModal(mobile);
+                            setOtpStatus(message, 'info');
+                            sendOtpForCurrentMobile(true);
+                            return;
+                        }
+
+                        const message = 'Please enter and verify the OTP before submitting the form.';
+                        setInlineOtpStatus(message, 'danger');
+                        showOtpModal(mobile);
+                        setOtpStatus(message, 'danger');
+                        return;
+                    }
                     if (window.sessionStorage) {
                         sessionStorage.setItem(submitPendingKey, '1');
                     }
+                    allowPageLeave = true;
                 });
                 form.addEventListener('input', saveDraft);
                 form.addEventListener('change', saveDraft);
+                getFileFields().forEach(function (field) {
+                    field.addEventListener('change', saveFileDraft);
+                });
             }
 
             if (select) {

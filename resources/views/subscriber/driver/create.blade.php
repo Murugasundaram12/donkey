@@ -358,8 +358,7 @@
                                                 pdf
                                                 format </span></small>
                                             <small class="form-text text-muted">
-                                                Note: Download, sign and upload the Rider Agreement available under Point No. 7 before onboarding riders.
-                                                <a href="/assets/document/Bikers%20-%20Rider%20Agreement%20with%20do%20N%20key.pdf" target="_blank" rel="noopener noreferrer">Click here.</a>
+                                                Note: To download the Rider Agreement, please <a href="https://www.donkeydeliveries.com" target="_blank" rel="noopener noreferrer">click here</a> and refer to Point 7 on the website. After obtaining the rider's signature, upload the signed copy in the Documents section.
                                             </small>
                                             @error('customerdocument')
                                                 <span class="invalid-feedback">
@@ -430,5 +429,4 @@
         }
 </script>
 @endsection
-
 

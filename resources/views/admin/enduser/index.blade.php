@@ -99,6 +99,7 @@
                                             <th> Name</th>
                                             <th>Email</th>
                                             <th>Phone</th>
+                                            <th>Referral</th>
                                             <th>Current Status</th>
                                             <th>Changing Status</th>
                                             <th>Action</th>
@@ -113,6 +114,7 @@
                                                     <td>{{ $enduser->name }}</td>
                                                     <td>{{ $enduser->email }}</td>
                                                     <td>{{ $enduser->phone }}</td>
+                                                    <td>{{ $enduser->referrals_count ?? 0 }}</td>
                                                     @php
                                                         $statusValues = [
                                                             0 => ['label' => 'Block', 'color' => 'red'],
@@ -319,7 +321,7 @@
                                             @endforeach
                                         @else
                                             <tr class="text-center">
-                                                <td colspan="6"><span class="text-center">No Data Found</span></td>
+                                                <td colspan="9"><span class="text-center">No Data Found</span></td>
                                             </tr>
                                         @endif
                                     </tbody>

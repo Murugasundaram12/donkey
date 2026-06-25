@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Mail\InvoiceMail;
 use App\Models\Admin;
 use Razorpay\Api as api1;
+use App\Models\Employee;
 use App\Models\statusnotify;
 use App\Models\Subscriber;
 use App\Models\PaymentDetails;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session as FacadesSession;
 use Illuminate\Support\Facades\Validator;
+use App\Services\WhatsAppOtpService;
 // use Spatie\Permission\Contracts\Role;
 use Spatie\Permission\Models\Role;
 
@@ -32,7 +34,7 @@ use Spatie\Permission\Models\Permission;
 
 class otherController extends Controller
 {
-    public function subscriberstatuschange(Request $request)
+    public function subscriberstatuschange(Request $request, WhatsAppOtpService $whatsApp)
     {
         $validate = Validator::make($request->all(), [
             'message' => "required",
@@ -64,15 +66,53 @@ class otherController extends Controller
 
         $user = Subscriber::where('id', $request->get('id'))->first();
         //dd($user);        
+        $wasInactive = (string) $user->activestatus === '0';
         $user->activestatus = $request->get('status');
         //dd($user);
         $user->save();
 
-        if ((string) $request->get('status') === '0') {
-            $this->sendSubscriberStatusWhatsapp($user, 'inactive');
+        if ($wasInactive && (string) $request->get('status') === '1' && $this->isSelfRegisteredSubscriber($user)) {
+            $this->ensureSubscriberAdminSetup($user);
+
+            $whatsApp->sendBodyTemplate(
+                $user->mobile,
+                config('services.whatsapp.approval_template'),
+                [$user->subscriberId]
+            );
         }
 
         return redirect()->back()->with('success', "Status Updated Successfully");
+    }
+
+    private function isSelfRegisteredSubscriber(Subscriber $subscriber): bool
+    {
+        return in_array((string) $subscriber->getRawOriginal('created_by'), ['', '0', 'public'], true);
+    }
+
+    private function ensureSubscriberAdminSetup(Subscriber $subscriber): void
+    {
+        $role = Role::where('guard_name', 'subscriber')->where('name', 'Subscriber Admin')->first();
+        if ($role && !$subscriber->hasRole($role->name)) {
+            $subscriber->assignRole($role->name);
+        }
+
+        Employee::firstOrCreate(
+            ['email' => $subscriber->email],
+            [
+                'name' => $subscriber->name,
+                'profile' => 'profile.jpg',
+                'emp_id' => 'PBP Employee ID - SELF' . $subscriber->id,
+                'official_mail' => $subscriber->email,
+                'mobile' => $subscriber->mobile,
+                'official_mobile' => $subscriber->mobile,
+                'address' => $subscriber->description ?: $subscriber->location ?: 'N/A',
+                'current_address' => $subscriber->location,
+                'location' => $subscriber->location,
+                'aadhar' => $subscriber->aadharNo ?: 'N/A',
+                'password' => $subscriber->password,
+                'subscriber_id' => $subscriber->id,
+            ]
+        );
     }
 
     private function sendSubscriberStatusWhatsapp(Subscriber $subscriber, string $status): void

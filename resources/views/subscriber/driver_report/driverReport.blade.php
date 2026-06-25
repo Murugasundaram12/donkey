@@ -142,10 +142,11 @@
                                                         $status = [
                                                             1 => ['label' => 'Active', 'color' => 'green'],
                                                             0 => ['label' => 'Inactive', 'color' => 'red'],
+                                                            2 => ['label' => 'Blocked', 'color' => 'red'],
                                                         ];
                                                     @endphp
-                                                    <td style="color: {{ $status[$driver->status]['color'] }}">
-                                                        {{ $status[$driver->status]['label'] }}
+                                                    <td style="color: {{ $status[$driver->status]['color'] ?? 'black' }}">
+                                                        {{ $status[$driver->status]['label'] ?? 'Unknown' }}
                                                     </td>
                                                     <td>{{ $driver->mobile }}</td>
                                                     <td>

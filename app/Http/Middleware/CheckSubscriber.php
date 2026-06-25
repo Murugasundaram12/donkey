@@ -18,14 +18,12 @@ class CheckSubscriber
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->session()->exists('subscribers')) {
-            if (Auth::guard('subscriber')->check()) {
-                Session::put('subscribers', Auth::guard('subscriber')->user());
-            } elseif (Auth::guard('employee')->check()) {
-                Session::put('subscribers', Auth::guard('employee')->user());
-            } else {
-                return redirect('subscribers/login');
-            }
+        if (Auth::guard('subscriber')->check()) {
+            Session::put('subscribers', Auth::guard('subscriber')->user()->fresh());
+        } elseif (Auth::guard('employee')->check()) {
+            Session::put('subscribers', Auth::guard('employee')->user()->fresh());
+        } elseif (!$request->session()->exists('subscribers')) {
+            return redirect('subscribers/login');
         }
 
         return $next($request);

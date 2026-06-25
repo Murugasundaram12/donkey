@@ -28,15 +28,16 @@
             <td>{{ $loop->iteration }}</td>
             <td>{{ $driver->name }}</td>
             <td>{{ App\Models\User::where('id',$driver->userid)?->first()?->user_id }}</td>
-            @php
-            $status = [
+        @php
+        $status = [
             1 => ['label' => 'Active', 'color' => 'green'],
             0 => ['label' => 'Inactive', 'color' => 'red'],
-            ];
-            @endphp
-            <td style="color: {{ $status[$driver->status]['color'] }}">
-                {{ $status[$driver->status]['label'] }}
-            </td>
+            2 => ['label' => 'Blocked', 'color' => 'red'],
+        ];
+        @endphp
+        <td style="color: {{ $status[$driver->status]['color'] ?? 'black' }}">
+            {{ $status[$driver->status]['label'] ?? 'Unknown' }}
+        </td>
             <td>{{ $driver->mobile }}</td>
             <td>
                 @if ($booking->updated_at)

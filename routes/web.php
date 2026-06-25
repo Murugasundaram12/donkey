@@ -86,7 +86,7 @@ Route::get('/clear', function () {
 Auth::routes();
 Route::get('usedPincodes', [HomeController::class, 'usedPincodes'])->name('usedPincodes');
 Route::resource('pincodebasedcategory', PincodebasedcategoryController::class);
-Route::get('pincodebasedcategorystatus', [PincodebasedcategoryController::class, 'pincodebasedcategorystatus'])->name('pincodebasedcategorystatus');
+Route::get('pincodebasedcategorystatus', [PincodebasedcategoryController::class, 'pincodebasedcategorystatus'])->name('admin.pincodebasedcategorystatus');
 Route::get('makePincodeBasedCategory', [PincodebasedcategoryController::class, 'makePincodeBasedCategory'])->name('makePincodeBasedCategory');
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'dashboard'])->name('dashboard');
@@ -106,12 +106,14 @@ Route::get('/pincodedelete/{id}', [App\Http\Controllers\PincodeController::class
 
 Route::get('/createSubscriber', [App\Http\Controllers\SubscriberController::class, 'create'])->name('createSubscriber');
 Route::get('/subscriberList', [App\Http\Controllers\SubscriberController::class, 'subscriber'])->name('subscriber');
-Route::get('/subscriberList/without-employee-id', [App\Http\Controllers\SubscriberController::class, 'subscribersWithoutEmployeeId'])->name('subscriber.withoutEmployeeId');
+Route::get('/subscriberList/self-registered-subscribers', [App\Http\Controllers\SubscriberController::class, 'subscribersWithoutEmployeeId'])->name('subscriber.withoutEmployeeId');
 Route::post('/subscriberstore', [App\Http\Controllers\SubscriberController::class, 'subscriberstore']);
+Route::post('/subscriber/onboarding/send-otp', [App\Http\Controllers\SubscriberController::class, 'sendOnboardingOtp'])->middleware('throttle:3,1')->name('subscriber.onboarding.otp.send');
+Route::post('/subscriber/onboarding/verify-otp', [App\Http\Controllers\SubscriberController::class, 'verifyOnboardingOtp'])->middleware('throttle:10,1')->name('subscriber.onboarding.otp.verify');
 Route::get('/subscriber/verify-otp', [App\Http\Controllers\SubscriberController::class, 'showOtpVerification'])->name('subscriber.otp.form');
 Route::post('/subscriber/verify-otp', [App\Http\Controllers\SubscriberController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('subscriber.otp.verify');
 Route::post('/subscriber/resend-otp', [App\Http\Controllers\SubscriberController::class, 'resendOtp'])->middleware('throttle:3,1')->name('subscriber.otp.resend');
-Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->whereNumber('id')->name('show');
+Route::get('/subscriber/show/{id}', [App\Http\Controllers\SubscriberController::class, 'show'])->whereNumber('id')->name('subscriber.show');
 Route::get('/subscriber/{id}', [App\Http\Controllers\SubscriberController::class, 'edit'])->whereNumber('id');
 Route::put('/subscriberupdate/{id}', [App\Http\Controllers\SubscriberController::class, 'update'])->whereNumber('id');
 Route::get('/subscriberdelete/{id}', [App\Http\Controllers\SubscriberController::class, 'destroy'])->whereNumber('id');
@@ -134,7 +136,7 @@ Route::get('/categoryStatus', [App\Http\Controllers\HomeController::class, 'cate
 Route::get('/driver', [App\Http\Controllers\HomeController::class, 'driver'])->name('drivers');
 Route::get('/driver/create', [App\Http\Controllers\HomeController::class, 'createdriver'])->name('driver.create');
 Route::post('/driverstore', [App\Http\Controllers\HomeController::class, 'driverstore']);
-Route::get('/driver/show/{id}', [App\Http\Controllers\HomeController::class, 'show'])->name('show');
+Route::get('/driver/show/{id}', [App\Http\Controllers\HomeController::class, 'show'])->name('admin.driver.show');
 
 Route::get('/driverActivate', [App\Http\Controllers\HomeController::class, 'driverActivate']);
 Route::get('/driver/{id}', [App\Http\Controllers\HomeController::class, 'driveredit']);
@@ -142,7 +144,7 @@ Route::put('/driverupdate/{id}', [App\Http\Controllers\HomeController::class, 'd
 Route::get('/driverNotification', [App\Http\Controllers\HomeController::class, 'drivernotify']);
 Route::get('/dot-notify', [App\Http\Controllers\HomeController::class, 'dotnotify'])->name('dot-notify');
 
-Route::put('readBy/{readBy}', [HomeController::class, 'readBy'])->name('readBy');
+Route::put('readBy/{readBy}', [HomeController::class, 'readBy'])->name('admin.readBy');
 Route::put('/driverblock/{id}', [App\Http\Controllers\SubscriberController::class, 'driverblock']);
 Route::post('/driverunblock', [App\Http\Controllers\SubscriberController::class, 'driverunblock']);
 
@@ -154,8 +156,8 @@ Route::get('/subscriberunblockList', [App\Http\Controllers\HomeController::class
 Route::get('/adminUnblocked', [App\Http\Controllers\HomeController::class, 'adminUnblockeddriver'])->name('adminUnblockeddriver');
 Route::get('/driverunblockList', [App\Http\Controllers\HomeController::class, 'driverunblockList'])->name('driverunblockList');
 
-Route::get('/coupons', [App\Http\Controllers\HomeController::class, 'coupons'])->name('coupons');
-Route::get('/coupons/create', [App\Http\Controllers\HomeController::class, 'createcoupons'])->name('createcoupons');
+Route::get('/coupons', [App\Http\Controllers\HomeController::class, 'coupons'])->name('admin.coupons');
+Route::get('/coupons/create', [App\Http\Controllers\HomeController::class, 'createcoupons'])->name('admin.createcoupons');
 Route::post('/couponsstore', [App\Http\Controllers\HomeController::class, 'couponsstore']);
 Route::get('/coupons/{id}', [App\Http\Controllers\HomeController::class, 'couponsedit']);
 Route::put('/couponsupdate/{id}', [App\Http\Controllers\HomeController::class, 'couponsupdate']);
@@ -193,7 +195,7 @@ Route::group(['prefix' => 'subscribers'], function () {
     Route::get('subPermission', [SubRoleController::class, 'subPermission']);
     Route::resource('subEmployee', SubEmployeeController::class)->parameter('subEmployee', 'employee');
     Route::resource('pincodes', SubscriberPincodebasedcategoryController::class)->parameter('pincodes', 'pincode')->only('index', 'show');
-    Route::get('pincodebasedcategorystatus', [SubscriberPincodebasedcategoryController::class, 'pincodebasedcategorystatus'])->name('pincodebasedcategorystatus');
+    Route::get('pincodebasedcategorystatus', [SubscriberPincodebasedcategoryController::class, 'pincodebasedcategorystatus'])->name('subscribers.pincodebasedcategorystatus');
 });
 Route::get('subscriberForgotPassword', [PasswordController::class, 'subscriberForgotPassword'])->name('subscriberForgotPassword');
 Route::post('subscriberEmailVerification', [PasswordController::class, 'subscriberEmailVerification'])->name('subscriberEmailVerification');
@@ -207,7 +209,7 @@ Route::group(['prefix' => 'subscribers', 'middleware' => 'subscribers'], functio
     Route::get('/createDriver', [App\Http\Controllers\SubscriberHomeController::class, 'createdriver'])->name('createdriver');
     Route::get('/driver', [App\Http\Controllers\SubscriberHomeController::class, 'driver'])->name('driver');
     Route::post('/driverstore', [App\Http\Controllers\SubscriberHomeController::class, 'driverstore']);
-    Route::get('/driver/show/{id}', [App\Http\Controllers\SubscriberHomeController::class, 'show'])->name('show');
+    Route::get('/driver/show/{id}', [App\Http\Controllers\SubscriberHomeController::class, 'show'])->name('subscribers.driver.show');
     Route::get('/driver/{id}', [App\Http\Controllers\SubscriberHomeController::class, 'edit']);
     Route::put('/driverupdate/{id}', [App\Http\Controllers\SubscriberHomeController::class, 'update']);
     Route::get('/driverdelete/{id}', [App\Http\Controllers\SubscriberHomeController::class, 'destroy']);
@@ -223,8 +225,8 @@ Route::group(['prefix' => 'subscribers', 'middleware' => 'subscribers'], functio
     Route::post('/pricestore', [App\Http\Controllers\SubscriberHomeController::class, 'pricestore']);
 
 
-    Route::get('/coupons', [App\Http\Controllers\CouponController::class, 'coupons'])->name('coupons');
-    Route::get('/coupons/create', [App\Http\Controllers\CouponController::class, 'createcoupons'])->name('createcoupons');
+    Route::get('/coupons', [App\Http\Controllers\CouponController::class, 'coupons'])->name('subscribers.coupons');
+    Route::get('/coupons/create', [App\Http\Controllers\CouponController::class, 'createcoupons'])->name('subscribers.createcoupons');
 
     Route::post('/couponsstore', [App\Http\Controllers\CouponController::class, 'couponsstore']);
     Route::get('/coupons/{id}', [App\Http\Controllers\CouponController::class, 'couponsedit']);

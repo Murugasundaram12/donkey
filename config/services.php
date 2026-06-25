@@ -37,9 +37,14 @@ return [
 
     'whatsapp' => [
         'onboarding_otp_enabled' => env('WHATSAPP_ONBOARDING_OTP_ENABLED', false),
-        'endpoint' => env('WHATSAPP_API_ENDPOINT', 'https://api.donkeydeliveries.com/v1/message/send-message'),
+        'onboarding_message_enabled' => env('WHATSAPP_ONBOARDING_MESSAGE_ENABLED', false),
+        'endpoint' => env('WHATSAPP_API_ENDPOINT', 'https://backend.wacto.ai/v1/message/send-message'),
         'token' => env('WHATSAPP_API_TOKEN', env('WACTO_WHATSAPP_TOKEN')),
         'otp_template' => env('WHATSAPP_OTP_TEMPLATE', 'otp_verification'),
+        'submission_template' => env('WHATSAPP_SUBMISSION_TEMPLATE', 'application_recevied'),
+        'approval_template' => env('WHATSAPP_APPROVAL_TEMPLATE', 'pbpwelcomeone'),
+        'rejection_template' => env('WHATSAPP_REJECTION_TEMPLATE', 'rejected_application'),
+        'submission_template_variables' => array_filter(array_map('trim', explode(',', env('WHATSAPP_SUBMISSION_TEMPLATE_VARIABLES', '')))),
         'country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '91'),
     ],
 

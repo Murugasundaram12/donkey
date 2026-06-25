@@ -366,7 +366,7 @@ class SubscriberHomeController extends Controller
         $user = Session::get('subscribers');
 
         if (isset($user->subscriberId)) {
-            if ($user->hasPermissionTo('rider-list')) {
+            if ($this->canAccessRiderList($user)) {
                 $driver = Driver::where('subscriberId', session('subscribers')['id'])->latest()->get();
                 //dd($driver);
                 return view('subscriber.driver.index', compact('driver'));
@@ -375,7 +375,7 @@ class SubscriberHomeController extends Controller
             return view('subscriber.403');
         } else {
             // $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-            if ($user->hasPermissionTo('rider-list')) {
+            if ($this->canAccessRiderList($user)) {
                 $driver = Driver::where('emp_id', $user->id)->latest()->get();
                 //dd($driver);
                 return view('subscriber.driver.index', compact('driver'));
@@ -385,11 +385,52 @@ class SubscriberHomeController extends Controller
         }
     }
 
+    private function canAccessRiderList($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if (isset($user->subscriberId)) {
+            return true;
+        }
+
+        return $this->hasAnyExistingPermission($user, ['rider-list', 'emp-rider-list']);
+    }
+
+    private function canAccessRiderCreate($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if (isset($user->subscriberId)) {
+            return true;
+        }
+
+        return $this->hasAnyExistingPermission($user, ['rider-create', 'emp-rider-create']);
+    }
+
+    private function hasAnyExistingPermission($user, array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            try {
+                if ($user->hasPermissionTo($permission)) {
+                    return true;
+                }
+            } catch (\Throwable $exception) {
+                continue;
+            }
+        }
+
+        return false;
+    }
+
     public function createdriver()
     {
         $user = Session::get('subscribers');
         if (isset($user->subscriberId)) {
-            if ($user->hasPermissionTo('rider-create')) {
+            if ($this->canAccessRiderCreate($user)) {
                 $subscriber = Session::get('subscribers');
                 // foreach($subscriber as $subscriber){
                 //$pin=json_decode($subscriber->pincode);
@@ -428,7 +469,7 @@ class SubscriberHomeController extends Controller
 
             return view('subscriber.403');
         } else {
-            if ($user->hasPermissionTo('rider-create')) {
+            if ($this->canAccessRiderCreate($user)) {
                 $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
                 $pin = json_decode($subscriber->pincode ?? '[]', true);
                 $pin = is_array($pin) ? $pin : [];
@@ -495,7 +536,7 @@ class SubscriberHomeController extends Controller
                 'licenceexpiry' => 'nullable',
                 'profile' => 'nullable',
                 'type' => ['required', 'array'],
-                'type.*' => ['required'],
+                'type.*' => ['required', 'in:1,2,3'],
                 'description' => 'nullable',
                 'bankacno' => 'nullable',
                 'ifsccode' => 'nullable'
@@ -609,7 +650,7 @@ class SubscriberHomeController extends Controller
                 'licenceexpiry' => 'nullable',
                 'profile' => 'nullable',
                 'type' => ['required', 'array'],
-                'type.*' => ['required'],
+                'type.*' => ['required', 'in:1,2,3'],
                 'description' => 'nullable',
                 'bankacno' => 'nullable',
                 'ifsccode' => 'nullable'
