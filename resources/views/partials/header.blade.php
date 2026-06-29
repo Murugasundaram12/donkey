@@ -612,7 +612,7 @@
 
     function bookingComplete() {
         $.ajax({
-            url: "{{ route('automaticBookingComplete') }}",
+            url: "{{ url('automaticBookingComplete') }}",
             type: "get",
             //   data: {id : menuId},
             dataType: "json",
@@ -625,7 +625,7 @@
 
     function bookingCancel() {
         $.ajax({
-            url: "{{ route('automaticBookingCancel') }}",
+            url: "{{ url('automaticBookingCancel') }}",
             type: "get",
             //   data: {id : menuId},
             dataType: "json",
