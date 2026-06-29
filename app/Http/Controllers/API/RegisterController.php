@@ -9,6 +9,7 @@ use App\Models\Pincode;
 use App\Models\Subscriber;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Services\WhatsAppOtpService;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 use DB;
@@ -24,7 +25,7 @@ class RegisterController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function register(Request $request)
+    public function register(Request $request, WhatsAppOtpService $whatsAppOtp)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
@@ -40,7 +41,7 @@ class RegisterController extends BaseController
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
-        
+
         if ($request->email) {
             $user_data_based_email = User::where('email', $request->email)->get()->toArray();
             if ($user_data_based_email) {
@@ -52,14 +53,14 @@ class RegisterController extends BaseController
             if ($user_data_based_phone) {
                 return $this->sendError('Phone number address already registered', [], 409);
             }
-        }        
+        }
         $input = $request->all();
         $input['otp'] = rand(1000, 9999);
         $input['password'] = bcrypt($input['password']);
         $input['user_id'] = 'DK-' . uniqid();
         $input['is_live'] = 1;
         $user = User::create($input);
-        
+
         if($request->has('address1')){
         UserAddress::create([
         'user_id' => $user->user_id,
@@ -74,7 +75,7 @@ class RegisterController extends BaseController
         'type' => '2'
         ]);
         }
-        
+
         $success['token'] =  $user->createToken('MyApp')->plainTextToken;
         $success['name'] =  $user->name;
         $success['user_id'] =  $user->user_id;
@@ -343,41 +344,53 @@ class RegisterController extends BaseController
     // }
     public function login(Request $request)
     {
+        $loginType = (string) $request->input('type', '0');
+
         $validator = Validator::make($request->all(), [
-            'password' => 'required',
-            'email' => 'required_without:phone',
-            'phone' => 'required_without:email',
+            'type' => 'nullable|in:0,1',
+            'country_code' => 'nullable',
+            'phone' => 'required',
+            'password' => $loginType === '1' ? 'nullable' : 'required',
             'device_token' => 'required',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
-        //return $request;
-        if (isset($request->email) && (Auth::guard('api')->attempt(['email' => $request->email, 'password' => $request->password]))) {
-            $user = Auth::guard('api')->user();
-            // log::info('user details',[$user]);
-            $success['token'] =  $user->createToken('MyApp')->plainTextToken;
-            $success['name'] =  $user->name;
-            $success['user_id'] =  $user->user_id;
-            $success['id'] =  $user->id;
-            $user->last_login = date("Y-m-d H:i:s");
-            $user->device_token = $request?->device_token;
-            $user->save();
-            return $this->sendResponse($success, 'User login successfully.');
-        } else if (isset($request->phone) && (Auth::guard('api')->attempt(['phone' => $request->phone, 'password' => $request->password]))) {
-            $user = Auth::guard('api')->user();
-            $success['token'] =  $user->createToken('MyApp')->plainTextToken;
-            $success['name'] =  $user->name;
-            $success['user_id'] =  $user->user_id;
-            $user->last_login = date("Y-m-d H:i:s");
-            $user->device_token = $request?->device_token;
-            $success['id'] =  $user->id;
-            $user->save();
-            return $this->sendResponse($success, 'User login successfully.');
-        } else {
-            return $this->sendError('Wrong Credentials', ['error' => 'Unauthorised'], 401); // Explicitly setting status code to 401
+
+        if ($loginType === '1') {
+            $user = User::where('phone', $request->phone)->first();
+            if (!$user) {
+                return $this->sendError('Phone number is not registered.', ['error' => 'Unauthorised'], 404);
+            }
+
+            $user->phone_verified = 1;
+            $user->phone_verified_at = $user->phone_verified_at ?: date("Y-m-d H:i:s");
+
+            return $this->completeLogin($user, $request, true);
         }
+
+        if (Auth::guard('api')->attempt(['phone' => $request->phone, 'password' => $request->password])) {
+            return $this->completeLogin(Auth::guard('api')->user(), $request, false);
+        }
+
+        return $this->sendError('Wrong Credentials', ['error' => 'Unauthorised'], 401); // Explicitly setting status code to 401
+    }
+
+    private function completeLogin(User $user, Request $request, bool $otpVerified)
+    {
+        $user->last_login = date("Y-m-d H:i:s");
+        $user->device_token = $request?->device_token;
+        $user->save();
+
+        $success['token'] =  $user->createToken('MyApp')->plainTextToken;
+        $success['name'] =  $user->name;
+        $success['user_id'] =  $user->user_id;
+        $success['id'] =  $user->id;
+        $success['type'] = $otpVerified ? 1 : 0;
+        $success['otp_verified'] = $otpVerified;
+
+        return $this->sendResponse($success, 'User login successfully.');
     }
 
 
@@ -583,7 +596,7 @@ class RegisterController extends BaseController
             }
         }
     }
-    
+
    public function driverlogincheck(Request $request)
     {
         // $t=DB::table('driver')->first();

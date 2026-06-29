@@ -70,10 +70,11 @@ class SubscriberController extends Controller
         $subscriber = Subscriber::whereIn('created_by', $adminIds)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->get();
+            ->paginate(50)
+            ->withQueryString();
         //dd($subscriber);
         $pincode = Pincode::all();
-        $id = $subscriber->pluck('created_by');
+        $id = $subscriber->getCollection()->pluck('created_by');
         $role = Role::whereIn('id', $id)->get();
 
         $empolyee_id = Admin::whereIn('id', $id)->get();
@@ -102,7 +103,8 @@ class SubscriberController extends Controller
         })
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->get();
+            ->paginate(50)
+            ->withQueryString();
 
         $pincode = Pincode::all();
         $roleName = collect();
@@ -378,17 +380,42 @@ class SubscriberController extends Controller
             'mobile' => ['required', 'max:12'],
         ]);
 
-        $otp = (string) random_int(100000, 999999);
         $mobile = $request->get('mobile');
+        $normalisedMobile = $this->normaliseOtpMobile($mobile);
+        $existingOtp = session('subscriber_onboarding_pre_otp');
+        $isResend = $request->boolean('resend');
 
-        session([
-            'subscriber_onboarding_pre_otp' => [
-                'mobile' => $this->normaliseOtpMobile($mobile),
-                'hash' => Hash::make($otp),
-                'expires_at' => now()->addSeconds(60)->timestamp,
-                'attempts' => 0,
-            ],
-        ]);
+        if (
+            $existingOtp &&
+            ($existingOtp['mobile'] ?? null) === $normalisedMobile &&
+            !empty($existingOtp['expires_at']) &&
+            now()->timestamp <= (int) $existingOtp['expires_at'] &&
+            (int) ($existingOtp['attempts'] ?? 0) < 5
+        ) {
+            return response()->json([
+                'message' => 'Verification code already sent to your WhatsApp number.',
+                'masked_phone' => $this->maskedMobile($mobile),
+                'already_sent' => true,
+                'expires_in' => max(0, (int) $existingOtp['expires_at'] - now()->timestamp),
+            ]);
+        }
+
+        if (
+            !$isResend &&
+            $existingOtp &&
+            ($existingOtp['mobile'] ?? null) === $normalisedMobile &&
+            !empty($existingOtp['expires_at']) &&
+            now()->timestamp > (int) $existingOtp['expires_at']
+        ) {
+            return response()->json([
+                'message' => 'OTP expired. Please click Resend OTP to get a new code.',
+                'masked_phone' => $this->maskedMobile($mobile),
+                'expired' => true,
+            ], 422);
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $expiresAt = now()->addSeconds(60)->timestamp;
 
         if (!$whatsAppOtp->send($mobile, $otp)) {
             return response()->json([
@@ -396,9 +423,20 @@ class SubscriberController extends Controller
             ], 422);
         }
 
+        session([
+            'subscriber_onboarding_pre_otp' => [
+                'mobile' => $normalisedMobile,
+                'hash' => Hash::make($otp),
+                'expires_at' => $expiresAt,
+                'attempts' => 0,
+            ],
+        ]);
+
         return response()->json([
             'message' => 'Verification code sent to your WhatsApp number.',
             'masked_phone' => $this->maskedMobile($mobile),
+            'already_sent' => false,
+            'expires_in' => 60,
         ]);
     }
 

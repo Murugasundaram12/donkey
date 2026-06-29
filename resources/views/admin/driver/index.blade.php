@@ -137,15 +137,20 @@ input:checked[type="checkbox"]::after {
                                 </thead>
                                 <tbody>
 
-                                    <?php $i=1;?>
+                                    @php $driverPage = $driver; @endphp
+                                    <?php $i = $driverPage->firstItem() ?? 1;?>
                                     @foreach ($driver as $driver)
+                                    @php
+                                        $driverAsAUser = $driverUsers[$driver->userid] ?? null;
+                                        $overallRating = $driverRatings[$driver->userid] ?? 0;
+                                    @endphp
                                     <tr>
 
 
                                         <td>{{ $i}}</td>
                                         <!-- <td>{{$driver->id}}</td> -->
                                         <td>{{$driver->name}}</td>
-                                        <td>{{App\Models\User::where('id',$driver->userid)->first()?->user_id}}</td>
+                                        <td>{{ $driverAsAUser?->user_id }}</td>
                                         {{-- <td>{{ App\Models\Enduser::where('id', $driver->driverId)->first()?->user_id }}</td> --}}
 
                                         <td>{{$driver->subscribername}}</td>
@@ -158,25 +163,11 @@ input:checked[type="checkbox"]::after {
                                             @php } @endphp
                                         </td>
                                         <td>{{$driver->mobile}}</td>
-                                        @php
-                                        $driverAsAUser = App\Models\User::where('id', $driver->userid)->first();
-                                        $driverRatings = App\Models\BookingRating::where('driver_id', $driver->userid)->get();
-                                        if (count($driverRatings) > 0) {
-                                            $driverRatingCount = $driverRatings->count();
-                                        $totalRating = $driverRatingCount > 0 ? $driverRatings->sum('rating') : 0; // Handle division by zero
-                                        $averageRating = $totalRating / $driverRatingCount;
-                                        $overallRating = $driverRatingCount > 0 ? round($averageRating, 1) : 0; // Handle division by zero
-                                        //dd($driverRatings);
-                                        } else {
-                                            $overallRating = 0;
-                                        }
-                                        
-                                        @endphp
                                         <td>
                                             <span class="fe fe-star text-warning"></span>{{ $overallRating }}
                                         </td>
                                        
-                                        @if ($driverAsAUser->is_live == 1)
+                                        @if ($driverAsAUser?->is_live == 1)
 <td><span class="badge badge-pill badge-success">Online</span></td>
                                         @else
 <td><span class="badge badge-pill badge-danger">Offline</span></td>                                            
@@ -263,6 +254,9 @@ input:checked[type="checkbox"]::after {
                                     @endforeach
                                 </tbody>
                             </table>
+                            <div class="mt-3">
+                                {{ $driverPage->links() }}
+                            </div>
                         </div>
                     </div>
                 </div> <!-- simple table -->

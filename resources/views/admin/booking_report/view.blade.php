@@ -33,15 +33,15 @@
                                 <h3>Customer Details</h3>
                                 <div class="form-group">
                                     <strong>Name:</strong>
-                                    {{ $customer->name ?? 'N/A' }}
+                                    {{ $customer?->name ?? $booking?->external_name ?? 'N/A' }}
                                 </div>
                                 <div class="form-group">
                                     <strong>Email:</strong>
-                                    {{ $customer->email }}
+                                    {{ $customer?->email ?? 'N/A' }}
                                 </div>
                                 <div class="form-group">
                                     <strong>Mobile:</strong>
-                                    {{ $customer->phone }}
+                                    {{ $customer?->phone ?? $booking?->external_phone ?? 'N/A' }}
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -158,7 +158,7 @@
                                 <h3>Distance</h3>
                                 <div class="form-group">
                                     {{-- <strong>Base Price:</strong> --}}
-                                    {{ $booking->distance }}
+                                    {{ $booking?->distance ?? 'N/A' }}
                                 </div>
                             </div>
                         </div>

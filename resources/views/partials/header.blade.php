@@ -107,7 +107,7 @@
                 <i class="fe fe-sun fe-16"></i>
             </a>
         </li>
-        {{-- <li class="nav-item nav-notif">
+        <li class="nav-item nav-notif">
             <a class="nav-link text-muted my-2" href="#" id="navbarDropdownNotification" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="fe fe-bell fe-16"></span>
@@ -127,7 +127,7 @@
                     '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
                     })->count() }}</a>
             </div>
-        </li> --}}
+        </li>
 
         @auth
             <li class="nav-item dropdown">

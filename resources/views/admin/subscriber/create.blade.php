@@ -1009,6 +1009,8 @@
             let otpRequestInProgress = false;
             let verifiedOtpMobile = '';
             let otpSentMobile = '';
+            let otpExpiresAt = 0;
+            let otpMaskedPhone = '';
             let allowPageLeave = false;
             let restoringFileDraft = false;
 
@@ -1260,9 +1262,10 @@
                 const verifiedText = document.getElementById('subscriberOtpVerifiedText');
 
                 if (sendButton) {
-                    sendButton.textContent = isVerified ? 'Resend OTP' : 'Send OTP';
-                    sendButton.classList.toggle('btn-outline-success', isVerified);
-                    sendButton.classList.toggle('btn-outline-primary', !isVerified);
+                    sendButton.textContent = 'Send OTP';
+                    sendButton.style.display = isVerified ? 'none' : 'inline-block';
+                    sendButton.classList.remove('btn-outline-success');
+                    sendButton.classList.add('btn-outline-primary');
                 }
 
                 if (verifiedText) {
@@ -1349,7 +1352,7 @@
                 return result;
             }
 
-            async function sendOtpForCurrentMobile(showModalAfterSend) {
+            async function sendOtpForCurrentMobile(showModalAfterSend, isResend) {
                 if (!form || otpRequestInProgress) return;
                 const mobile = form.querySelector('[name="mobile"]')?.value || '';
 
@@ -1359,20 +1362,35 @@
                     return;
                 }
 
+                if (!isResend && otpSentMobile === mobile && otpExpiresAt && Date.now() < otpExpiresAt) {
+                    const message = 'Verification code already sent to your WhatsApp number.';
+                    if (showModalAfterSend) {
+                        showOtpModal(otpMaskedPhone || mobile);
+                    }
+                    setOtpStatus(message, 'success');
+                    setInlineOtpStatus(message, 'success');
+                    return;
+                }
+
                 const payload = new FormData();
                 payload.append('mobile', mobile);
+                if (isResend) {
+                    payload.append('resend', '1');
+                }
 
                 otpRequestInProgress = true;
                 setOtpButtons(true);
-                setOtpStatus('Sending OTP...', 'info');
-                setInlineOtpStatus('Sending OTP...', 'muted');
+                setOtpStatus(isResend ? 'Resending OTP...' : 'Sending OTP...', 'info');
+                setInlineOtpStatus(isResend ? 'Resending OTP...' : 'Sending OTP...', 'muted');
 
                 try {
                     const result = await postOtp(sendOtpUrl, payload);
                     setOtpVerifiedState(false, '');
                     otpSentMobile = mobile;
+                    otpExpiresAt = Date.now() + (Number(result.expires_in || 60) * 1000);
+                    otpMaskedPhone = result.masked_phone || mobile;
                     if (showModalAfterSend) {
-                        showOtpModal(result.masked_phone || mobile);
+                        showOtpModal(otpMaskedPhone);
                     }
                     setOtpStatus(result.message || 'Verification code sent.', 'success');
                     setInlineOtpStatus(result.message || 'Verification code sent.', 'success');
@@ -1425,7 +1443,7 @@
             });
             $(document).on('click', '#subscriberOtpVerifyBtn', verifyCurrentOtp);
             $(document).on('click', '#subscriberOtpResendBtn', function () {
-                sendOtpForCurrentMobile(false);
+                sendOtpForCurrentMobile(false, true);
             });
             $(document).on('click', '#subscriberOtpCancelBtn', function () {
                 hideOtpModal();
@@ -1827,6 +1845,8 @@
                         }
                         if (this.value !== otpSentMobile) {
                             otpSentMobile = '';
+                            otpExpiresAt = 0;
+                            otpMaskedPhone = '';
                         }
                     });
                 }
@@ -1841,7 +1861,7 @@
                             setInlineOtpStatus(message, 'danger');
                             showOtpModal(mobile);
                             setOtpStatus(message, 'info');
-                            sendOtpForCurrentMobile(true);
+                            sendOtpForCurrentMobile(true, false);
                             return;
                         }
 

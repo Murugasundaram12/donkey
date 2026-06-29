@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
+use App\Models\Pincode;
 
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -468,6 +469,16 @@ class Booking extends BaseController
 		$total = isset($data['total']) ? $data['total'] : null;
 		$round_off = isset($data['round_off']) ? $data['round_off'] : null;
 		$pincode = isset($data['pincode']) ? $data['pincode'] : null;
+
+		$pincodeData = Pincode::where('pincode', $pincode)->first();
+		if (!$pincodeData) {
+			return false;
+		}
+
+		$subscriber = Subscriber::where('id', $pincodeData->usedBy)->first();
+		if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+			return false;
+		}
 
 
 		$notification_response = app('App\Http\Controllers\API\NotificationController')->sendNotification([

@@ -2,11 +2,11 @@
 
 use App\Http\Controllers\API\InfoController;
 use App\Http\Controllers\API\MessageControler;
+use App\Http\Controllers\CacheController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\otherController;
 use App\Http\Controllers\API\User\DriverLocationController;
-use Illuminate\Support\Facades\Artisan;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,14 +18,7 @@ use Illuminate\Support\Facades\Artisan;
 |
 */
 
-Route::get('/clear', function () {
-    Artisan::call('route:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('config:clear');
-    Artisan::call('config:cache');
-    Artisan::call('view:clear');
-    return "Cleared!";
-});
+Route::get('/clear', [CacheController::class, 'clear']);
 Route::get('qr', [otherController::class, 'getQr'])->name('qr');
 Route::get('getDriversLocation', [DriverLocationController::class, 'index'])->name('getDriversLocation');
 Route::get('driver-arrived', [otherController::class, 'driverarrived'])->name('driverarrived')->middleware('detect.company');

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CacheController;
 use App\Http\Controllers\Admin\Crypto\SettingsController;
 use App\Http\Controllers\Admin\InfoController;
 use App\Http\Controllers\Admin\NotifyController;
@@ -35,7 +36,6 @@ use App\Http\Controllers\SubscriberReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\websiteController;
 use App\Http\Controllers\SubscriberController;
-use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\PaymentReportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Subscriber\CouponController as SubscriberCouponController;
@@ -57,13 +57,7 @@ use App\Http\Controllers\Subscriber\PincodebasedcategoryController as Subscriber
 |
 */
 
-Route::get('/', function () {
-    return to_route('dashboard');
-});
-
-Route::get('accountDeletion', function () {
-    return view('accountDelation');
-});
+Route::view('accountDeletion', 'accountDelation');
 
 Route::get('generate_referral_code', [RegisterController::class, 'generate_referral_code']);
 
@@ -74,14 +68,7 @@ Route::get('automaticBookingCancel', [otherController::class, 'automaticBookingC
 Route::get("tc", [App\Http\Controllers\websiteController::class, 'tc']);
 Route::get("returnandrefundpolicy", [App\Http\Controllers\websiteController::class, 'returnandrefundpolicy']);
 Route::get("privacypolicyandcookies", [App\Http\Controllers\websiteController::class, 'privacypolicyandcookies']);
-Route::get('/clear', function () {
-    Artisan::call('route:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('config:clear');
-    Artisan::call('config:cache');
-    Artisan::call('view:clear');
-    return "Cleared!";
-});
+Route::get('/clear', [CacheController::class, 'clear']);
 
 Auth::routes();
 Route::get('usedPincodes', [HomeController::class, 'usedPincodes'])->name('usedPincodes');

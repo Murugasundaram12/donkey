@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\BookingLocation;
 use App\Models\BookingLocationMapping;
 use App\Models\BookingPayment;
+use App\Models\Category;
 use App\Models\Driver;
 use App\Models\Pincode;
 use App\Models\Subscriber;
@@ -91,16 +92,37 @@ class BookingReportController extends Controller
     }
 })
 
-            ->with(['user', 'bookingPayment', 'pincode', 'driver', 'driverasuser']);
+            ->with([
+                'user:id,user_id,name',
+                'bookingPayment',
+                'pincode:id,pincode,usedBy',
+                'driverasuser:id,user_id',
+            ]);
             if($request->type != ''){
             $bookings = $bookings->whereRelation('bookingPayment','type', '=', $request->type);
             }
             
-            $bookings = $bookings->latest()->get();
+            $bookings = $bookings->latest()->paginate(50)->withQueryString();
+            $categories = Category::whereIn('id', $bookings->getCollection()->pluck('category')->filter()->unique())
+                ->pluck('category', 'id');
+            $subscribers = Subscriber::whereIn(
+                'id',
+                $bookings->getCollection()
+                    ->map(fn ($booking) => $booking->relationLoaded('pincode') ? $booking->getRelation('pincode')?->usedBy : null)
+                    ->filter()
+                    ->unique()
+            )->get()->keyBy('id');
            
           //  dd($bookings);
             // dd($bookings);
-        return view('admin.booking_report.index', ['bookings' => $bookings, 'pincodes' => $pincodes, 'statuses' => $statuses,'types'=>$types]);
+        return view('admin.booking_report.index', [
+            'bookings' => $bookings,
+            'pincodes' => $pincodes,
+            'statuses' => $statuses,
+            'types' => $types,
+            'categories' => $categories,
+            'subscribers' => $subscribers,
+        ]);
     }
 
 
@@ -133,6 +155,7 @@ class BookingReportController extends Controller
      */
     public function show(Booking $booking)
     {
+        $booking->loadMissing(['bookingRating', 'driverasuser', 'driver', 'bookingPayment', 'user']);
         // $Tbooking = Booking::where('booking_id','doc-00432ce6-91df-41da-a05e-93d9e99bab64')->with('bookingRating')->first();
         //  dd($booking->pincode);
         $accepted =  $booking?->accepted;
@@ -140,9 +163,9 @@ class BookingReportController extends Controller
         $subscriberID = Driver::where('userid', $accepted)->select('subscriberId')->first();
         $subscriber = Subscriber::where('id', $subscriberID?->subscriberId)->select('subscriberId')->first();
         //dd($subscriber);
-        $driver = User::where('id', $booking->accepted)->first();
+        $driver = $booking->driverasuser;
         //dd($driver);
-        $customer = User::where('user_id', $booking->customer_id)->first();
+        $customer = $booking->user;
         $location = BookingLocationMapping::where('booking_id', $booking->booking_id)->get();
 if ($location->isNotEmpty()) {
     $start_location = BookingLocation::where('location_id', $location[0]->start_location_id)->first();
@@ -154,7 +177,7 @@ if ($location->isNotEmpty()) {
 }
         $payment = BookingPayment::where('booking_id', $booking?->booking_id)?->first();
         return view('admin.booking_report.view', [
-            'booking' => $booking->load('bookingRating','driverasuser','driver'),
+            'booking' => $booking,
             'driver' => $driver,
             'customer' => $customer,
             'start_location' => $start_location,

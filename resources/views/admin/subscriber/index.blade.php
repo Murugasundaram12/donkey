@@ -141,7 +141,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $i = 1; ?>
+                                        @php $subscriberPage = $subscriber; @endphp
+                                        <?php $i = $subscriberPage->firstItem() ?? 1; ?>
                                         @foreach ($subscriber as $subscriber)
                                             <tr>
 
@@ -427,6 +428,9 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+                                <div class="mt-3">
+                                    {{ $subscriberPage->links() }}
+                                </div>
                             </div>
                         </div>
                     </div> <!-- simple table -->

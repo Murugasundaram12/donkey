@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Blocklist;
 use App\Models\Booking;
 use App\Models\BookingPayment;
+use App\Models\BookingRating;
 use App\Models\Checking;
 use App\Models\Complaints;
 use App\Models\Unblocklist;
@@ -722,9 +723,19 @@ class HomeController extends Controller
     public function driver()
     {
         $pincode = Pincode::all();
-        $driver = Driver::join('subscriber', 'driver.subscriberId', '=', 'subscriber.id')->latest()->select('driver.*', 'subscriber.name as subscribername')->get();
+        $driver = Driver::join('subscriber', 'driver.subscriberId', '=', 'subscriber.id')
+            ->latest()
+            ->select('driver.*', 'subscriber.name as subscribername')
+            ->paginate(50)
+            ->withQueryString();
+        $driverUserIds = $driver->getCollection()->pluck('userid')->filter()->unique();
+        $driverUsers = User::whereIn('id', $driverUserIds)->get()->keyBy('id');
+        $driverRatings = BookingRating::whereIn('driver_id', $driverUserIds)
+            ->selectRaw('driver_id, ROUND(AVG(rating), 1) as average_rating')
+            ->groupBy('driver_id')
+            ->pluck('average_rating', 'driver_id');
         //dd($driver);
-        return view('admin.driver.index', compact('driver', 'pincode'));
+        return view('admin.driver.index', compact('driver', 'pincode', 'driverUsers', 'driverRatings'));
     }
     public function createdriver()
     {

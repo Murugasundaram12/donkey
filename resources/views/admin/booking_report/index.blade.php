@@ -153,16 +153,21 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php $i = 1; ?>
+                                            <?php $i = $bookings->firstItem() ?? 1; ?>
                                             @php
                                                 $totalAmount = 0;
                                                 $servicetotalAmount = 0;
                                             @endphp
                                             @foreach ($bookings as $booking)
+                                                @php
+                                                    $bookingPincode = $booking->relationLoaded('pincode')
+                                                        ? $booking->getRelation('pincode')
+                                                        : null;
+                                                @endphp
                                                 <tr>
                                                     <td>{{ $i }}</td>
                                                     <td>{{ $booking?->booking_id }}</td>
-                                                    <td>{{ App\Models\Category::where('id', $booking?->category)?->first()?->category }}
+                                                    <td>{{ $categories[$booking?->category] ?? 'N/A' }}
                                                     </td>
                                                     <td>
                                                         @if ($booking && count($booking->bookingPayment) > 0)
@@ -177,14 +182,7 @@
                                                     </td>
 
                                                     @php
-                                                        $subId = App\Models\Pincode::where(
-                                                            'pincode',
-                                                            $booking->pincode,
-                                                        )?->first()?->usedBy;
-                                                        $subscriber = App\Models\Subscriber::where(
-                                                            'id',
-                                                            $subId,
-                                                        )?->first();
+                                                        $subscriber = $subscribers[$bookingPincode?->usedBy] ?? null;
                                                     @endphp
                                                     @if (
                                                         $booking &&
@@ -207,21 +205,7 @@
                                                     @endif
                                                     <td>{{ $booking->user->name ?? $booking->external_name ?? 'N/A' }}</td>
 
-                                                    @if (isset($userid))
-                                                        @php
-                                                            $userid = App\Models\Driver::where(
-                                                                'id',
-                                                                $booking->accepted,
-                                                            )->first()?->userid;
-                                                            $user_id = App\models\User::where('id', $userid)->first()
-                                                                ->user_id;
-                                                        @endphp
-                                                        <td>{{ $user_id }}
-                                                        </td>
-                                                    @else
-                                                        <td>{{ App\Models\User::where('id', $booking->accepted)->first()?->user_id }}
-                                                        </td>
-                                                    @endif
+                                                    <td>{{ $booking?->driverasuser?->user_id ?? 'N/A' }}</td>
 
 
                                                     <td>{{ $booking->pincode }}</td>
@@ -255,15 +239,7 @@
                                                 </tr>
                                                 <?php $i++; ?>
                                                 @php
-                                                    $subId = App\Models\Pincode::where(
-                                                        'pincode',
-                                                        $booking->pincode,
-                                                    )->first();
-                                                    $subscriber = null;
-
-                                                    if ($subId) {
-                                                        $subscriber = App\Models\Subscriber::find($subId->usedBy);
-                                                    }
+                                                    $subscriber = $subscribers[$bookingPincode?->usedBy] ?? null;
                                                     if ($booking->bookingPayment->first()?->coupon_id != '') {
                                                         $totalAmount +=
                                                             optional($booking->bookingPayment->first())->total -
@@ -295,7 +271,6 @@
                                                     }
                                                 @endphp
                                             @endforeach
-                                            {{-- {{ $bookings->links() }} --}}
                                         </tbody>
                                         <tfoot>
                                             <tr>
@@ -306,6 +281,9 @@
                                             </tr>
                                         </tfoot>
                                     </table>
+                                    <div class="mt-3">
+                                        {{ $bookings->links() }}
+                                    </div>
                                 </div>
                             </div>
                         </div>

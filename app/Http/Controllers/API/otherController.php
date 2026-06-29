@@ -92,10 +92,10 @@ class otherController extends BaseController
         }
 
         $subscriber = Subscriber::where('id', $pincodeData->usedBy)->first();
-        if (!$subscriber || $subscriber->blockedstatus != 1) {
+        if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subscriber blocked'
+                'message' => 'Subscriber inactive or blocked'
             ]);
         }
 
@@ -794,25 +794,38 @@ class otherController extends BaseController
             'device_token' => 'required',
         ]);
 
-        if (isset($request->email) && (Auth::guard('api')->attempt(['email' => $request->email, 'password' => $request->password]))) {
-            $user = Auth::guard('api')->user();
-            // log::info('user details',[$user]);
-            //return $user;
-            if (($user->is_googleUser == 1) && ($user->blockedstatus == 1)) {
-                $success['token'] =  $user->createToken('MyApp')->plainTextToken;
-                $success['name'] =  $user->name;
-                $success['user_id'] =  $user->user_id;
-                $success['id'] =  $user->id;
-                $user->last_login = date("Y-m-d H:i:s");
-                $user->device_token = $request->device_token;
-                $user->save();
-                return $this->sendResponse($success, 'User login successfully.');
-            } else {
-                return $this->sendError('User Blocked', ['error' => 'Contact Admin'], 403);
-            }
-        } else {
-            return $this->sendError('Wrong Credentials', ['error' => 'Unauthorised'], 401); // Explicitly setting status code to 401
+        $user = User::where('email', $request->email)->first();
+
+        // if (!$user) {
+        //     // return $this->sendError('', ['error' => 'Please sign up'], 404);
+        //     return new JsonResponse([
+        //         'status' => false,
+        //         'message' => "User not found. Please sign up",
+        //     ]);
+        // }
+
+        if ((int) ($user->is_googleUser ?? 0) !== 1) {
+            return new JsonResponse([
+                'error' => 'Invalid Login',
+                'errors' => [
+                    'error' => 'Your not a google user. Please signup using google',
+                ],
+            ], 401);
         }
+
+        if ((string) $user->blockedstatus === '0') {
+            return $this->sendError('User Blocked', ['error' => 'Contact Admin'], 403);
+        }
+
+        $success['token'] =  $user->createToken('MyApp')->plainTextToken;
+        $success['name'] =  $user->name;
+        $success['user_id'] =  $user->user_id;
+        $success['id'] =  $user->id;
+        $user->last_login = date("Y-m-d H:i:s");
+        $user->device_token = $request->device_token;
+        $user->save();
+
+        return $this->sendResponse($success, 'User login successfully.');
     }
 
     public function drivercurrentlocation(Request $request)
@@ -1171,10 +1184,10 @@ class otherController extends BaseController
         }
 
         $subscriber = Subscriber::where('id', $pincode->usedBy)->first();
-        if (!$subscriber || $subscriber->blockedstatus != 1) {
+        if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
             return response()->json([
                 'status' => false,
-                'message' => "Unable to make booking, subscriber blocked"
+                'message' => "Unable to make booking, subscriber inactive or blocked"
             ]);
         }
 
@@ -4852,6 +4865,19 @@ class otherController extends BaseController
         if ($validate->fails()) {
             return $this->sendError($validate->errors());
         } else {
+            $pincode = Pincode::where('pincode', $d->get('pincode'))->first();
+            if (!$pincode) {
+                return $this->sendError("Invalid pincode");
+            }
+
+            $subscriber = Subscriber::where('id', $pincode->usedBy)->first();
+            if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Unable to make booking, subscriber inactive or blocked"
+                ]);
+            }
+
             $checkthebookinghistory1 = DB::table('booking')->where('customer_id', $d->get('user_id'))->orderBy('created_at', 'desc')->get();
 
             if (count($checkthebookinghistory1) > 0) {
