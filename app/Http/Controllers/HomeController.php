@@ -269,9 +269,8 @@ class HomeController extends Controller
 
     public function dashboard()
     {
-        $subscriber = Subscriber::get();
-        $subscriptionAmount = $subscriber->sum('subscription_price');
-        $subscriberCount = $subscriber->count();
+        $subscriptionAmount = Subscriber::sum('subscription_price');
+        $subscriberCount = Subscriber::count();
         $enduser = Enduser::count();
         $driversCount = Driver::count();
         $category = Category::count();
@@ -285,77 +284,12 @@ class HomeController extends Controller
         $id = Auth::id();
         $checking = Checking::where('admin_id', $id)->latest()->first();
         $bookingCount = Booking::count();
-        $bookingPrice = Booking::with('bookingPayment')->get();
-        $totalBookingAmount = $bookingPrice->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $bikeTaxi = Booking::where('category', 1)->with('bookingPayment')->get();
-        $bikeTaxiTotal = $bikeTaxi->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $pickup = Booking::where('category', 2)->with('bookingPayment')->get();
-        $pickupTotal = $pickup->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $dropAndDelivery = Booking::where('category', 3)->with('bookingPayment')->get();
-        $dropAndDeliveryTotal = $dropAndDelivery->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $auto = Booking::where('category', 4)->with('bookingPayment')->get();
-        $autoTotal = $auto->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $cab = Booking::where('category', 5)->with('bookingPayment')->get();
-        $cabTotal = $cab->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
+        $totalBookingAmount = $this->bookingPaymentTotal();
+        $bikeTaxiTotal = $this->bookingPaymentTotal(['category' => 1]);
+        $pickupTotal = $this->bookingPaymentTotal(['category' => 2]);
+        $dropAndDeliveryTotal = $this->bookingPaymentTotal(['category' => 3]);
+        $autoTotal = $this->bookingPaymentTotal(['category' => 4]);
+        $cabTotal = $this->bookingPaymentTotal(['category' => 5]);
 
         $totalServiceAmount = $bikeTaxiTotal + $pickupTotal + $dropAndDeliveryTotal + $autoTotal + $cabTotal;
         $inactiveSubscribers = Subscriber::where('activestatus', 0)->count();
@@ -370,84 +304,8 @@ class HomeController extends Controller
             ->where('updated_at', '>=', $thirtyDaysAgo)
             ->count();
         $salesCount = $pincodeSales;
-        $booking = Booking::with('bookingPayment')->get();
-        $bookingCost = $booking->sum(function ($booking) {
-            return $booking->bookingPayment->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-        });
-
-        $books = Booking::latest()->get();
-        $totalBookingCostWithServiceCost = 0;
-        foreach ($books as $book) {
-            $pincodeRecord = Pincode::where('pincode', $book->pincode)->first();
-            if ($pincodeRecord) {
-                $subId = $pincodeRecord->usedBy;
-                $subscriberrr = Subscriber::where('id', $subId)->first();
-                if ($subscriberrr) {
-                    if ($book->category == 1) {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    } elseif ($book->category == 2) {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    } elseif ($book->category == 3) {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    } elseif ($book->category == 4) {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    } elseif ($book->category == 5) {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    } else {
-                        $totalBookingCostWithServiceCost += $book->bookingPayment->isEmpty() ? 0 : $book->bookingPayment->sum(function ($payment) {
-                            // Check if coupon_id is not null and adjust the total accordingly
-                            if ($payment->coupon_id !== null) {
-                                return $payment->total - $payment->coupon_amount;
-                            } else {
-                                return $payment->total;
-                            }
-                        });
-                    }
-                }
-            }
-        }
+        $bookingCost = $totalBookingAmount;
+        $totalBookingCostWithServiceCost = $this->assignedPincodeBookingPaymentTotal();
 
         $buttonColors = ['btn-secondary', 'btn-dark', 'btn-primary', 'btn-success', 'btn-warning', 'btn-danger'];
         $counts = [];
@@ -463,48 +321,13 @@ class HomeController extends Controller
             ];
         }
 
-        $completedBookingId = Booking::where('status', 2)->pluck('booking_id');
-        $completedBookingTotal = BookingPayment::whereIn('booking_id', $completedBookingId)
-            ->get() // Retrieve all matching BookingPayment records
-            ->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
+        $completedBookingTotal = $this->bookingPaymentTotal(['status' => 2]);
+        $cancelledBookingTotal = $this->bookingPaymentTotal(['status' => 3]);
+        $inprocessBookingTotal = $this->bookingPaymentTotal(['status' => 1]);
 
-
-        $cancelledBookingId = Booking::where('status', 3)->pluck('booking_id');
-        $cancelledBookingTotal = BookingPayment::whereIn('booking_id', $cancelledBookingId)
-            ->get() // Retrieve all matching BookingPayment records
-            ->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-
-
-        $inprocessBookingId = Booking::where('status', 1)->pluck('booking_id');
-        $inprocessBookingTotal = BookingPayment::whereIn('booking_id', $inprocessBookingId)
-            ->get() // Retrieve all matching BookingPayment records
-            ->sum(function ($payment) {
-                // Check if coupon_id is not null and adjust the total accordingly
-                if ($payment->coupon_id !== null) {
-                    return $payment->total - $payment->coupon_amount;
-                } else {
-                    return $payment->total;
-                }
-            });
-
-
-        $expiredSubscribers = Subscriber::whereDate('expiryDate', '<', now()->format('Y-m-d'))->get();
-        $expiredSubscriberCount = $expiredSubscribers->count();
-        $expiredSubscriptionPrice = $expiredSubscribers->sum('subscription_price');
+        $expiredSubscriberQuery = Subscriber::whereDate('expiryDate', '<', now()->format('Y-m-d'));
+        $expiredSubscriberCount = (clone $expiredSubscriberQuery)->count();
+        $expiredSubscriptionPrice = (clone $expiredSubscriberQuery)->sum('subscription_price');
 
         return view('admin.dashboard', compact(
             'expiredSubscriberCount',
@@ -544,6 +367,30 @@ class HomeController extends Controller
             'counts',
             'completedBookingTotal'
         ));
+    }
+
+    private function bookingPaymentTotal(array $bookingFilters = []): float
+    {
+        $query = BookingPayment::query()
+            ->join('booking', 'booking.booking_id', '=', 'booking_payment.booking_id');
+
+        foreach ($bookingFilters as $column => $value) {
+            $query->where('booking.' . $column, $value);
+        }
+
+        return (float) $query
+            ->selectRaw('COALESCE(SUM(booking_payment.total - CASE WHEN booking_payment.coupon_id IS NOT NULL THEN COALESCE(booking_payment.coupon_amount, 0) ELSE 0 END), 0) AS aggregate')
+            ->value('aggregate');
+    }
+
+    private function assignedPincodeBookingPaymentTotal(): float
+    {
+        return (float) BookingPayment::query()
+            ->join('booking', 'booking.booking_id', '=', 'booking_payment.booking_id')
+            ->join('pincode', 'pincode.pincode', '=', 'booking.pincode')
+            ->join('subscriber', 'subscriber.id', '=', 'pincode.usedBy')
+            ->selectRaw('COALESCE(SUM(booking_payment.total - CASE WHEN booking_payment.coupon_id IS NOT NULL THEN COALESCE(booking_payment.coupon_amount, 0) ELSE 0 END), 0) AS aggregate')
+            ->value('aggregate');
     }
 
     //End user
