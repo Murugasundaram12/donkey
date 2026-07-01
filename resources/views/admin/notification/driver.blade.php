@@ -135,7 +135,7 @@
 
                                     <!-- Modal -->
                                     <div class="modal fade" id="exampleModalCenter{{$driver->id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                                        <form action="{{route('admin.readBy',['readBy' => $driver->id])}}" method="Post">
+                                        <form action="{{ url('readBy/'.$driver->id) }}" method="POST">
                                             @csrf
                                             @method('Put')
 

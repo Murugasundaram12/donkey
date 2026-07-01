@@ -1255,6 +1255,7 @@
 
     <!-- <div class="cursor"></div> -->
     <!-- <div class="cursor2"></div> -->
+    @include('partials.required-field-indicator')
 </body>
 <!-- <style>
 .cursor {

@@ -27,6 +27,7 @@ class UpdateSubscriberPasswordRequest extends FormRequest
     {
         return [
             'user_id' => 'nullable',
+            'reset_type' => 'nullable|in:employee,subscriber',
             //'email' => ['email', 'required', Rule::exists(Employee::class)],
             'password' => 'required',
             'confirmed_password' => 'required'

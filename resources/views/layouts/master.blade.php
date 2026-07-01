@@ -69,7 +69,7 @@
     <script src="{{ asset('admin/js/datamaps-zoomto.js') }}"></script>
     <script src="{{ asset('admin/js/datamaps.custom.js') }}"></script>
     <script src="{{ asset('admin/js/Chart.min.js') }}"></script>
-    <script src="{{ asset('admin/js/multiselect-dropdown.js') }}"></script>
+    <script src="{{ asset('admin/js/multiselect-dropdown.js') }}?v={{ filemtime(public_path('admin/js/multiselect-dropdown.js')) }}"></script>
     <script>
         /* defind global options */
         Chart.defaults.global.defaultFontFamily = base.defaultFontFamily;
@@ -245,6 +245,14 @@
 
     <script src="{{ asset('admin/js/apps.js') }}"></script>
     @yield('scripts')
+    @if (!session()->has('suppress_success_modal') && (session()->has('success') || session()->has('success_message') || session()->has('show_success_modal')))
+        <script>
+            $(function() {
+                $('.main-content .alert.alert-success').hide();
+                $('#successModal').modal('show');
+            });
+        </script>
+    @endif
     <script>
         $(document).ready(function() {
             $("#searchinput").on("keyup", function() {
@@ -255,6 +263,7 @@
             });
         });
     </script>
+    @include('partials.required-field-indicator')
 </body>
 
 </html>

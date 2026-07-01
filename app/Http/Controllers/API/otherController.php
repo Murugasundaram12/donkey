@@ -1672,105 +1672,137 @@ class otherController extends BaseController
         } else {
             $type = 1;
         }
-        $driverarray = [];
-        $pincode = $pincode1;
-        $Pincode = Pincode::where('pincode', $pincode)->get();
-        foreach ($Pincode as $pin) {
-            if ($pin->pincode == $pincode) {
 
-                $driver = Driver::where('type', $type)->get(['pincode', 'id', 'userid', 'type']);
-                foreach ($driver as $drivers) {
-                    $driverpin =  json_decode($drivers->pincode);
-                    foreach ($driverpin as $p) {
-                        if ($p == $pin->id) {
-                            //notification for that driver pincode
-                            // $user_id = User::where('id', $drivers->id)->get(['user_id']);
-                            // if (count($user_id) > 0)
-                            array_push($driverarray, $drivers->userid);
-                        }
-                    }
-                }
-            }
+        $pin = Pincode::where('pincode', $pincode1)->first();
+        if (!$pin) {
+            return 0;
         }
-        $driverarray = array_unique($driverarray);
-        if (count($driverarray) > 0) {
-            // return $this->sendResponse(array_unique($driverarray), 'These Are the driver id for the notification');
-            foreach ($driverarray as $da) {
-                $d11 = User::where('id', $da)->get(['device_token']);
-                if (count($d11) > 0 && $d11[0]->device_token != "") {
-                    $url = 'https://fcm.googleapis.com/v1/projects/donkey-driver/messages:send';
-                    // Authorization token (replace with your actual bearer token)
-                    $driverToken = site::where('id', 1)?->first()?->driverToken;
-                    $token = $driverToken;
 
-                    // Compile headers in one variable
-                    $headers = array(
-                        'Authorization: ' . $token,
-                        'Content-Type: application/json'
-                    );
+        $drivers = $this->activeDriversForNotification([$pin->id], $type);
 
-                    // Notification payload
-                    $notifData = [
-                        'title' => "Duty Alert !!",
-                        'body' => "Passenger needs a ride \nDistance: " . $notification_data[4] . "\nPincode: " . $notification_data[5]
-                    ];
-
-                    // Data payload (extra data)
-                    $dataPayload = [
-                        'title' => "Duty Alert !!",
-                        'body' => "Passenger needs a ride \nDistance: " . $notification_data[4] . "\nPincode: " . $notification_data[5],
-                        'story_id' => "story_12345"
-                    ];
-
-                    $apiBody = [
-                        'message' => [
-                            'token' => $d11[0]->device_token, // Target device token
-                            'notification' => $notifData,  // Notification section
-                            'android' => [
-                                'priority' => 'high',
-                                'notification' => [
-                                    'sound' => 'default',
-                                    'channel_id' => '1101'
-                                ]
-                            ],
-                            'apns' => [
-                                'headers' => [
-                                    'apns-priority' => '10', // iOS notification priority
-                                ],
-                            ],
-                            'data' => $dataPayload // Data section
-                        ]
-                    ];
-
-                    // Initialize CURL and set options
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($apiBody));
-
-                    // Execute the call and save the response
-                    $result = curl_exec($ch);
-
-                    // Capture any CURL error
-                    if (curl_errno($ch)) {
-                        $error_msg = curl_error($ch);
-                        Log::error("CURL error: " . $error_msg);
-                    } else {
-                        $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                        Log::info("Response code: " . $responseCode);
-                    }
-
-                    // Log the entire result and response for debugging
-                    Log::info("FCM Response: " . $result);
-
-                    // Close CURL
-                    curl_close($ch);
-                }
-            }
+        if ($drivers->isEmpty()) {
+            $nearbyPincodeIds = $this->nearbyPincodeIds($pin);
+            $drivers = $this->activeDriversForNotification($nearbyPincodeIds, $type);
         }
+
+        foreach ($drivers as $driver) {
+            $this->sendDriverBookingNotification($driver->device_token, $notification_data);
+        }
+
         return 1;
+    }
+
+    private function nearbyPincodeIds(Pincode $pin): array
+    {
+        if (empty($pin->taluk) && empty($pin->city) && empty($pin->district)) {
+            return [];
+        }
+
+        return Pincode::query()
+            ->whereKeyNot($pin->id)
+            ->where(function ($query) use ($pin) {
+                if (!empty($pin->taluk)) {
+                    $query->orWhere('taluk', $pin->taluk);
+                }
+                if (!empty($pin->city)) {
+                    $query->orWhere('city', $pin->city);
+                }
+                if (!empty($pin->district)) {
+                    $query->orWhere('district', $pin->district);
+                }
+            })
+            ->limit(50)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    private function activeDriversForNotification(array $pincodeIds, int $type)
+    {
+        $pincodeIds = array_map('intval', array_filter($pincodeIds));
+        if (empty($pincodeIds)) {
+            return collect();
+        }
+
+        return Driver::query()
+            ->join('users', 'users.id', '=', 'driver.userid')
+            ->join('subscriber', 'subscriber.id', '=', 'driver.subscriberId')
+            ->where('driver.type', $type)
+            ->where('driver.status', 1)
+            ->where('users.is_live', 1)
+            ->where('users.blockedstatus', 1)
+            ->whereNotNull('users.device_token')
+            ->where('users.device_token', '!=', '')
+            ->where('subscriber.activestatus', 1)
+            ->where('subscriber.blockedstatus', 1)
+            ->get(['driver.userid', 'driver.pincode', 'users.device_token'])
+            ->filter(function ($driver) use ($pincodeIds) {
+                $driverPincodes = json_decode((string) $driver->pincode, true);
+                if (!is_array($driverPincodes)) {
+                    return false;
+                }
+
+                $driverPincodes = array_map('intval', $driverPincodes);
+                return count(array_intersect($driverPincodes, $pincodeIds)) > 0;
+            })
+            ->unique('userid')
+            ->values();
+    }
+
+    private function sendDriverBookingNotification(string $deviceToken, array $notification_data): void
+    {
+        $url = 'https://fcm.googleapis.com/v1/projects/donkey-driver/messages:send';
+        $driverToken = site::where('id', 1)?->first()?->driverToken;
+
+        $headers = [
+            'Authorization: ' . $driverToken,
+            'Content-Type: application/json',
+        ];
+
+        $body = "Passenger needs a ride \nDistance: " . $notification_data[4] . "\nPincode: " . $notification_data[5];
+        $apiBody = [
+            'message' => [
+                'token' => $deviceToken,
+                'notification' => [
+                    'title' => "Duty Alert !!",
+                    'body' => $body,
+                ],
+                'android' => [
+                    'priority' => 'high',
+                    'notification' => [
+                        'sound' => 'default',
+                        'channel_id' => '1101',
+                    ],
+                ],
+                'apns' => [
+                    'headers' => [
+                        'apns-priority' => '10',
+                    ],
+                ],
+                'data' => [
+                    'title' => "Duty Alert !!",
+                    'body' => $body,
+                    'story_id' => "story_12345",
+                ],
+            ],
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($apiBody));
+
+        $result = curl_exec($ch);
+        if (curl_errno($ch)) {
+            Log::error("CURL error: " . curl_error($ch));
+        } else {
+            Log::info("Response code: " . curl_getinfo($ch, CURLINFO_HTTP_CODE));
+            Log::info("FCM Response: " . $result);
+        }
+
+        curl_close($ch);
     }
 
     public function pincheckNew(Request $request)
@@ -4461,22 +4493,31 @@ class otherController extends BaseController
             ]
         ];
 
-        // Make a POST request to FCM API
-        $response = $client->post($url, [
-            'headers' => $headers,
-            'json' => $apiBody,
-        ]);
+        try {
+            $response = $client->post($url, [
+                'headers' => $headers,
+                'json' => $apiBody,
+            ]);
 
-        // Check response status code
-        if ($response->getStatusCode() === 200) {
-            // Notification sent successfully
-            Log::info('Notification sent successfully');
-            return true;
-        } else {
-            // Log unsuccessful responses
+            if ($response->getStatusCode() === 200) {
+                Log::info('Notification sent successfully');
+                return true;
+            }
+
             Log::error('Failed to send notification. Status code: ' . $response->getStatusCode());
-            return false;
+        } catch (\GuzzleHttp\Exception\ClientException $exception) {
+            $response = $exception->getResponse();
+            Log::error('FCM notification client error.', [
+                'status' => $response?->getStatusCode(),
+                'body' => $response ? substr((string) $response->getBody(), 0, 1000) : null,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('FCM notification failed.', [
+                'message' => $exception->getMessage(),
+            ]);
         }
+
+        return false;
     }
 
     private function sendNotificationbackup29($deviceToken, $notificationData)

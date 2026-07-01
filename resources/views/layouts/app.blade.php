@@ -80,6 +80,7 @@
         @include('partials.success-modal')
         </main>
     </div>
+    @include('partials.required-field-indicator')
 </body>
 
 </html>

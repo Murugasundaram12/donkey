@@ -23,6 +23,25 @@
         opacity: 1 !important;
         vertical-align: baseline !important;
     }
+
+    .subscriber-submit-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.4rem;
+        vertical-align: -0.15em;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: subscriberSubmitSpin 0.75s linear infinite;
+    }
+
+    @keyframes subscriberSubmitSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
 </style>
 
 @section('content')
@@ -42,7 +61,7 @@
 
                                 <input type="hidden" id="pincodeSearchApiUrl"
                                     value="{{ route('pincode.search') ?? url('pincode/search') }}">
-                                <form method="post" action="{{ url('subscriberstore') }}" autocomplete="off"
+                                <form method="post" action="{{ url('subscriberstore') }}" autocomplete="on"
                                     enctype="multipart/form-data">
                                     {{ csrf_field() }}
                                     <div id="pincodeTopAlert" class="alert alert-warning alert-dismissible fade show"
@@ -72,6 +91,7 @@
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
+                                    <div id="subscriberAjaxStatus" class="alert" role="alert" style="display:none;"></div>
                                     <div class="form-row">
                                         <div class="col-md-6 mb-3">
                                             <label for="name">Name</label>
@@ -232,7 +252,8 @@
                                                 <select name="pincode[]"
                                                     class="form-control @error('pincode') is-invalid @enderror" id="pincode"
                                                     multiple placeholder="Select up to 5 Pincodes" multiselect-search="true"
-                                                    multiselect-select-all="true">
+                                                    multiselect-select-all="true" multiselect-lazy="true"
+                                                    multiselect-chunk-size="250">
 
                                                     @foreach ($pincode as $pin)
                                                         <option value="{{ $pin->id }}" {{ is_array(old('pincode')) && in_array($pin->id, old('pincode')) ? 'selected' : '' }}>
@@ -890,7 +911,13 @@
 
 
 
-                                    <center><button class="btn btn-primary mt-2" type="submit">Submit form</button></center>
+                                    <center>
+                                        <button class="btn btn-primary mt-2" type="submit" id="subscriberSubmitBtn">
+                                            <span class="subscriber-submit-spinner" id="subscriberSubmitSpinner"
+                                                style="display:none;" aria-hidden="true"></span>
+                                            <span id="subscriberSubmitText">Submit form</span>
+                                        </button>
+                                    </center>
                                 </form>
                                 <div class="modal fade" id="subscriberOtpModal" tabindex="-1" role="dialog"
                                     aria-labelledby="subscriberOtpModalLabel" aria-hidden="true" data-backdrop="static"
@@ -1013,14 +1040,11 @@
             let otpMaskedPhone = '';
             let allowPageLeave = false;
             let restoringFileDraft = false;
+            let submitInProgress = false;
 
             function setMessage(show) {
-                $('#pincodeTopAlert').hide();
+                $('#pincodeTopAlert').toggle(!!show);
                 if (show) {
-                    if (!pincodeModalShown && window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-                        $('#pincodeNotListedModal').modal('show');
-                        pincodeModalShown = true;
-                    }
                 } else {
                     pincodeModalShown = false;
                 }
@@ -1225,6 +1249,138 @@
 
             function csrfToken() {
                 return form ? form.querySelector('input[name="_token"]')?.value : '';
+            }
+
+            function setAjaxStatus(message, type) {
+                const status = document.getElementById('subscriberAjaxStatus');
+                if (!status) return;
+
+                status.className = 'alert alert-' + (type || 'info');
+                status.innerHTML = message || '';
+                status.style.display = message ? 'block' : 'none';
+                if (message && type === 'danger') {
+                    status.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            function setSubmitLoading(isLoading) {
+                submitInProgress = isLoading;
+                const submitButton = document.getElementById('subscriberSubmitBtn');
+                const submitSpinner = document.getElementById('subscriberSubmitSpinner');
+                const submitText = document.getElementById('subscriberSubmitText');
+
+                if (submitButton) submitButton.disabled = isLoading;
+                if (submitSpinner) submitSpinner.style.display = isLoading ? 'inline-block' : 'none';
+                if (submitText) submitText.textContent = isLoading ? 'Submitting...' : 'Submit form';
+            }
+
+            function clearAjaxValidationErrors() {
+                if (!form) return;
+                form.querySelectorAll('.is-invalid').forEach(function (field) {
+                    field.classList.remove('is-invalid');
+                });
+                form.querySelectorAll('.ajax-invalid-feedback').forEach(function (node) {
+                    node.remove();
+                });
+            }
+
+            function findFieldForError(key) {
+                if (!form || !key) return null;
+                const candidates = [key];
+                const arrayKey = key.replace(/\.\d+$/, '[]');
+                if (arrayKey !== key) candidates.push(arrayKey);
+                candidates.push(key.split('.')[0]);
+                candidates.push(key.split('.')[0] + '[]');
+
+                for (const candidate of candidates) {
+                    const escaped = window.CSS && CSS.escape ? CSS.escape(candidate) : candidate.replace(/"/g, '\\"');
+                    const field = form.querySelector('[name="' + escaped + '"]');
+                    if (field) return field;
+                }
+
+                return null;
+            }
+
+            function renderAjaxValidationErrors(errors) {
+                clearAjaxValidationErrors();
+                const messages = [];
+                Object.keys(errors || {}).forEach(function (key) {
+                    const errorMessages = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+                    const message = errorMessages[0] || 'Invalid value.';
+                    messages.push(message);
+
+                    const field = findFieldForError(key);
+                    if (!field) return;
+                    field.classList.add('is-invalid');
+
+                    const feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback ajax-invalid-feedback';
+                    feedback.textContent = message;
+                    if (field.parentElement) {
+                        field.parentElement.appendChild(feedback);
+                    }
+                });
+
+                setAjaxStatus(messages.length ? messages.join('<br>') : 'Please check the form details.', 'danger');
+                const firstInvalid = form.querySelector('.is-invalid');
+                if (firstInvalid && typeof firstInvalid.focus === 'function') {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus({ preventScroll: true });
+                }
+            }
+
+            async function submitSubscriberFormAjax() {
+                if (!form || submitInProgress) return;
+
+                clearAjaxValidationErrors();
+                setAjaxStatus('', 'info');
+                setSubmitLoading(true);
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: form.method || 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken(),
+                        },
+                        body: new FormData(form),
+                    });
+
+                    let result = {};
+                    try {
+                        result = await response.json();
+                    } catch (error) {
+                        result = {};
+                    }
+
+                    if (response.status === 422 && result.errors) {
+                        renderAjaxValidationErrors(result.errors);
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Unable to submit the application. Please try again.');
+                    }
+
+                    setAjaxStatus('', 'success');
+                    clearSavedForm();
+                    if (window.sessionStorage) {
+                        sessionStorage.removeItem(submitPendingKey);
+                        sessionStorage.removeItem(otpVerifiedKey);
+                    }
+                    setOtpVerifiedState(false, '');
+                    setInlineOtpStatus('', 'success');
+                    showClientSuccessMessage();
+                    removeFileDraft().catch(function () {});
+                } catch (error) {
+                    if (window.sessionStorage) {
+                        sessionStorage.removeItem(submitPendingKey);
+                    }
+                    setAjaxStatus(error.message || 'Unable to submit the application. Please try again.', 'danger');
+                } finally {
+                    setSubmitLoading(false);
+                }
             }
 
             function setOtpStatus(message, type) {
@@ -1532,7 +1688,6 @@
                     if (!field.name || field.type === 'file' || field.name === '_token') return;
                     if (isPublicSubscriberForm && field.id === 'subscriptionDate') {
                         field.value = currentSubscriptionDate;
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
                         return;
                     }
 
@@ -1575,7 +1730,7 @@
                     if (window.sessionStorage) {
                         sessionStorage.removeItem(submitPendingKey);
                     }
-                } else if (hasServerSuccess || hadSubmitPending) {
+                } else if (hasServerSuccess && !isReload) {
                     clearSavedForm();
                     if (window.sessionStorage) {
                         sessionStorage.removeItem(submitPendingKey);
@@ -1583,6 +1738,8 @@
                     }
                     showClientSuccessMessage();
                     return;
+                } else if (hadSubmitPending && window.sessionStorage) {
+                    sessionStorage.removeItem(submitPendingKey);
                 }
 
                 const rawDraft = localStorage.getItem(draftKey);
@@ -1852,7 +2009,14 @@
                 }
 
                 form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) return;
+                    if (window.sessionStorage) {
+                        sessionStorage.removeItem(submitPendingKey);
+                    }
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        form.reportValidity();
+                        return;
+                    }
                     if (requiresWhatsAppOtp && !otpVerifiedForSubmit) {
                         event.preventDefault();
                         const mobile = form.querySelector('[name="mobile"]')?.value || '';
@@ -1871,10 +2035,13 @@
                         setOtpStatus(message, 'danger');
                         return;
                     }
-                    if (window.sessionStorage) {
-                        sessionStorage.setItem(submitPendingKey, '1');
-                    }
                     allowPageLeave = true;
+                    if (isPublicSubscriberForm) {
+                        event.preventDefault();
+                        submitSubscriberFormAjax();
+                    } else {
+                        setSubmitLoading(true);
+                    }
                 });
                 form.addEventListener('input', saveDraft);
                 form.addEventListener('change', saveDraft);

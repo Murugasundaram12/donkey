@@ -78,13 +78,23 @@
 
                 </div>
                 <p class="card-text"> </p>
+                @if(session('subscriber_success'))
+                    <div class="col-md-12 px-0">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong></strong> {{ session('subscriber_success') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
                 <div class="row">
                     <span id="message" class="alert alert-success alert-dismissible fade show col-md-12"
                         style="display: none;" role="alert">
 
                     </span>
                 </div>
-                @if(Session::has('success'))
+                @if(Session::has('success') && !Session::has('subscriber_success'))
                     <!-- Small table -->
                     <div class="col-md-12">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -573,29 +583,6 @@
             }
         }
     </script>
-    @if (session('show_success_modal'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var successText = @json(session('success_message'));
-
-                function showPopup() {
-                    if (typeof window.swal === 'function') {
-                        window.swal({
-                            title: 'Success!',
-                            text: successText,
-                            icon: 'success',
-                            button: 'OK'
-                        });
-                    } else {
-                        alert(successText);
-                    }
-                }
-
-                // Delay to ensure full page load
-                setTimeout(showPopup, 300);
-            });
-        </script>
-    @endif
 @endsection
 @section('scripts')
 @endsection

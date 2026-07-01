@@ -67,25 +67,24 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $i = 1; ?>
-                                        @foreach ($pincode as $pincode)
+                                        @foreach ($pincode as $pin)
                                             <tr>
 
 
-                                                <td>{{ $i }}</td>
-                                                <td>{{ $pincode->state }}</td>
-                                                <td>{{ $pincode->district }}</td>
-                                                <td>{{ $pincode->city }}</td>
-                                                <td>{{ $pincode->taluk }}</td>
-                                                <td>{{ $pincode->pincode }}</td>
+                                                <td>{{ $pincode->firstItem() + $loop->index }}</td>
+                                                <td>{{ $pin->state }}</td>
+                                                <td>{{ $pin->district }}</td>
+                                                <td>{{ $pin->city }}</td>
+                                                <td>{{ $pin->taluk }}</td>
+                                                <td>{{ $pin->pincode }}</td>
 
                                                 <td>
                                                     @can('pincode-edit')
-                                                        <a href="{{ url('pincode/' . $pincode->id) }}"><span
+                                                        <a href="{{ url('pincode/' . $pin->id) }}"><span
                                                                 class="fe fe-24 fe-edit text-success"></span></a>
                                                     @endcan
                                                     @can('pincode-delete')
-                                                        <a href="{{ url('pincodedelete/' . $pincode->id) }}"
+                                                        <a href="{{ url('pincodedelete/' . $pin->id) }}"
                                                             class="button delete-confirm"><span
                                                                 class="fe fe-24 fe-trash text-danger"></span></a>
                                                     @endcan
@@ -93,10 +92,12 @@
 
                                                 </td>
                                             </tr>
-                                            <?php $i++; ?>
                                         @endforeach
                                     </tbody>
                                 </table>
+                                <div class="mt-3">
+                                    {{ $pincode->links('pagination::bootstrap-4') }}
+                                </div>
                             </div>
                         </div>
                     </div> <!-- simple table -->
@@ -104,17 +105,6 @@
             </div> <!-- .col-12 -->
         </div> <!-- .row -->
     </div> <!-- .container-fluid -->
-    <script src="https://technext.github.io/tinydash/js/jquery.dataTables.min.js"></script>
-    <script src='https://technext.github.io/tinydash/js/dataTables.bootstrap4.min.js'></script>
-    <script>
-        $('#dataTable-1').DataTable({
-            autoWidth: true,
-            "lengthMenu": [
-                [16, 32, 64, -1],
-                [16, 32, 64, "All"]
-            ]
-        });
-    </script>
 @endsection
 @section('scripts')
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>

@@ -40,12 +40,18 @@ class PincodeController extends Controller
         $results = Pincode::query()
             ->availableForNewSubscriber()
             ->where('pincode', 'LIKE', '%' . $q . '%')
+            ->orderByRaw(
+                'CASE WHEN pincode = ? THEN 0 WHEN pincode LIKE ? THEN 1 ELSE 2 END',
+                [$q, $q . '%']
+            )
+            ->orderBy('pincode')
             ->select(['id', 'pincode'])
             ->limit(10)
             ->get()
             ->map(fn($row) => [
                 'id' => $row->id,
                 'pincode' => $row->pincode,
+                'text' => $row->pincode,
             ])->values();
 
         return response()->json([
@@ -62,7 +68,8 @@ class PincodeController extends Controller
 
     {
         $pincode = Pincode::with(['subscriber'])
-            ->get();
+            ->latest()
+            ->paginate(16);
         //dd($pincode);
         return view('admin.pincode.index', compact('pincode'));
     }

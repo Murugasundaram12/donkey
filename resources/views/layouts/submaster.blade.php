@@ -63,7 +63,7 @@
     <script src="{{ asset('admin/js/datamaps-zoomto.js') }}"></script>
     <script src="{{ asset('admin/js/datamaps.custom.js') }}"></script>
     <script src="{{ asset('admin/js/Chart.min.js') }}"></script>
-    <script src="{{ asset('admin/js/multiselect-dropdown.js') }}"></script>
+    <script src="{{ asset('admin/js/multiselect-dropdown.js') }}?v={{ filemtime(public_path('admin/js/multiselect-dropdown.js')) }}"></script>
     <script>
     /* defind global options */
     Chart.defaults.global.defaultFontFamily = base.defaultFontFamily;
@@ -264,6 +264,7 @@
         })
     }
     </script>
+    @include('partials.required-field-indicator')
 </body>
 
 </html>

@@ -3,8 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Employee;
+use App\Models\Subscriber;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreSubscriberPasswordRequest extends FormRequest
 {
@@ -26,7 +26,18 @@ class StoreSubscriberPasswordRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => ['required', 'email', Rule::exists(Employee::class)]
+            'email' => [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) {
+                    $exists = Employee::where('email', $value)->exists()
+                        || Subscriber::where('email', $value)->exists();
+
+                    if (!$exists) {
+                        $fail('The selected email is invalid.');
+                    }
+                },
+            ],
         ];
     }
 }

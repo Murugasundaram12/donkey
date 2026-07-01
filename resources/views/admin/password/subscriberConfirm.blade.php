@@ -28,6 +28,7 @@
                         @csrf
 
                     <input type="hidden" name="user_id" value="{{$userId}}">
+                    <input type="hidden" name="reset_type" value="{{ $resetType ?? 'employee' }}">
                         <div class="row mb-3">
                             <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('New Password') }}</label>
                             <div class="col-md-6">

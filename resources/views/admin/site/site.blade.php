@@ -1,6 +1,19 @@
 @extends('layouts.master')
 
 @section('content')
+    <style>
+        .site-image-preview {
+            display: block;
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            margin-top: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px;
+            background: #fff;
+        }
+    </style>
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-12">
@@ -18,19 +31,23 @@
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="main_logo" class="form-label">Main Logo</label>
-                                            <input type="file" id="main_logo" class="form-control" name="main_logo">
-                                            <img style="height:50px;width:50px;"
-                                                src="{{ url('public/site/' . $site->main_logo) }}" alt="Logo-Img">
+                                            <input type="file" id="main_logo" class="form-control site-image-input"
+                                                name="main_logo" accept="image/*" data-preview="main_logo_preview">
+                                            @if ($site->main_logo)
+                                                <img id="main_logo_preview" class="site-image-preview"
+                                                    src="{{ asset('site/' . $site->main_logo) }}" alt="Main Logo">
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="sidebar_logo" class="form-label">Sidebar Logo</label>
-                                            <input type="file" id="sidebar_logo" class="form-control"
-                                                name="sidebar_logo">
-                                            <img style="height:50px;width:50px;"
-                                                src="{{ url('public/site/' . $site->sidebar_logo) }}"
-                                                alt="Sidebar-Logo-Img">
+                                            <input type="file" id="sidebar_logo" class="form-control site-image-input"
+                                                name="sidebar_logo" accept="image/*" data-preview="sidebar_logo_preview">
+                                            @if ($site->sidebar_logo)
+                                                <img id="sidebar_logo_preview" class="site-image-preview"
+                                                    src="{{ asset('site/' . $site->sidebar_logo) }}" alt="Sidebar Logo">
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -38,22 +55,26 @@
                                             <label for="sidebar_small_logo" class="form-label">Sidebar Logo
                                                 <small>small</small>
                                             </label>
-                                            <input type="file" id="sidebar_small_logo" class="form-control"
-                                                name="sidebar_small_logo">
-                                            <img style="height:50px;width:50px;"
-                                                src="{{ url('public/site/' . $site->sidebar_small_logo) }}"
-                                                alt="Sidebar-Logo-Img">
+                                            <input type="file" id="sidebar_small_logo"
+                                                class="form-control site-image-input" name="sidebar_small_logo"
+                                                accept="image/*" data-preview="sidebar_small_logo_preview">
+                                            @if ($site->sidebar_small_logo)
+                                                <img id="sidebar_small_logo_preview" class="site-image-preview"
+                                                    src="{{ asset('site/' . $site->sidebar_small_logo) }}"
+                                                    alt="Sidebar Small Logo">
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="mb-3">
                                             <label for="favicon" class="form-label">Favicon
                                             </label>
-                                            <input type="file" id="favicon" class="form-control"
-                                                name="favicon">
-                                            <img style="height:50px;width:50px;"
-                                                src="{{ url('public/site/' . $site->favicon) }}"
-                                                alt="Sidebar-Logo-Img">
+                                            <input type="file" id="favicon" class="form-control site-image-input"
+                                                name="favicon" accept="image/*" data-preview="favicon_preview">
+                                            @if ($site->favicon)
+                                                <img id="favicon_preview" class="site-image-preview"
+                                                    src="{{ asset('site/' . $site->favicon) }}" alt="Favicon">
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -113,4 +134,28 @@
             </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.site-image-input').forEach(function(input) {
+            input.addEventListener('change', function() {
+                const file = this.files && this.files[0];
+                const previewId = this.dataset.preview;
+
+                if (!file || !previewId) {
+                    return;
+                }
+
+                let preview = document.getElementById(previewId);
+
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = previewId;
+                    preview.className = 'site-image-preview';
+                    preview.alt = this.previousElementSibling ? this.previousElementSibling.textContent.trim() : 'Preview';
+                    this.insertAdjacentElement('afterend', preview);
+                }
+
+                preview.src = URL.createObjectURL(file);
+            });
+        });
+    </script>
 @endsection

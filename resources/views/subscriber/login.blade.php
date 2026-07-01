@@ -319,6 +319,7 @@
             $('.wrapper').removeClass('blur');
         }
     </script>
+@include('partials.required-field-indicator')
 </body>
 
 </html>

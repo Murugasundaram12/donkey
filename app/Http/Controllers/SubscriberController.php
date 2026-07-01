@@ -146,7 +146,7 @@ class SubscriberController extends Controller
         }
 
         // dd($request);
-        $this->validate($request, [
+        $rules = [
             'name' => 'required',
             'location' => 'required',
             'subscriptionDate' => 'required',
@@ -198,6 +198,18 @@ class SubscriberController extends Controller
             'ifsccode' => 'required',
             'video' => 'nullable|mimes:mp4',
             'qr' => 'nullable'
+        ];
+
+        if (!$isPublicRegistration) {
+            $rules['email'] = [
+                'required',
+                'email',
+                Rule::unique('employees', 'email'),
+            ];
+        }
+
+        $this->validate($request, $rules, [
+            'email.unique' => 'This email already exists in employees. Please use another email.',
         ]);
         $pincode = array();
         $zipcode = $request->pincode;
@@ -320,7 +332,7 @@ class SubscriberController extends Controller
         }
         $subscriber->save();
         $subid = $subscriber->id;
-        $insertPric = $this->storePrice($subid, $zipcode, $request);
+        $insertPric = $this->storePrice($subid, $zipcode, $request, true);
         // dd($subscriber);
 
         if (!$isPublicRegistration) {
@@ -333,7 +345,7 @@ class SubscriberController extends Controller
                 'address' => $request->description,
                 'aadhar' => $request->aadharNo,
                 'subscriber_id' => $subscriber->id,
-                'emp_id' => "PBP Employee ID - " . str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT),
+                'emp_id' => $this->generateSubscriberEmployeeId(),
                 'role' => 'Subscriber Admin'
             ];
             $role = Role::where('guard_name', 'subscriber')->where('name', $data['role'])->first();
@@ -344,14 +356,21 @@ class SubscriberController extends Controller
         }
 
         $categories = Category::pluck('id');
+        $pincodeCategoryRows = [];
+        $timestamp = now();
         foreach ($zipcode as $code) {
             foreach ($categories as $category) {
-                Pincodebasedcategory::create([
+                $pincodeCategoryRows[] = [
                     'subscriber_id' => $subscriber->id,
                     'pincode_id' => $code,
-                    'category_id' => $category
-                ]);
+                    'category_id' => $category,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ];
             }
+        }
+        if (!empty($pincodeCategoryRows)) {
+            Pincodebasedcategory::insert($pincodeCategoryRows);
         }
 
         if ($isPublicRegistration && config('services.whatsapp.onboarding_otp_enabled')) {
@@ -359,19 +378,52 @@ class SubscriberController extends Controller
         }
 
         if ($isPublicRegistration && config('services.whatsapp.onboarding_message_enabled')) {
-            $whatsAppOtp->sendBodyTemplate(
-                $subscriber->mobile,
-                config('services.whatsapp.submission_template'),
-                $whatsAppOtp->submissionVariables($subscriber)
-            );
+            $this->sendSubmissionWhatsappAfterResponse($subscriber, $whatsAppOtp);
         }
 
         $message = 'Application Submitted Successfully. Your application has been received and is under review. The review process typically takes 5-7 business days. You will receive a WhatsApp notification if your application is approved or rejected. If additional information is required, our team may contact you through our official WhatsApp number: 9069067008. If your application remains under review beyond 7 business days, you may contact us through our official WhatsApp number using your registered mobile number and Service Provider ID. To ensure timely processing for all applicants, please avoid sending repeated follow-up messages during the review period.';
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'subscriber_id' => $subscriber->id,
+                'redirect_url' => $isPublicRegistration
+                    ? route('createSubscriber', ['fresh' => 1])
+                    : route('subscriber'),
+            ]);
+        }
+
+        if (!$isPublicRegistration) {
+            return redirect()->route('subscriber')->with([
+                'success' => 'Application Submitted Successfully',
+                'subscriber_success' => 'Application Submitted Successfully',
+            ]);
+        }
+
         return redirect()->route('createSubscriber')->with([
             'success' => 'Subscriber added!',
             'success_message' => $message,
             'show_success_modal' => true
         ]);
+    }
+
+    private function sendSubmissionWhatsappAfterResponse(Subscriber $subscriber, WhatsAppOtpService $whatsAppOtp): void
+    {
+        app()->terminating(function () use ($subscriber, $whatsAppOtp) {
+            $whatsAppOtp->sendBodyTemplate(
+                $subscriber->mobile,
+                config('services.whatsapp.submission_template'),
+                $whatsAppOtp->submissionVariables($subscriber)
+            );
+        });
+    }
+
+    private function generateSubscriberEmployeeId(): string
+    {
+        do {
+            $employeeId = "PBP Employee ID - " . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        } while (Employee::where('emp_id', $employeeId)->exists());
+
+        return $employeeId;
     }
 
     public function sendOnboardingOtp(Request $request, WhatsAppOtpService $whatsAppOtp)
@@ -542,7 +594,7 @@ class SubscriberController extends Controller
         }
 
         return redirect()->route('createSubscriber')->with([
-            'success' => 'Phone number verified!',
+            'success' => 'Application Submitted Successfully',
             'success_message' => 'Application Submitted Successfully. Your phone number has been verified and your application is under review.',
             'show_success_modal' => true,
         ]);
@@ -858,7 +910,11 @@ class SubscriberController extends Controller
         }
 
 
-        return redirect('subscriberList')->with('success', 'Subscriber Updated');
+        return redirect('subscriberList')->with([
+            'success' => 'Subscriber Updated',
+            'subscriber_success' => 'Subscriber Updated',
+            'suppress_success_modal' => true,
+        ]);
     }
     public function changeStatus(Request $request)
     {
@@ -884,8 +940,17 @@ class SubscriberController extends Controller
     }
     public function destroy($id)
     {
-        Subscriber::find($id)->delete();
-        return back()->with('success', 'Subscriber deleted successfully');
+        $subscriber = Subscriber::find($id);
+        if (!$subscriber) {
+            return back()->with('error', 'Subscriber not found or already deleted.');
+        }
+
+        $subscriber->delete();
+        return back()->with([
+            'success' => 'Subscriber deleted successfully',
+            'subscriber_success' => 'Subscriber deleted successfully',
+            'suppress_success_modal' => true,
+        ]);
     }
 
     public function expiry()
@@ -1075,8 +1140,13 @@ class SubscriberController extends Controller
             return $result;
         }
     }
-    public function storePrice($subid, $zipcode, $request)
+    public function storePrice($subid, $zipcode, $request, bool $isNewSubscriber = false)
     {
+        if ($isNewSubscriber) {
+            $this->storeNewSubscriberPrice($subid, $zipcode, $request);
+            return;
+        }
+
         foreach ($zipcode as $zip) {
             $getZip = Pincode::find($zip);
             $getZip->usedBy = $subid;
@@ -1179,6 +1249,72 @@ class SubscriberController extends Controller
         }
     }
 
+    private function storeNewSubscriberPrice($subid, array $zipcode, $request): void
+    {
+        $pincodes = Pincode::whereIn('id', $zipcode)->get(['id', 'pincode']);
+        if ($pincodes->isEmpty()) {
+            return;
+        }
+
+        Pincode::whereIn('id', $pincodes->pluck('id'))->update(['usedBy' => $subid]);
+
+        $priceRows = [];
+        $timestamp = now();
+        $priceMatrix = [
+            1 => [
+                [0, 5, $request->get('bt_price1')],
+                [5, 8, $request->get('bt_price2')],
+                [8, 10, $request->get('bt_price3')],
+                [10, 50, $request->get('bt_price4')],
+            ],
+            2 => [
+                [0, 5, $request->get('pk_price1')],
+                [5, 8, $request->get('pk_price2')],
+                [8, 10, $request->get('pk_price3')],
+                [10, 50, $request->get('pk_price4')],
+            ],
+            3 => [
+                [0, 5, $request->get('bd_price1')],
+                [5, 8, $request->get('bd_price2')],
+                [8, 10, $request->get('bd_price3')],
+                [10, 50, $request->get('bd_price4')],
+            ],
+            4 => [
+                [0, 5, $request->get('at_price1')],
+                [5, 8, $request->get('at_price2')],
+                [8, 10, $request->get('at_price3')],
+                [10, 50, $request->get('at_price4')],
+            ],
+            5 => [
+                [0, 5, $request->get('cab_price1')],
+                [5, 8, $request->get('cab_price2')],
+                [8, 10, $request->get('cab_price3')],
+                [10, 50, $request->get('cab_price4')],
+            ],
+        ];
+
+        foreach ($pincodes as $pincode) {
+            foreach ($priceMatrix as $category => $ranges) {
+                foreach ($ranges as [$rangeFrom, $rangeTo, $amount]) {
+                    $priceRows[] = [
+                        'subscriber_id' => $subid,
+                        'pincode' => $pincode->pincode,
+                        'category' => $category,
+                        'range_from' => $rangeFrom,
+                        'range_to' => $rangeTo,
+                        'amount' => $amount,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
+                }
+            }
+        }
+
+        if (!empty($priceRows)) {
+            DB::table('price')->insert($priceRows);
+        }
+    }
+
     public function deletesubscribervideo(Request $d)
     {
         DB::statement(DB::raw("update  `subscriber` SET video='' where id='$d->id'"));
@@ -1213,7 +1349,11 @@ class SubscriberController extends Controller
             );
         }
 
-        return redirect('subscriberList')->with('success', 'Subscriber blocked ');
+        return redirect('subscriberList')->with([
+            'success' => 'Subscriber blocked ',
+            'subscriber_success' => 'Subscriber blocked ',
+            'suppress_success_modal' => true,
+        ]);
     }
     public function subscriberunblock(Request $request)
     {
@@ -1233,7 +1373,11 @@ class SubscriberController extends Controller
         $unblock->unblockedBy = Auth::id();
         $unblock->comments = $request->get('comments');
         $unblock->save();
-        return redirect('subscriberList')->with('success', 'Subscriber unblocked ');
+        return redirect('subscriberList')->with([
+            'success' => 'Subscriber unblocked ',
+            'subscriber_success' => 'Subscriber unblocked ',
+            'suppress_success_modal' => true,
+        ]);
     }
 
     private function sendSubscriberStatusWhatsapp(Subscriber $subscriber, string $status): void

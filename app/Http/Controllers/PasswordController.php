@@ -32,16 +32,24 @@ class PasswordController extends Controller
     public function sendForgotPasswordEmail(StorePasswordRequest $request)
     {
         $employee = Admin::where('email', $request->email)->first();
-         $encid = encrypt($employee ->id);
+        if (!$employee) {
+            return back()->withErrors(['email' => 'Email address not found.'])->withInput();
+        }
+
+        $encid = encrypt($employee->id);
         $resetLink = config('app.url') . '/passwordReset/'.$encid;
-         //dd($employee);
         // Send email using Laravel's mailing system
         $data = [
             'employee' => $employee,
             'resetLink' => $resetLink,
         ];
-         //dd($data);
-        Mail::to($employee->email)->send(new ForgotPasswordMail($data));
+        try {
+            Mail::to($employee->email)->send(new ForgotPasswordMail($data));
+        } catch (\Throwable $e) {
+            return back()->withErrors([
+                'email' => 'Unable to send reset email. Please check SMTP credentials.',
+            ])->withInput();
+        }
 
         return back()->with('success', 'Check your mail for password reset instructions.')
             ->withInput();
@@ -49,19 +57,37 @@ class PasswordController extends Controller
 
     public function subscriberEmailVerification(StoreSubscriberPasswordRequest $request)
     {
-        // dd($request);
         $employee = Employee::where('email', $request->email)->first();
-         $encid = encrypt($employee->id);
+        $subscriber = null;
+        $resetType = 'employee';
+
+        if (!$employee) {
+            $subscriber = Subscriber::where('email', $request->email)->first();
+            $resetType = 'subscriber';
+        }
+
+        $account = $employee ?: $subscriber;
+        if (!$account) {
+            return back()->withErrors(['email' => 'Email address not found.'])->withInput();
+        }
+
+        $encid = encrypt([
+            'type' => $resetType,
+            'id' => $account->id,
+        ]);
         $resetLink = config('app.url') . '/subscriberpasswordReset/'.$encid;
-        // dd($resetLink);
         // Send email using Laravel's mailing system
         $data = [
-            'employee' => $employee,
+            'employee' => $account,
             'resetLink' => $resetLink,
         ];
-        // dd(config('mail.username'));
-        // dd($data);
-        Mail::to($employee->email)->send(new ForgotPasswordMail($data));
+        try {
+            Mail::to($account->email)->send(new ForgotPasswordMail($data));
+        } catch (\Throwable $e) {
+            return back()->withErrors([
+                'email' => 'Unable to send reset email. Please check SMTP credentials.',
+            ])->withInput();
+        }
 
         return back()->with('success', 'Check your mail for password reset instructions.')
             ->withInput();
@@ -75,8 +101,19 @@ class PasswordController extends Controller
 
     public function subscriberPasswordReset($id)
     {
-    $userId = decrypt($id);
-        return view('admin.password.subscriberConfirm',['userId' => $userId]);
+        $payload = decrypt($id);
+        $resetType = 'employee';
+        $userId = $payload;
+
+        if (is_array($payload)) {
+            $resetType = $payload['type'] ?? 'employee';
+            $userId = $payload['id'] ?? null;
+        }
+
+        return view('admin.password.subscriberConfirm', [
+            'userId' => $userId,
+            'resetType' => $resetType,
+        ]);
     }
 
     public function newPassword(UpdatePasswordRequest $request)
@@ -99,24 +136,39 @@ class PasswordController extends Controller
 
     public function SubscriberNewPassword(UpdateSubscriberPasswordRequest $request)
     {
-        // dd($request);
         if ($request->password == $request->confirmed_password) {
-            $validator = $request->validated();           // dd($validator['email']);
-            $employee = Employee::where('id', $validator['user_id'])?->first();
-            $subscriber = Subscriber::where('email', $employee?->email)?->first();
-            if (isset($subscriber)) {
+            $validator = $request->validated();
+            $resetType = $request->get('reset_type', 'employee');
+
+            if ($resetType === 'subscriber') {
+                $subscriber = Subscriber::where('id', $validator['user_id'])->first();
+                if (!$subscriber) {
+                    return back()->withErrors(['password' => 'Reset account not found.'])->withInput();
+                }
+
                 $subscriber->password = $validator['password'];
                 $subscriber->update();
-                $employee->password = $validator['password'];
-                $employee->update();
+
+                $employee = Employee::where('email', $subscriber->email)->first();
+                if ($employee) {
+                    $employee->password = $validator['password'];
+                    $employee->update();
+                }
             } else {
+                $employee = Employee::where('id', $validator['user_id'])->first();
+                if (!$employee) {
+                    return back()->withErrors(['password' => 'Reset account not found.'])->withInput();
+                }
+
+                $subscriber = Subscriber::where('email', $employee->email)->first();
+                if ($subscriber) {
+                    $subscriber->password = $validator['password'];
+                    $subscriber->update();
+                }
+
                 $employee->password = $validator['password'];
                 $employee->update();
             }
-
-            // dd($employee);
-            // $validator['password'] = Hash::make($request->password);
-            // dd($validator);
 
             return redirect()->route('subscriberLogin')->with('success', "Password Changed Successfully");
         } else {
