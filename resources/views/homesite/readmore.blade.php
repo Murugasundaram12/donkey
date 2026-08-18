@@ -87,7 +87,7 @@
     </style>
     <!-- Page Title -->
 
-    <section class="page-title banner picpic" style="background-image: url('{{ asset('public/assets/images/' . $banner) }}');">
+    <section class="page-title banner picpic" style="background-image: url('{{ asset('assets/images/' . $banner) }}');">
 
 
         <div class="background-text">
@@ -140,7 +140,7 @@
                     <div class="row">
 
                         <div class="col-md-6">
-                            <div class="image images "><img class="rmr" src="{{ url('public/assets/images/') }}/{{ $image }}"
+                            <div class="image images "><img class="rmr" src="{{ asset('assets/images/') }}/{{ $image }}"
                                     alt="" style="height:300px; width:400px; margin-top:20px;margin-bottom:-15px; ">
                             </div>
                         </div>

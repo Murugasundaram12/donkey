@@ -1,0 +1,23 @@
+meta {
+  name: Incomplete Bookings
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/bookings/incomplete
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Fetch pending (status 0) and in-progress (status 1) bookings.
+}

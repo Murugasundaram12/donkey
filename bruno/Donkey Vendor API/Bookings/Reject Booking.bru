@@ -1,0 +1,30 @@
+meta {
+  name: Reject Booking
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/bookings/:id/reject
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "reason": "Service area unavailable at this time"
+}
+}
+
+docs {
+  Reject or cancel a booking with optional reason.
+}

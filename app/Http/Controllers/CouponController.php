@@ -12,13 +12,13 @@ use Illuminate\Validation\Rule;
 
 class CouponController extends Controller
 {
-  public function index()
-  {
-    $coupons = Coupon::with('pincode')
+    public function index()
+    {
+      $coupons = Coupon::with('pincode')
       ->latest()
       ->get();
     foreach ($coupons as $coupon) {
-      if ($coupon->expiry_date->format('Y-m-d') < now()) {
+      if ($coupon->expiry_date && $coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d')) {
         $coupon->update([
           'status' => 0
         ]);
@@ -151,4 +151,3 @@ class CouponController extends Controller
     return response()->json([$result => false]);
   }
 }
-

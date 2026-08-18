@@ -72,6 +72,12 @@ class websiteController extends Controller
 
     public function readmore(Request $d)
     {
+        $heading = '';
+        $content = '';
+        $image = '';
+        $banner = '';
+        $button = '';
+        $point = '';
         $site_details = site::all();
         if ($d->what == "buyanddelivery") {
             $heading = "Buy And Delivery";
@@ -291,7 +297,7 @@ class websiteController extends Controller
             $banner = "bc.jpeg";
         }
 
-        return view('homesite.readmore', compact(['site_details', 'heading', 'content', 'image', 'banner', 'button', 'point']));
+        return view('homesite.readmore', compact('site_details', 'heading', 'content', 'image', 'banner', 'button', 'point'));
     }
     public function admin(Request $d)
     {
@@ -309,8 +315,6 @@ class websiteController extends Controller
     }
     public function siteupdate(Request $d)
     {
-
-
         site::where('id', 1)->update([
             'sitename' => $d->input('sitename'),
             'phone' => $d->input('phone'),
@@ -324,8 +328,6 @@ class websiteController extends Controller
     }
     public function siteupdateimage(Request $d)
     {
-
-
         $image = $d->file('image');
         $r = site::get();
         $imagename = explode(",", $r[0]->image);

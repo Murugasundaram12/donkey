@@ -31,7 +31,7 @@
     }
 </style>
 <!-- Page Title -->
-<section class="page-title picpic" style="background-image: url('public/assets/images/servicebaner.jpeg');">
+<section class="page-title picpic" style="background-image: asset('assets/images/servicebaner.jpeg');">
     <script>
         const ele = document.querySelectorAll('.sec1');
 
@@ -85,7 +85,7 @@
                     </div>
                     <a href="{{url('readmore/buyanddelivery')}}" class="readmore-link" style="color:white"><i class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>01</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images1.png')}}" style="max-width: 210px !important;" alt=""></div>
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images1.png')}}" style="max-width: 210px !important;" alt=""></div>
 
                 </div>
             </div>
@@ -97,7 +97,7 @@
                     </div>
                     <a href="{{url('readmore/biketaxi')}}" class="readmore-link" style="color:white"><i class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>02</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images2.png')}}" style="max-width: 210px !important;" alt=""></div>
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images2.png')}}" style="max-width: 210px !important;" alt=""></div>
                 </div>
             </div>
             <div class="col-lg-4 service-block-one">
@@ -108,7 +108,7 @@
                     </div>
                     <a href="{{url('readmore/atozdelivery')}}" class="readmore-link" style="color:white"><i class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>03</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images3.png')}}" style="max-width: 210px !important;" alt=""></div>
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images3.png')}}" style="max-width: 210px !important;" alt=""></div>
                 </div>
             </div>
         </div>

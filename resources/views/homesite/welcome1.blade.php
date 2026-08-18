@@ -73,7 +73,7 @@
 
             @foreach($image as $i)
 
-            <div class="swiper-slide" style="background-image: url({{url('public/admin/upload')}}/{{$i}});">
+            <div class="swiper-slide" style="background-image: url({{asset('admin/upload')}}/{{$i}});">
                 <div class="content-outer">
                     <div class="content-box">
                         <div class="inner text-center">
@@ -116,7 +116,7 @@
                     <a href="{{url('readmore/buyanddelivery')}}" class="readmore-link" style="color:white"><i
                             class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>01</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images1.png')}}"
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images1.png')}}"
                             style="max-width: 210px !important;" alt=""></div>
 
                 </div>
@@ -130,7 +130,7 @@
                     <a href="{{url('readmore/biketaxi')}}" class="readmore-link" style="color:white"><i
                             class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>02</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images2.png')}}"
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images2.png')}}"
                             style="max-width: 210px !important;" alt=""></div>
                 </div>
             </div>
@@ -143,7 +143,7 @@
                     <a href="{{url('readmore/atozdelivery')}}" class="readmore-link" style="color:white"><i
                             class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                     <div class="count"><span>03</span></div>
-                    <div class="image" data-parallax='{"y": 30}'><img src="{{url('public/assets/images/images3.png')}}"
+                    <div class="image" data-parallax='{"y": 30}'><img src="{{asset('assets/images/images3.png')}}"
                             style="max-width: 210px !important;" alt=""></div>
                 </div>
             </div>
@@ -152,7 +152,7 @@
 </section>
 
 <!-- About Section -->
-<section class="about-section" style="background-image: url({{url('public/assets/images/background/bg-1.jpg')}});">
+<section class="about-section" style="background-image: url({{asset('assets/images/background/bg-1.jpg')}});">
     <div class="auto-container">
         <div class="row">
             <div class="col-lg-6">
@@ -214,7 +214,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="image wow fadeInRight" data-wow-duration="1500ms"><img
-                        src="{{url('public/assets/images/resource/image-1.jpg')}}" alt=""></div>
+                        src="{{asset('assets/images/resource/image-1.jpg')}}" alt=""></div>
             </div>
         </div>
     </div>
@@ -278,7 +278,7 @@
 
 <!-- Work-process Section -->
 <section class="work-process-section">
-    <div class="bg" style="background-image: url({{url('public/assets/images/background/bg-2.jpg')}});"></div>
+    <div class="bg" style="background-image: url({{asset('assets/images/background/bg-2.jpg')}});"></div>
     <div class="auto-container">
         <div class="sec-title text-center light">
             <div class="sub-title text-center" style="color:white !important">Driving Toward Safety</div>
@@ -338,7 +338,7 @@
 <!-- Modal -->
 
 <!-- Industries Covered -->
-<section class="industries-covered" style="background-image: url({{url('public/assets/images/background/bg-3.jpg')}});">
+<section class="industries-covered" style="background-image: url({{asset('assets/images/background/bg-3.jpg')}});">
     <div class="background-text" data-parallax='{"x": 100}'>industries</div>
     <div class="outer-box side-container">
         <div class="outer-container">
@@ -347,7 +347,7 @@
                 <div class="text-block">
                     <div class="inner-box">
                         <div class="image"
-                            style="background-image: url({{url('public/assets/images/resource/image-2.jpg')}});">
+                            style="background-image: url({{asset('assets/images/resource/image-2.jpg')}});">
                         </div>
                         <div class="content wow zoomIn" style="border-radius:20px">
                             <div class="icon"><span class="flaticon-spaceship"></span></div>
@@ -366,7 +366,7 @@
                 <div class="text-block">
                     <div class="inner-box">
                         <div class="image"
-                            style="background-image: url({{url('public/assets/images/resource/image-4.jpg')}});">
+                            style="background-image: url({{asset('assets/images/resource/image-4.jpg')}});">
                         </div>
                         <div class="content wow  zoomIn" style="border-radius:20px">
                             <div class="icon"><span class="flaticon-spaceship"></span></div>
@@ -384,7 +384,7 @@
                 <div class="text-block">
                     <div class="inner-box">
                         <div class="image"
-                            style="background-image: url({{url('public/assets/images/resource/image-5.jpg')}});">
+                            style="background-image: url({{asset('assets/images/resource/image-5.jpg')}});">
                         </div>
                         <div class="content wow zoomIn" style="border-radius:20px">
                             <div class="icon"><span class="flaticon-box-1"></span></div>
@@ -404,7 +404,7 @@
     </div>
 </section>
 <section class="about-section"
-    style="margin-top:40px;margin-bottom:40px;background-image: url({{url('public/assets/images/background/bg-1.jpg')}});">
+    style="margin-top:40px;margin-bottom:40px;background-image: url({{asset('assets/images/background/bg-1.jpg')}});">
     <!-- <div class="auto-container"> -->
     <div class="car">
         <div class="weel weel1"></div>

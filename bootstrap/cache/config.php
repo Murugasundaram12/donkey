@@ -4,7 +4,7 @@
     'name' => 'Crypto',
     'env' => 'local',
     'debug' => true,
-    'url' => 'http://donkeydeliveries.com',
+    'url' => 'http://localhost',
     'asset_url' => NULL,
     'timezone' => 'Asia/Kolkata',
     'locale' => 'en',
@@ -284,7 +284,7 @@
       'file' => 
       array (
         'driver' => 'file',
-        'path' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\framework/cache/data',
+        'path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/framework/cache/data',
       ),
       'memcached' => 
       array (
@@ -378,8 +378,8 @@
         'host' => 'localhost',
         'port' => '3306',
         'database' => 'admin_donk',
-        'username' => 'root',
-        'password' => '',
+        'username' => 'admin_donk',
+        'password' => 'Id{*{Y+$jaH{C[e0',
         'unix_socket' => '',
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci',
@@ -398,8 +398,8 @@
         'host' => 'localhost',
         'port' => '3306',
         'database' => 'admin_donk',
-        'username' => 'root',
-        'password' => '',
+        'username' => 'admin_donk',
+        'password' => 'Id{*{Y+$jaH{C[e0',
         'charset' => 'utf8',
         'prefix' => '',
         'prefix_indexes' => true,
@@ -413,8 +413,8 @@
         'host' => 'localhost',
         'port' => '3306',
         'database' => 'admin_donk',
-        'username' => 'root',
-        'password' => '',
+        'username' => 'admin_donk',
+        'password' => 'Id{*{Y+$jaH{C[e0',
         'charset' => 'utf8',
         'prefix' => '',
         'prefix_indexes' => true,
@@ -455,20 +455,20 @@
       'local' => 
       array (
         'driver' => 'local',
-        'root' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\app',
+        'root' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/app',
       ),
       'public' => 
       array (
         'driver' => 'local',
-        'root' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\app/public',
-        'url' => 'http://donkeydeliveries.com/storage',
+        'root' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/app/public',
+        'url' => 'http://localhost/storage',
         'visibility' => 'public',
       ),
       'profile' => 
       array (
         'driver' => 'local',
-        'root' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\app/public/profile',
-        'url' => 'http://donkeydeliveries.com/storage',
+        'root' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/app/public/profile',
+        'url' => 'http://localhost/storage',
         'visibility' => 'public',
       ),
       's3' => 
@@ -485,7 +485,7 @@
     ),
     'links' => 
     array (
-      'D:\\xampp-8.2\\htdocs\\donkey\\public\\storage' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\app/public',
+      '/home/admin/web/donkeydeliveries.com/public_html/donkey/public/storage' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/app/public',
     ),
   ),
   'hashing' => 
@@ -524,13 +524,13 @@
       'single' => 
       array (
         'driver' => 'single',
-        'path' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\logs/laravel.log',
+        'path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/logs/laravel.log',
         'level' => 'debug',
       ),
       'daily' => 
       array (
         'driver' => 'daily',
-        'path' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\logs/laravel.log',
+        'path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/logs/laravel.log',
         'level' => 'debug',
         'days' => 14,
       ),
@@ -581,7 +581,7 @@
       ),
       'emergency' => 
       array (
-        'path' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\logs/laravel.log',
+        'path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/logs/laravel.log',
       ),
     ),
   ),
@@ -597,7 +597,7 @@
         'port' => '587',
         'encryption' => 'tls',
         'username' => 'help@donkeydeliveries.in',
-        'password' => 'wwcmmajeuufxuydm',
+        'password' => 'Kes*Do-N+2137',
         'timeout' => NULL,
         'auth_mode' => NULL,
       ),
@@ -647,7 +647,7 @@
       'theme' => 'default',
       'paths' => 
       array (
-        0 => 'D:\\xampp-8.2\\htdocs\\donkey\\resources\\views/vendor/mail',
+        0 => '/home/admin/web/donkeydeliveries.com/public_html/donkey/resources/views/vendor/mail',
       ),
     ),
   ),
@@ -806,26 +806,30 @@
     'driver' => 'file',
     'lifetime' => '120',
     'expire_on_close' => false,
-    'files' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage/framework/sessions',
+    'encrypt' => false,
+    'files' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/framework/sessions',
     'connection' => NULL,
     'table' => 'sessions',
+    'store' => NULL,
     'lottery' => 
     array (
       0 => 2,
       1 => 100,
     ),
-    'cookie' => 'laravel_session',
+    'cookie' => 'crypto_session',
     'path' => '/',
     'domain' => NULL,
-    'secure' => false,
+    'secure' => NULL,
+    'http_only' => true,
+    'same_site' => 'lax',
   ),
   'view' => 
   array (
     'paths' => 
     array (
-      0 => 'D:\\xampp-8.2\\htdocs\\donkey\\resources\\views',
+      0 => '/home/admin/web/donkeydeliveries.com/public_html/donkey/resources/views',
     ),
-    'compiled' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\framework\\views',
+    'compiled' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/framework/views',
   ),
   'flare' => 
   array (
@@ -973,7 +977,7 @@
     ),
     'temporary_files' => 
     array (
-      'local_path' => 'D:\\xampp-8.2\\htdocs\\donkey\\storage\\framework/cache/laravel-excel',
+      'local_path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/storage/framework/cache/laravel-excel',
       'remote_disk' => NULL,
       'remote_prefix' => NULL,
       'force_resync_remote' => NULL,
@@ -1004,7 +1008,7 @@
       'local' => 
       array (
         'type' => 'city',
-        'path' => 'D:\\xampp-8.2\\htdocs\\donkey\\database\\maxmind/GeoLite2-City.mmdb',
+        'path' => '/home/admin/web/donkeydeliveries.com/public_html/donkey/database/maxmind/GeoLite2-City.mmdb',
       ),
     ),
     'ip_api' => 

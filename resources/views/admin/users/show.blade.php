@@ -46,8 +46,8 @@
             <div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
                     <strong>Profile Image:</strong>
-                    <a href="{{ asset('public/admin/admin/profile/') }}/{{ $user->profile }}" download=""><img
-                            src="{{ asset('public/admin/admin/profile/') }}/{{ $user->profile }}" width="40%"
+                    <a href="{{ asset('admin/admin/profile/' . $user->profile) }}" download=""><img
+                            src="{{ asset('admin/admin/profile/' . $user->profile) }}" width="40%"
                             height="40%">
                     </a>
                 </div>
@@ -162,9 +162,9 @@
             <div class="col-xs-12 col-sm-12 col-md-12">
                 <div class="form-group">
                     <strong>Other Document:</strong>
-                    {{-- <a href="{{ asset('public/admin/admin/otherDocument/'  ) }}/{{ $user->other }}" download=""><img src="{{ asset('public/admin/admin/otherDocument/'  ) }}/{{ $user->other }}" width="40%" height="40%">
+                    {{-- <a href="{{ asset('admin/admin/otherDocument/'  ) }}/{{ $user->other }}" download=""><img src="{{ asset('admin/admin/otherDocument/'  ) }}/{{ $user->other }}" width="40%" height="40%">
                     </a> </div> --}}
-                    <a href="{{ asset('public/admin/admin/otherDocument/') }}/{{ $user->other }}" download="">
+                    <a href="{{ asset('admin/admin/otherDocument/') }}/{{ $user->other }}" download="">
                         Click To Download Document
                     </a>
                 </div>

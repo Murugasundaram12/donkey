@@ -25,7 +25,11 @@ class PaymentController extends Controller
     public function successfulPlatFormFee($id, Request $d)
     {
         // dd($id,$d);
-        Subscriber::where('subscriberId', $id)->update(['status' => 1, 'activestatus' => 1, 'notify' => 0, 'platform_fee' => 0, 'need_to_pay' => 0]);
+        $updateFields = ['status' => 1, 'notify' => 0, 'platform_fee' => 0, 'need_to_pay' => 0];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('subscriber', 'activestatus')) {
+            $updateFields['activestatus'] = 1;
+        }
+        Subscriber::where('subscriberId', $id)->update($updateFields);
         //  $input = $d->all();
         //dd($d->response);
         $input = [];

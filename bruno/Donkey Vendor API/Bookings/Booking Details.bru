@@ -1,0 +1,23 @@
+meta {
+  name: Booking Details
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/bookings/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Retrieve full booking and payment details by booking ID.
+}

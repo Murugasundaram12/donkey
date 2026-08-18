@@ -1,0 +1,26 @@
+meta {
+  name: OTP Resend
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/otp/resend
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "mobile": "9876543210"
+}
+}
+
+docs {
+  Request a new OTP sent to vendor mobile number.
+}

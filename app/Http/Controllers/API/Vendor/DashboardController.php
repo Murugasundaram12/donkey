@@ -66,7 +66,9 @@ class DashboardController extends Controller
         $totalRiders = (clone $driverQuery)->count();
         $pendingRiders = (clone $driverQuery)->where('status', 0)->count();
         
-        $driverUserIds = (clone $driverQuery)->pluck('userid')->filter()->toArray();
+        $driverUserIds = \Illuminate\Support\Facades\Schema::hasColumn('driver', 'userid')
+            ? (clone $driverQuery)->pluck('userid')->filter()->toArray()
+            : (clone $driverQuery)->pluck('id')->filter()->toArray();
         $onlineRiders = 0;
         $offlineRiders = 0;
         if (!empty($driverUserIds)) {
@@ -75,13 +77,22 @@ class DashboardController extends Controller
         }
 
         // Active Coupons
-        $activeCouponsCount = Coupon::where('status', 1)
-            ->where(function ($q) use ($vendor, $pincodes) {
-                $q->where('created_by', $vendor->id);
-                if (!empty($pincodes)) {
-                    $q->orWhereIn('pincode_id', $pincodes);
-                }
-            })->count();
+        $activeCouponsCount = 0;
+        if (\Illuminate\Support\Facades\Schema::hasTable('coupons')) {
+            $couponQuery = Coupon::query();
+            if (\Illuminate\Support\Facades\Schema::hasColumn('coupons', 'status')) {
+                $couponQuery->where('status', 1);
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('coupons', 'created_by')) {
+                $couponQuery->where(function ($q) use ($vendor, $pincodes) {
+                    $q->where('created_by', $vendor->id);
+                    if (!empty($pincodes) && \Illuminate\Support\Facades\Schema::hasColumn('coupons', 'pincode_id')) {
+                        $q->orWhereIn('pincode_id', $pincodes);
+                    }
+                });
+            }
+            $activeCouponsCount = $couponQuery->count();
+        }
 
         // Notifications
         $notificationsCount = Pushnotification::count();

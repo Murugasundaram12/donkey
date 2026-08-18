@@ -1,0 +1,23 @@
+meta {
+  name: Get Work Description
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/work-description
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Retrieve service base prices and tier pricing breakdown.
+}

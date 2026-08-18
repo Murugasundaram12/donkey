@@ -65,12 +65,12 @@
 
                                         @if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png' || $extension == 'gif')
                                         <td>
-                                            <img src="{{url('public/banner/'.$banner->image)}}" style="height:60px;width: 60px;" alt="Banner-Ct">
+                                            <img src="{{asset('banner/'.$banner->image)}}" style="height:60px;width: 60px;" alt="Banner-Ct">
                                         </td>
                                         @else
                                         <td>
                                             <video controls style="height: 100px; width: 100px;">
-                                                <source src="{{ url('public/banner/'.$banner->image) }}" type="video/mp4">
+                                                <source src="{{ asset('banner/'.$banner->image) }}" type="video/mp4">
                                             </video>
                                         </td>
                                         @endif

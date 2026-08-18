@@ -19,7 +19,7 @@
                 <div class="mb-3">
                     <label for="exampleFormControlTextarea1" class="form-label">Email</label>
                     <input type="text" class="form-control" placeholder="Email" required name="email"
-                        value="{{$site->email}}">
+                        value="{{ old('email', $site->email ?? '') }}">
                 </div>
                 <div class="mb-3">
                     <label for="exampleFormControlTextarea1" class="form-label">Phone Number</label>
@@ -33,12 +33,12 @@
                 <div class="mb-3">
                     <label for="exampleFormControlTextarea1" class="form-label">Address</label>
                     <textarea class="form-control form-control-lg" name="address" required
-                        id="exampleFormControlTextarea1" rows="3"> {{$site->address}}</textarea>
+                        id="exampleFormControlTextarea1" rows="3">{{ old('address', $site->address ?? '') }}</textarea>
                 </div>
                 <div class="mb-3">
                     <label for="exampleFormControlTextarea1" class="form-label">Map Link</label>
                     <textarea class="form-control form-control-lg" name="map" required id="exampleFormControlTextarea1"
-                        rows="3"> {{$site->map}}</textarea>
+                        rows="3">{{ old('map', $site->map ?? '') }}</textarea>
                 </div>
                 <div class="mb-3 float-end">
 

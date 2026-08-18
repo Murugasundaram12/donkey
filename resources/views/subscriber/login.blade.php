@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="{{ url('public/site/' . $site->main_logo) }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('site/' . $site->main_logo) }}" type="image/x-icon">
     <title>do N key PBP Panel</title>
     <!-- Simple bar CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/simplebar.css') }}">
@@ -163,7 +163,7 @@
                 @csrf
 
                 <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="">
-                    <img src="{{ url('public/site/' . $site->main_logo) }}" height="50" alt="do N key PBP Panel">
+                    <img src="{{ asset('site/' . $site->main_logo) }}" height="50" alt="do N key PBP Panel">
                     {{-- <svg version="1.1" id="logo" class="navbar-brand-img brand-md"
                         xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                         viewBox="0 0 120 120" xml:space="preserve">

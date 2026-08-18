@@ -70,7 +70,7 @@
 </style>
 
 <!-- Page Title -->
-<section class="page-title picpic" style="background-image: url({{url('public/assets/images/about.jpeg')}});">
+<section class="page-title picpic" style="background-image: url({{asset('assets/images/about.jpeg')}});">
     <div class="background-text">
         <div data-parallax='{"x": 100}'>
             <div class="text-1"></div>
@@ -129,7 +129,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="image mb-30 animate-once">
-                        <img src="{{url('public/assets/images/servicee.png')}}" class="animate-on-scroll" style="height: 70%; width: 80%;" alt="">
+                        <img src="{{asset('assets/images/servicee.png')}}" class="animate-on-scroll" style="height: 70%; width: 80%;" alt="">
                     </div>
                 </div>
 
@@ -180,7 +180,7 @@
                                     class="overlay-link lightbox-image video-fancybox"><i
                                         class="flaticon-play-arrow"></i></a>
                             </div>
-                            <div class="signature"><img src="{{url('public/assets/images/resource/sign.png')}}" alt="">
+                            <div class="signature"><img src="{{asset('assets/images/resource/sign.png')}}" alt="">
                             </div>
                             <div>
                                 <div class="author-title">Roman Primera </div>
@@ -191,7 +191,7 @@
 
                     <div class="col-lg-6">
                         <div class="row m-10 mb-5">
-                            <img class="biki" src="{{url('public/assets/images/rider.png')}}" style="height: 40%; width:100%; margin-top: -135px;" alt="" class="wow fadeInRight animate-on-scroll">
+                            <img class="biki" src="{{asset('assets/images/rider.png')}}" style="height: 40%; width:100%; margin-top: -135px;" alt="" class="wow fadeInRight animate-on-scroll">
                         </div>
                     </div>
                     <script>
@@ -203,7 +203,7 @@
                     <div class="col-lg-6">
                         <div class="row m-10">
                             <!--Column-->
-                            <img src="{{url('public/assets/images/bd.jpeg')}}" style="width: 100%;" alt="" class="animate-on-scroll">
+                            <img src="{{asset('assets/images/bd.jpeg')}}" style="width: 100%;" alt="" class="animate-on-scroll">
 
                             <!-- <div class="col-md car1">
                                 <div class="weel weel11"></div>
@@ -238,7 +238,7 @@
         <div class="row">
             <div class="col-lg-6">
                 <div class="image">
-                    <img class="smvbike" src="{{url('public/assets/images/vission.png')}}" alt="" data-aos="fade-in" style="width:600px; height:600px;" class="animate-on-scroll">
+                    <img class="smvbike" src="{{asset('assets/images/vission.png')}}" alt="" data-aos="fade-in" style="width:600px; height:600px;" class="animate-on-scroll">
                 </div>
             </div>
             <script>
@@ -260,7 +260,7 @@
             </script>
             <div class="col-lg-6">
                 <div class="content" style="border-radius:20px">
-                    <!-- <div class="badge"><img src="{{url('public/assets/images/resource/badge-3.png')}}" alt=""></div> -->
+                    <!-- <div class="badge"><img src="{{asset('assets/images/resource/badge-3.png')}}" alt=""></div> -->
                     <!-- Tab panes -->
                     <div class="tab-content wow fadeInUp" data-wow-delay="200ms" data-wow-duration="1200ms">
                         <div class="tab-pane fadeInUp animated active" id="tab-one" role="tabpanel" aria-labelledby="tab-one">

@@ -140,15 +140,19 @@
                                                             <span class="badge badge-warning">Something Wrong</span>
                                                         @endif
                                                     </td>
-                                                    @if ($coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d'))
+                                                    @php
+                                                        $couponExpiry = $coupon->expiry_date;
+                                                        $couponStart = $coupon->start_date;
+                                                    @endphp
+                                                    @if ($couponExpiry && $couponExpiry->format('Y-m-d') < now()->format('Y-m-d'))
                                                         <td><span class="badge badge-danger">Expired</span></td>
                                                         <td><span class="badge badge-danger">Expired</span></td>
                                                     @else
-                                                        <td>{{ $coupon->start_date->format('dM,Y') }}</td>
-                                                        <td>{{ $coupon->expiry_date->format('dM,Y') }}</td>
+                                                        <td>{{ $couponStart ? $couponStart->format('dM,Y') : '-' }}</td>
+                                                        <td>{{ $couponExpiry ? $couponExpiry->format('dM,Y') : '-' }}</td>
                                                     @endif
                                                     @can('Status on')
-                                                        @if ($coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d') && $coupon->status == 0)
+                                                        @if ($couponExpiry && $couponExpiry->format('Y-m-d') < now()->format('Y-m-d') && $coupon->status == 0)
                                                             <td><span class="badge badge-danger">Expired</span></td>
                                                         @else
                                                             <td>
@@ -211,7 +215,7 @@
                                                                             <input type="date"
                                                                                 class="form-control @error('start_date') is-invalid @enderror "
                                                                                 id="start_date" name="start_date"
-                                                                                value="{{ old('start_date', \Carbon\Carbon::parse($coupon->start_date)->format('Y-m-d')) }}"
+                                                                                value="{{ old('start_date', $couponStart ? $couponStart->format('Y-m-d') : '') }}"
                                                                                 readonly>
                                                                             @error('start_date')
                                                                                 <span class="invalid-feedback">
@@ -225,7 +229,7 @@
                                                                             <input type="date"
                                                                                 class="form-control @error('expiry_date') is-invalid @enderror "
                                                                                 id="expiry_date" name="expiry_date"
-                                                                                value="{{ old('expiry_date', \Carbon\Carbon::parse($coupon->expiry_date)->format('Y-m-d')) }}"
+                                                                                value="{{ old('expiry_date', $couponExpiry ? $couponExpiry->format('Y-m-d') : '') }}"
                                                                                 min="{{ now()->format('Y-m-d') }}">
                                                                             @error('expiry_date')
                                                                                 <span class="invalid-feedback">
@@ -338,4 +342,3 @@
     </script>
 @endsection
 @endsection
-

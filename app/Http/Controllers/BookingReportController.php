@@ -95,7 +95,7 @@ class BookingReportController extends Controller
             ->with([
                 'user:id,user_id,name',
                 'bookingPayment',
-                'pincode:id,pincode,usedBy',
+                'pincode:id,pincode,district,state',
                 'driverasuser:id,user_id',
             ]);
             if($request->type != ''){
@@ -160,7 +160,7 @@ class BookingReportController extends Controller
         //  dd($booking->pincode);
         $accepted =  $booking?->accepted;
         //dd($accepted);
-        $subscriberID = Driver::where('userid', $accepted)->select('subscriberId')->first();
+        $subscriberID = Driver::where('id', $accepted)->select('subscriberId')->first();
         $subscriber = Subscriber::where('id', $subscriberID?->subscriberId)->select('subscriberId')->first();
         //dd($subscriber);
         $driver = $booking->driverasuser;

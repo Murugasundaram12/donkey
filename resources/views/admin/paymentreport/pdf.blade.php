@@ -165,7 +165,7 @@
         {{-- <div class="top-container"> --}}
         <h2 class="tax">Tax Invoice</h2>
         <div class="invoice-header  top-container">
-            <img src="{{ url('public/site/' . $site->main_logo) }}" style="height: 80px;width:50px;" alt="Do N Key">
+            <img src="{{ asset('site/' . $site->main_logo) }}" style="height: 80px;width:50px;" alt="Do N Key">
         </div>
         <div class="invoice-headerr  top-container">
             {{-- <p class="date">Invoice Number: {{ $paymentDetail?->invoice_no }}</p> --}}

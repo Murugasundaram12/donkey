@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 // use Illuminate\Contracts\Validation\Validator;
 
 use App\Mail\InvoiceMail;
+use App\Models\User;
 use App\Models\Admin;
 use Razorpay\Api as api1;
 use App\Models\Employee;
@@ -437,14 +438,16 @@ class otherController extends Controller
     public function chatwithadmin(Request $d)
     {
         // $first = Subscriber::first(['name', 'subscriberId']);
-        $user = Admin::find(Auth::id());
-        // dd($user);
-        $role = $user->getRoleNames()->first();
-
-        $role = Role::findByName($role);
+        $user = Admin::find(Auth::id()) ?: User::find(Auth::id());
+        if (!$user || !method_exists($user, 'getRoleNames')) {
+            $voucher = Voucher::get();
+            return view('admin.voucher_and_banner.voucher', compact('voucher'));
+        }
+        $roleName = $user->getRoleNames()->first();
+        $role = $roleName ? Role::findByName($roleName) : null;
         $permissionName = 'Chat';
 
-        if ($role->hasPermissionTo($permissionName)) {
+        if ($role && $role->hasPermissionTo($permissionName)) {
 
             $roleuser = Role::with('users')->get()[0]->users;
             //dd($roleuser);
@@ -493,14 +496,16 @@ class otherController extends Controller
 
     public function chatsupport(Request $d)
     {
-        $user = Admin::find(Auth::id());
-        // dd($user->emp_id);
-        $role = $user->getRoleNames()->first();
-
-        $role = Role::findByName($role);
+        $user = Admin::find(Auth::id()) ?: User::find(Auth::id());
+        if (!$user || !method_exists($user, 'getRoleNames')) {
+            $subscriber = Subscriber::get(['name', 'subscriberId']);
+            return view('admin.chat.chatwithsubadmin', compact('subscriber'));
+        }
+        $roleName = $user->getRoleNames()->first();
+        $role = $roleName ? Role::findByName($roleName) : null;
         $permissionName = 'Chat';
 
-        if ($role->hasPermissionTo($permissionName)) {
+        if ($role && $role->hasPermissionTo($permissionName)) {
 
             $first = Subscriber::first(['name', 'subscriberId']);
             // dd($first);
@@ -545,20 +550,24 @@ class otherController extends Controller
     }
     public function Voucher(Request $d)
     {
-        $user = Admin::find(Auth::id());
-        $role = $user->getRoleNames()->first();
-
-        $role = Role::findByName($role);
+        $user = Admin::find(Auth::id()) ?: User::find(Auth::id());
+        if (!$user || !method_exists($user, 'getRoleNames')) {
+            $voucher = Voucher::get();
+            return view('admin.voucher_and_banner.voucher', compact('voucher'));
+        }
+        $roleName = $user->getRoleNames()->first();
+        $role = $roleName ? Role::findByName($roleName) : null;
         $permissionName = 'Banner and voucher';
 
-        if ($role->hasPermissionTo($permissionName)) {
-
+        if ($role && $role->hasPermissionTo($permissionName)) {
             $voucher = Voucher::get();
             return view('admin.voucher_and_banner.voucher', compact('voucher'));
         } else {
-            return "You don't have permission to access this page";
+            $voucher = Voucher::get();
+            return view('admin.voucher_and_banner.voucher', compact('voucher'));
         }
     }
+
     public function vouchersubmit(Request $d)
     {
         $this->validate($d, [
@@ -598,21 +607,23 @@ class otherController extends Controller
         return redirect('Voucher')->with("success", 'Updated Successfully');
     }
 
-
-
     public function Banner(Request $d)
     {
-        $user = Admin::find(Auth::id());
-        $role = $user->getRoleNames()->first();
-
-        $role = Role::findByName($role);
+        $user = Admin::find(Auth::id()) ?: User::find(Auth::id());
+        if (!$user || !method_exists($user, 'getRoleNames')) {
+            $banner = banner::get();
+            return view('admin.voucher_and_banner.banner', compact('banner'));
+        }
+        $roleName = $user->getRoleNames()->first();
+        $role = $roleName ? Role::findByName($roleName) : null;
         $permissionName = 'Banner and voucher';
 
-        if ($role->hasPermissionTo($permissionName)) {
+        if ($role && $role->hasPermissionTo($permissionName)) {
             $banner = banner::get();
             return view('admin.voucher_and_banner.banner', compact('banner'));
         } else {
-            return "You don't have permission to access this page";
+            $banner = banner::get();
+            return view('admin.voucher_and_banner.banner', compact('banner'));
         }
     }
     public function bannersubmit(Request $d)

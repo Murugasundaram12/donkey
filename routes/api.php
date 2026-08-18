@@ -165,3 +165,81 @@ Route::post("drivertocustomercall", [App\Http\Controllers\API\otherController::c
 Route::post("checkNumber", [App\Http\Controllers\API\otherController::class, "checkNumber"])->name("checkNumber");
 
 Route::post('generate_referral_code', [App\Http\Controllers\Auth\RegisterController::class, 'generate_referral_code']);
+
+/*
+|--------------------------------------------------------------------------
+| VENDOR APP APIs
+| URL: /api/vendor/*
+|--------------------------------------------------------------------------
+*/
+Route::prefix('vendor')->group(function () {
+    // Guest Auth Routes
+    Route::post('login', [\App\Http\Controllers\API\Vendor\AuthController::class, 'login']);
+    Route::post('otp/verify', [\App\Http\Controllers\API\Vendor\AuthController::class, 'otpVerify']);
+    Route::post('otp/resend', [\App\Http\Controllers\API\Vendor\AuthController::class, 'otpResend']);
+    Route::post('password/forgot', [\App\Http\Controllers\API\Vendor\AuthController::class, 'forgotPassword']);
+
+    // Public Info Routes
+    Route::get('info/support', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'support']);
+    Route::get('info/terms', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'terms']);
+    Route::get('info/privacy', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'privacy']);
+    Route::get('info/about', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'about']);
+
+    // Authenticated Vendor Routes
+    Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureVendorAuthenticated::class])->group(function () {
+        // Auth
+        Route::get('me', [\App\Http\Controllers\API\Vendor\AuthController::class, 'me']);
+        Route::post('password/change', [\App\Http\Controllers\API\Vendor\AuthController::class, 'changePassword']);
+        Route::post('logout', [\App\Http\Controllers\API\Vendor\AuthController::class, 'logout']);
+
+        // Dashboard
+        Route::get('dashboard', [\App\Http\Controllers\API\Vendor\DashboardController::class, 'index']);
+
+        // Business Profile & Pricing
+        Route::get('business', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getBusiness']);
+        Route::post('business/update', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'updateBusiness']);
+        Route::get('work-description', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getWorkDescription']);
+        Route::post('work-description/update', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'updateWorkDescription']);
+
+        // Bookings
+        Route::get('bookings/today', [\App\Http\Controllers\API\Vendor\BookingController::class, 'today']);
+        Route::get('bookings/incomplete', [\App\Http\Controllers\API\Vendor\BookingController::class, 'incomplete']);
+        Route::get('bookings', [\App\Http\Controllers\API\Vendor\BookingController::class, 'index']);
+        Route::get('bookings/{id}', [\App\Http\Controllers\API\Vendor\BookingController::class, 'show']);
+        Route::post('bookings/{id}/accept', [\App\Http\Controllers\API\Vendor\BookingController::class, 'accept']);
+        Route::post('bookings/{id}/reject', [\App\Http\Controllers\API\Vendor\BookingController::class, 'reject']);
+        Route::post('bookings/{id}/status', [\App\Http\Controllers\API\Vendor\BookingController::class, 'updateStatus']);
+        Route::post('bookings/{id}/assign-rider', [\App\Http\Controllers\API\Vendor\BookingController::class, 'assignRider']);
+
+        // Riders
+        Route::apiResource('riders', \App\Http\Controllers\API\Vendor\RiderController::class);
+
+        // Coupons
+        Route::get('coupons/active', [\App\Http\Controllers\API\Vendor\CouponController::class, 'active']);
+
+        // Payments
+        Route::get('payments', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'index']);
+        Route::get('payments/{id}', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'show']);
+
+        // Bank Details
+        Route::get('bank-details', [\App\Http\Controllers\API\Vendor\BankDetailsController::class, 'show']);
+        Route::post('bank-details/update', [\App\Http\Controllers\API\Vendor\BankDetailsController::class, 'update']);
+
+        // Documents
+        Route::get('documents', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'index']);
+        Route::post('documents', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'store']);
+        Route::delete('documents/{type}', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'destroy']);
+
+        // Notifications
+        Route::get('notifications', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'index']);
+        Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
+        Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
+
+        // Reports
+        Route::get('reports', [\App\Http\Controllers\API\Vendor\ReportController::class, 'index']);
+
+        // Settings
+        Route::get('settings', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'getSettings']);
+        Route::post('settings/update', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'updateSettings']);
+    });
+});

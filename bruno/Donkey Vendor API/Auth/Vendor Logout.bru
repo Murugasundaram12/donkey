@@ -1,0 +1,23 @@
+meta {
+  name: Vendor Logout
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/logout
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Revoke current Sanctum access token and log out.
+}

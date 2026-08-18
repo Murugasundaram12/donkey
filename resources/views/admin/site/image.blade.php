@@ -40,7 +40,7 @@
                 <?php $ii=$ii+1;?>
                 <div class="row mt-4 justify-content-center align-items-center">
                     <!-- <div class="col-md-3"> -->
-                    <img src="{{url('public/admin/upload')}}/{{$i}}" style="height:200px;width:200px" alt="">
+                    <img src="{{asset('admin/upload')}}/{{$i}}" style="height:200px;width:200px" alt="">
                     <!-- </div> -->
                     <a href="{{url('admin/delete')}}/{{$ii}}" style="text-decoration:none"><span
                             class="fe fe-24 fe-trash text-danger"></span></a>

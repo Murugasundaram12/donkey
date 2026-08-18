@@ -1,0 +1,35 @@
+meta {
+  name: Update Settings
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/settings/update
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "notification_settings": {
+    "push_notifications": true,
+    "email_alerts": true,
+    "sms_alerts": false,
+    "new_booking_sound": true
+  }
+}
+}
+
+docs {
+  Update vendor notification preference settings.
+}

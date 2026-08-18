@@ -15,28 +15,28 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap">
 
 
-    <link href="{{ url('public/assets/css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.5.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-rvCmN5lLPWk9ZFBq8v8VzL4pF6Eu/jl5F5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.2/dist/js/bootstrap.min.js"
         integrity="sha384-Rn538y5F5EC5CyTCWT5/Cs5eHV8l5X6w5V5X6w5X6w5X6w5V5X6w5X6w5X6w5V5X6w5" crossorigin="anonymous">
     </script>
 
-    <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"></script>
 
     <!-- Responsive File -->
-    <link href="{{ url('public/assets/css/responsive.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/responsive.css') }}" rel="stylesheet">
     <!-- Color File -->
-    <link href="{{ url('public/assets/css/color.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/color.css') }}" rel="stylesheet">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&amp;family=Yantramanav:wght@300;400;500;700;900&amp;display=swap"
         rel="stylesheet">
 
-    <link rel="shortcut icon" href="{{ url('public/assets/images/fav.png') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url('public/assets/images/fav.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('assets/images/fav.png') }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('assets/images/fav.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
     <!-- Responsive -->
@@ -922,7 +922,7 @@
                 <div class="inner-container" style="margin-right:-38px;">
                     <div class="left-column">
                         <ul class="social-icon ">
-                            <li><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/do.png') }}" class="dodo"
+                            <li><a href="{{ url('/') }}"><img src="{{ asset('assets/images/do.png') }}" class="dodo"
                                         style="width: 180px; margin-left:-40px;" ></a></li>
                             <!-- <li class="right-column  myhiddennav  myhiddennav2"><a href="https://www.facebook.com/donkeydeliveries/"><i class="fab fa-facebook-f"></i></a></li>
                                 <li class="right-column myhiddennav myhiddennav2"><a href="https://twitter.com/doNkeyDeliverys?t=CcXdqICxVYHRRnr1pE-zug&s=08"><i class="fab fa-twitter"></i></a></li>
@@ -937,7 +937,7 @@
                             <div class="nav-outer  ">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler"><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
+                                        src="{{ asset('assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
                                 </div>
 
                                 <!-- Main Menu -->
@@ -1174,14 +1174,14 @@
                     <!--Logo-->
                     <div class="logo-box">
                         <div class="logo">
-                            {{-- <a href="{{url('/')}}"><img src="{{url('public/assets/images/do.png')}}" --}} {{-- style="width: 180px"></a> --}} </div>
+                            {{-- <a href="{{url('/')}}"><img src="{{asset('assets/images/do.png')}}" --}} {{-- style="width: 180px"></a> --}} </div>
                     </div>
                     <div class="right-column ">
                         <!--Nav Box-->
                         <div class="nav-outer ">
                             <!--Mobile Navigation Toggler-->
                             <div class="mobile-nav-toggler"><img class="ic"
-                                    src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
+                                    src="{{ asset('assets/images/icons/icon-bar.png') }}" alt="" style="margin-top: -147px;">
                             </div>
 
                             <!-- Main Menu -->
@@ -1265,7 +1265,7 @@
                         <!--Logo-->
                         <div class="logo-box">
                             <div class="logo"><a href="{{ url('/') }}"><img
-                                        src="{{ url('public/assets/images/do.png') }}" style="width: 180px"
+                                        src="{{ asset('assets/images/do.png') }}" style="width: 180px"
                                         alt=""></a></div>
                         </div>
                         <div class="right-column">
@@ -1273,7 +1273,7 @@
                             <div class="nav-outer">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler "><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" class="pb" alt="" style="margin-top: -147px;">
+                                        src="{{ asset('assets/images/icons/icon-bar.png') }}" class="pb" alt="" style="margin-top: -147px;">
                                 </div>
 
                                 <!-- Main Menu -->
@@ -1299,7 +1299,7 @@
 
             <nav class="menu-box">
                 <div class="nav-logo "><a href="{{ url('/') }}"><img
-                            src="{{ url('public/assets/images/fav.png') }}" style="width: 100px; height:100px;" alt=""
+                            src="{{ asset('assets/images/fav.png') }}" style="width: 100px; height:100px;" alt=""
                             title=""></a></div>
                 <div class="menu-outer">
                     <!--Here Menu Will Come Automatically Via Javascript / Same Menu as in Header-->
@@ -1331,7 +1331,7 @@
                 <div class="hidden-sidebar-close"><span class="flaticon-remove"></span></div>
                 <div class="text-widget sidebar-widget">
                     <div class="logo"><a href="{{ url('/') }}"><img
-                                src="{{ url('public/assets/images/do.png') }}" style="width: 180px" alt="">
+                                src="{{ asset('assets/images/do.png') }}" style="width: 180px" alt="">
                             <div class="text"></div>
                     </div>
                     <!-- PDF Widget -->
@@ -1339,7 +1339,7 @@
                         <div class="row">
                             <div class="col-sm-6 column">
                                 <div class="content">
-                                    <div class="icon"><img src="{{ url('public/assets/images/icons/icon-8.png') }}"
+                                    <div class="icon"><img src="{{ asset('assets/images/icons/icon-8.png') }}"
                                             alt="">
                                     </div>
                                     <h4>Sender <br> Instructions</h4>
@@ -1347,7 +1347,7 @@
                             </div>
                             <div class="col-sm-6 column">
                                 <div class="content">
-                                    <div class="icon"><img src="{{ url('public/assets/images/icons/icon-8.png') }}"
+                                    <div class="icon"><img src="{{ asset('assets/images/icons/icon-8.png') }}"
                                             alt="">
                                     </div>
                                     <h4>Sender <br> Instructions</h4>
@@ -1400,7 +1400,7 @@
     
     <!-- Page Title -->
 <div class="scroll">
-    <section class="page-title bi picpic " style="background-image: url('public/assets/images/pbpp.jpeg'); margin-bottom:40px; ">
+    <section class="page-title bi picpic " style="background-image: asset('assets/images/pbpp.jpeg'); margin-bottom:40px; ">
         <script>
             const ele = document.querySelectorAll('.sec1');
 
@@ -1625,7 +1625,7 @@
                     <div class="col-md-6 col-sm-12">
                         <h2 style="margin-bottom: 25px;">Easy start</h2>
 
-                        <img src="{{ url('public/assets/images/icons/easy.png') }}" class="es"
+                        <img src="{{ asset('assets/images/icons/easy.png') }}" class="es"
                             style="height: 25%; margin-top:10px; margin-bottom:10px;display:block; " alt="Left Image">
                         <br><br>
                         <div class="text">
@@ -1639,7 +1639,7 @@
                     <div class="col-md-6 col-sm-12">
                         <h2 style="margin-left:103px; margin-bottom: 25px;"  class="wynts">What You Need to Start</h2>
 
-                        <img src="{{ url('public/assets/images/icons/need.png') }}" class="es ess"
+                        <img src="{{ asset('assets/images/icons/need.png') }}" class="es ess"
                             style="height: 25%;margin-top:10px; margin-bottom:10px; margin-left:98px;"
                             alt="Right Image"><br><br><br>
                         <div class="text " style="width: 80%; margin-left:auto">
@@ -1841,11 +1841,11 @@
                         <div class="widget links-widget">
 
                             <h4 style="font-weight: 700;" class="ridr"> Rider App</h4><br>
-                          <a href="https://play.google.com/store/apps/details?id=com.donkey.driverapp">  <img class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}" alt="Rider App"
+                          <a href="https://play.google.com/store/apps/details?id=com.donkey.driverapp">  <img class="gplay" src="{{ asset('assets/images/play store.jpg') }}" alt="Rider App"
                                 style="height: 35px; width:108px;">
                             <br> <br>
                             <h4 style="font-weight: 700;"> User App</h4><br>
-                           <a href="https://play.google.com/store/apps/details?id=com.fertail.donkeyuser"> <img class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}" alt="Rider App"
+                           <a href="https://play.google.com/store/apps/details?id=com.fertail.donkeyuser"> <img class="gplay" src="{{ asset('assets/images/play store.jpg') }}" alt="Rider App"
                                 style="height: 35px; width:108px;"></a>
 
                         </div>
@@ -2075,26 +2075,26 @@
         AOS.init();
     </script>
 
-    <script src="{{ url('public/assets/js/jquery.js') }}"></script>
-    <script src="{{ url('public/assets/js/popper.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/bootstrap.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/bootstrap-select.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.fancybox.js') }}"></script>
-    <script src="{{ url('public/assets/js/isotope.js') }}"></script>
-    <script src="{{ url('public/assets/js/owl.js') }}"></script>
-    <script src="{{ url('public/assets/js/appear.js') }}"></script>
-    <script src="{{ url('public/assets/js/wow.js') }}"></script>
-    <script src="{{ url('public/assets/js/lazyload.js') }}"></script>
-    <script src="{{ url('public/assets/js/scrollbar.js') }}"></script>
-    <script src="{{ url('public/assets/js/TweenMax.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/swiper.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.polyglot.language.switcher.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.ajaxchimp.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/parallax-scroll.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.js') }}"></script>
+    <script src="{{ asset('assets/js/popper.min.js') }}"></script>
+    <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.fancybox.js') }}"></script>
+    <script src="{{ asset('assets/js/isotope.js') }}"></script>
+    <script src="{{ asset('assets/js/owl.js') }}"></script>
+    <script src="{{ asset('assets/js/appear.js') }}"></script>
+    <script src="{{ asset('assets/js/wow.js') }}"></script>
+    <script src="{{ asset('assets/js/lazyload.js') }}"></script>
+    <script src="{{ asset('assets/js/scrollbar.js') }}"></script>
+    <script src="{{ asset('assets/js/TweenMax.min.js') }}"></script>
+    <script src="{{ asset('assets/js/swiper.min.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.polyglot.language.switcher.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.ajaxchimp.min.js') }}"></script>
+    <script src="{{ asset('assets/js/parallax-scroll.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.polyfills.min.js"></script>
 
 
-    <script src="{{ url('public/assets/js/script.js') }}"></script>
+    <script src="{{ asset('assets/js/script.js') }}"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.25.0/font/bootstrap-icons.css" rel="stylesheet">
 
 

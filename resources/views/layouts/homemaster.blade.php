@@ -15,21 +15,21 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap">
 
 
-    <link href="{{ url('public/assets/css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.5.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-rvCmN5lLPWk9ZFBq8v8VzL4pF6Eu/jl5F5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5n5" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.5.2/dist/js/bootstrap.min.js"
         integrity="sha384-Rn538y5F5EC5CyTCWT5/Cs5eHV8l5X6w5V5X6w5X6w5X6w5V5X6w5X6w5X6w5V5X6w5" crossorigin="anonymous">
         </script>
 
-    <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"></script>
 
     <!-- Responsive File -->
-    <link href="{{ url('public/assets/css/responsive.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/responsive.css') }}" rel="stylesheet">
     <!-- Color File -->
-    <link href="{{ url('public/assets/css/color.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/color.css') }}" rel="stylesheet">
 
 
 
@@ -38,8 +38,8 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&amp;family=Yantramanav:wght@300;400;500;700;900&amp;display=swap"
         rel="stylesheet">
 
-    <link rel="shortcut icon" href="{{ url('public/assets/images/fav.png') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url('public/assets/images/fav.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('assets/images/fav.png') }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset('assets/images/fav.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
     <!-- Responsive -->
@@ -469,7 +469,7 @@
                 <div class="inner-container" style="margin-right:-38px;">
                     <div class="left-column">
                         <ul class="social-icon ">
-                            <li><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/do.png') }}"
+                            <li><a href="{{ url('/') }}"><img src="{{ asset('assets/images/do.png') }}"
                                         style="width: 180px; margin-left:-40px;"></a></li>
                             <!-- <li class="right-column  myhiddennav  myhiddennav2"><a href="https://www.facebook.com/donkeydeliveries/"><i class="fab fa-facebook-f"></i></a></li>
                                 <li class="right-column myhiddennav myhiddennav2"><a href="https://twitter.com/doNkeyDeliverys?t=CcXdqICxVYHRRnr1pE-zug&s=08"><i class="fab fa-twitter"></i></a></li>
@@ -484,7 +484,7 @@
                             <div class="nav-outer  ">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler"><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt=""
+                                        src="{{ asset('assets/images/icons/icon-bar.png') }}" alt=""
                                         style="margin-top: -147px;">
                                 </div>
 
@@ -740,7 +740,7 @@
                     <!--Logo-->
                     <div class="logo-box">
                         <div class="logo">
-                            {{-- <a href="{{url('/')}}"><img src="{{url('public/assets/images/do.png')}}" --}} {{--
+                            {{-- <a href="{{url('/')}}"><img src="{{asset('assets/images/do.png')}}" --}} {{--
                                     style="width: 180px"></a> --}} </div>
                     </div>
                     <div class="right-column ">
@@ -748,7 +748,7 @@
                         <div class="nav-outer ">
                             <!--Mobile Navigation Toggler-->
                             <div class="mobile-nav-toggler"><img
-                                    src="{{ url('public/assets/images/icons/icon-bar.png') }}" alt=""
+                                    src="{{ asset('assets/images/icons/icon-bar.png') }}" alt=""
                                     style="margin-top: -147px;">
                             </div>
 
@@ -833,7 +833,7 @@
                         <!--Logo-->
                         <div class="logo-box">
                             <div class="logo"><a href="{{ url('/') }}"><img
-                                        src="{{ url('public/assets/images/do.png') }}" style="width: 180px" alt=""></a>
+                                        src="{{ asset('assets/images/do.png') }}" style="width: 180px" alt=""></a>
                             </div>
                         </div>
                         <div class="right-column">
@@ -841,7 +841,7 @@
                             <div class="nav-outer">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler "><img
-                                        src="{{ url('public/assets/images/icons/icon-bar.png') }}" class="pb" alt=""
+                                        src="{{ asset('assets/images/icons/icon-bar.png') }}" class="pb" alt=""
                                         style="margin-top: -147px;">
                                 </div>
 
@@ -867,7 +867,7 @@
             <div class="close-btn"><span class="icon flaticon-remove"></span></div>
 
             <nav class="menu-box">
-                <div class="nav-logo "><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/fav.png') }}"
+                <div class="nav-logo "><a href="{{ url('/') }}"><img src="{{ asset('assets/images/fav.png') }}"
                             style="width: 100px; height:100px;" alt="" title=""></a></div>
                 <div class="menu-outer">
                     <!--Here Menu Will Come Automatically Via Javascript / Same Menu as in Header-->
@@ -902,7 +902,7 @@
             <div class="content-wrapper">
                 <div class="hidden-sidebar-close"><span class="flaticon-remove"></span></div>
                 <div class="text-widget sidebar-widget">
-                    <div class="logo"><a href="{{ url('/') }}"><img src="{{ url('public/assets/images/do.png') }}"
+                    <div class="logo"><a href="{{ url('/') }}"><img src="{{ asset('assets/images/do.png') }}"
                                 style="width: 180px" alt="">
                             <div class="text">Demoralized by the charms of pleasure of the moment so blinded by
                                 desire
@@ -913,7 +913,7 @@
                         <div class="row">
                             <div class="col-sm-6 column">
                                 <div class="content">
-                                    <div class="icon"><img src="{{ url('public/assets/images/icons/icon-8.png') }}"
+                                    <div class="icon"><img src="{{ asset('assets/images/icons/icon-8.png') }}"
                                             alt="">
                                     </div>
                                     <h4>Sender <br> Instructions</h4>
@@ -921,7 +921,7 @@
                             </div>
                             <div class="col-sm-6 column">
                                 <div class="content">
-                                    <div class="icon"><img src="{{ url('public/assets/images/icons/icon-8.png') }}"
+                                    <div class="icon"><img src="{{ asset('assets/images/icons/icon-8.png') }}"
                                             alt="">
                                     </div>
                                     <h4>Sender <br> Instructions</h4>
@@ -991,12 +991,12 @@
 
                             <h4 style="font-weight: 700;" class="ridr"> Rider App</h4><br>
                             <a href="https://play.google.com/store/apps/details?id=com.donkey.driverapp"> <img
-                                    class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}"
+                                    class="gplay" src="{{ asset('assets/images/play store.jpg') }}"
                                     alt="Rider App" style="height: 35px; width:108px;">
                                 <br> <br>
                                 <h4 style="font-weight: 700;"> User App</h4><br>
                                 <a href="https://play.google.com/store/apps/details?id=com.fertail.donkeyuser"> <img
-                                        class="gplay" src="{{ asset('public/assets/images/play store.jpg') }}"
+                                        class="gplay" src="{{ asset('assets/images/play store.jpg') }}"
                                         alt="Rider App" style="height: 35px; width:108px;"></a>
 
                         </div>
@@ -1139,7 +1139,7 @@
                 </div>
                 <div class="col-auto">
                     <span class="flag-india">
-                        <img src=" {{ asset('public/assets/images/india.png') }}" alt="India Flag "
+                        <img src=" {{ asset('assets/images/india.png') }}" alt="India Flag "
                             style="height: 25px; width: 25px;">
                         <b>(IND)</b>
                     </span>
@@ -1230,26 +1230,26 @@
         AOS.init();
     </script>
 
-    <script src="{{ url('public/assets/js/jquery.js') }}"></script>
-    <script src="{{ url('public/assets/js/popper.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/bootstrap.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/bootstrap-select.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.fancybox.js') }}"></script>
-    <script src="{{ url('public/assets/js/isotope.js') }}"></script>
-    <script src="{{ url('public/assets/js/owl.js') }}"></script>
-    <script src="{{ url('public/assets/js/appear.js') }}"></script>
-    <script src="{{ url('public/assets/js/wow.js') }}"></script>
-    <script src="{{ url('public/assets/js/lazyload.js') }}"></script>
-    <script src="{{ url('public/assets/js/scrollbar.js') }}"></script>
-    <script src="{{ url('public/assets/js/TweenMax.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/swiper.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.polyglot.language.switcher.js') }}"></script>
-    <script src="{{ url('public/assets/js/jquery.ajaxchimp.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/parallax-scroll.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.js') }}"></script>
+    <script src="{{ asset('assets/js/popper.min.js') }}"></script>
+    <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.fancybox.js') }}"></script>
+    <script src="{{ asset('assets/js/isotope.js') }}"></script>
+    <script src="{{ asset('assets/js/owl.js') }}"></script>
+    <script src="{{ asset('assets/js/appear.js') }}"></script>
+    <script src="{{ asset('assets/js/wow.js') }}"></script>
+    <script src="{{ asset('assets/js/lazyload.js') }}"></script>
+    <script src="{{ asset('assets/js/scrollbar.js') }}"></script>
+    <script src="{{ asset('assets/js/TweenMax.min.js') }}"></script>
+    <script src="{{ asset('assets/js/swiper.min.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.polyglot.language.switcher.js') }}"></script>
+    <script src="{{ asset('assets/js/jquery.ajaxchimp.min.js') }}"></script>
+    <script src="{{ asset('assets/js/parallax-scroll.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.polyfills.min.js"></script>
 
 
-    <script src="{{ url('public/assets/js/script.js') }}"></script>
+    <script src="{{ asset('assets/js/script.js') }}"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.25.0/font/bootstrap-icons.css" rel="stylesheet">
 
 

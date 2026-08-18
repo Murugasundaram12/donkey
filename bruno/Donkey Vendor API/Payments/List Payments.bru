@@ -1,0 +1,23 @@
+meta {
+  name: List Payments
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/payments
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  List payment transactions for vendor's bookings.
+}

@@ -32,7 +32,7 @@
         "currency": "INR",
         "name": "{{ $subscriber->name }}",
         "description": "",
-        "image": "{{ url('public/site/' . $site->main_logo) }}",
+        "image": "{{ asset('site/' . $site->main_logo) }}",
         "callback_url": "https://donkeydeliveries.com/donkey/subscribers/dashboard",
         "handler": function(response) {
             // Hide the loader when payment is completed          

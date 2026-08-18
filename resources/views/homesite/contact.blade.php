@@ -91,7 +91,7 @@ padding:0px !important;
     </style>
     <!-- Page Title -->
     <div class="oxh">
-    <section class="page-title picpic" style="background-image: url('public/assets/images/contactbaner.jpeg');">
+    <section class="page-title picpic" style="background-image: asset('assets/images/contactbaner.jpeg');">
         <script>
             const ele = document.querySelectorAll('.sec1');
 

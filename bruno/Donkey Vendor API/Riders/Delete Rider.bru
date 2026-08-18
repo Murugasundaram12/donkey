@@ -1,0 +1,23 @@
+meta {
+  name: Delete Rider
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/vendor/riders/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Delete a rider from vendor account.
+}

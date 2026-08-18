@@ -19,7 +19,13 @@ class BusinessController extends Controller
 
         $subscribersPin = json_decode($vendor->pincode, true);
         $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
-        $pincodeObjects = Pincode::whereIn('id', $subscribersPin)->get(['id', 'pincode', 'area_name']);
+        $pincodeCols = ['id', 'pincode'];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('pincode', 'area_name')) {
+            $pincodeCols[] = 'area_name';
+        } elseif (\Illuminate\Support\Facades\Schema::hasColumn('pincode', 'district')) {
+            $pincodeCols[] = 'district as area_name';
+        }
+        $pincodeObjects = Pincode::whereIn('id', $subscribersPin)->get($pincodeCols);
 
         return response()->json([
             'status' => true,

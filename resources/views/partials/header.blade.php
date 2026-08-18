@@ -89,11 +89,11 @@
     $faviconPath = $site && $site->favicon ? public_path('site/' . $site->favicon) : null;
     $logoPath = $site && $site->main_logo ? public_path('site/' . $site->main_logo) : null;
     $faviconUrl = ($faviconPath && file_exists($faviconPath))
-        ? url('public/site/' . $site->favicon)
+        ? asset('site/' . $site->favicon)
         : asset('assets/images/favicon.png');
     $logoUrl = ($logoPath && file_exists($logoPath))
-        ? asset('admin/assets/images/new_logo.png')
-        : url('public/site/' . $site->main_logo);
+        ? asset('site/' . $site->main_logo)
+        : asset('admin/assets/images/new_logo.png');
 @endphp
 <link rel="icon" href="{{ $faviconUrl }}" type="image/x-icon">
 <nav class="topnav navbar navbar-light">

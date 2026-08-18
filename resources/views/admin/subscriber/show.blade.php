@@ -12,7 +12,7 @@
                 <div class="row mt-5 align-items-center">
                     <div class="col-md-3 text-center mb-5">
                         <div class="avatar avatar-xl">
-                            <img src="{{ asset('public/admin/subscriber/profile/' . $subscriber->image) }}"
+                            <img src="{{ asset('admin/subscriber/profile/' . $subscriber->image) }}"
                                 alt="{{ $subscriber->name }}" height="110px;" class="avatar-img rounded-circle">
                         </div>
                     </div>
@@ -129,7 +129,7 @@
                             <div class="card-body my-n3">
                                 <div class="row align-items-center">
                                     <div class="col-3 text-center">
-                                        <a href="{{ asset('public/admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
+                                        <a href="{{ asset('admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
                                             target="_blank" download><span class="circle circle-lg bg-light">
                                                 <i class="fe fe-download fe-24 text-primary"></i>
 
@@ -139,10 +139,10 @@
 
                                         <h3 class="h5 mt-4 mb-1">Aadhar Front Image</h3>
                                         <embed
-                                            src="{{ asset('public/admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
+                                            src="{{ asset('admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
                                             width="100%;" height="150px;" alt="{{ $subscriber->name }}"
                                             class="avatar-img ">
-                                        <!-- <img src="{{ asset('public/admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
+                                        <!-- <img src="{{ asset('admin/subscriber/aadhar/' . $subscriber->aadharImage) }}"
                                                             width="100%;" height="150px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
 
                                     </div> <!-- .col -->
@@ -156,7 +156,7 @@
                             <div class="card-body my-n3">
                                 <div class="row align-items-center">
                                     <div class="col-3 text-center">
-                                        <a href="{{ asset('public/admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
+                                        <a href="{{ asset('admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
                                             target="_blank" download><span class="circle circle-lg bg-light">
                                                 <i class="fe fe-download fe-24 text-primary"></i>
                                             </span></a>
@@ -165,10 +165,10 @@
 
                                         <h3 class="h5 mt-4 mb-1">Aadhar Back Image</h3>
                                         <embed
-                                            src="{{ asset('public/admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
+                                            src="{{ asset('admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
                                             width="100%;" height="150px;" alt="{{ $subscriber->name }}"
                                             class="avatar-img ">
-                                        <!-- <img src="{{ asset('public/admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
+                                        <!-- <img src="{{ asset('admin/subscriber/aadhar/back/' . $subscriber->aadharBackImage) }}"
                                                             width="100%;" height="150px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
                                     </div> <!-- .col -->
                                 </div> <!-- .row -->
@@ -181,7 +181,7 @@
                             <div class="card-body my-n3">
                                 <div class="row align-items-center">
                                     <div class="col-3 text-center">
-                                        <a href="{{ asset('public/admin/subscriber/pan/' . $subscriber->pancardImage) }}"
+                                        <a href="{{ asset('admin/subscriber/pan/' . $subscriber->pancardImage) }}"
                                             target="_blank" download> <span class="circle circle-lg bg-light">
                                                 <i class="fe fe-download fe-24 text-primary"></i>
                                             </span></a>
@@ -192,10 +192,10 @@
 
                                         <p class="text-muted">
                                             <embed
-                                                src="{{ asset('public/admin/subscriber/pan/' . $subscriber->pancardImage) }}"
+                                                src="{{ asset('admin/subscriber/pan/' . $subscriber->pancardImage) }}"
                                                 width="100%;" height="150px;" alt="{{ $subscriber->name }}"
                                                 class="avatar-img ">
-                                            <!-- <img src="{{ asset('public/admin/subscriber/pan/' . $subscriber->pancardImage) }}"
+                                            <!-- <img src="{{ asset('admin/subscriber/pan/' . $subscriber->pancardImage) }}"
                                                                 width="100%;" height="150px;" alt="{{ $subscriber->name }}"
                                                                 class="avatar-img "> -->
                                     </div> <!-- .col -->
@@ -209,7 +209,7 @@
                             <div class="card-body my-n3">
                                 <div class="row align-items-center">
                                     <div class="col-3 text-center">
-                                        <a href="{{ asset('public/admin/subscriber/document/' . $subscriber->customerdocument) }}"
+                                        <a href="{{ asset('admin/subscriber/document/' . $subscriber->customerdocument) }}"
                                             target="_blank" download> <span class="circle circle-lg bg-light">
                                                 <span class="circle circle-lg bg-light">
                                                     <i class="fe fe-download fe-24 text-primary"></i>
@@ -220,7 +220,7 @@
                                         <h3 class="h5 mt-4 mb-1">Document</h3>
 
                                         <p class="text-muted"><embed
-                                                src="{{ asset('public/admin/subscriber/document/' . $subscriber->customerdocument) }}"
+                                                src="{{ asset('admin/subscriber/document/' . $subscriber->customerdocument) }}"
                                                 width="100%;" height="150px;" alt="{{ $subscriber->name }}"
                                                 class="avatar-img ">
                                     </div> <!-- .col -->
@@ -235,7 +235,7 @@
                                 <div class="card-body my-n3">
                                     <div class="row align-items-center">
                                         <div class="col-3 text-center">
-                                            <a href="{{ asset('public/qr/' . $subscriber->qr) }}" target="_blank"
+                                            <a href="{{ asset('qr/' . $subscriber->qr) }}" target="_blank"
                                                 download> <span class="circle circle-lg bg-light">
                                                     <span class="circle circle-lg bg-light">
                                                         <i class="fe fe-download fe-24 text-primary"></i>
@@ -246,7 +246,7 @@
                                             <h3 class="h5 mt-4 mb-1">QR</h3>
 
                                             <p class="text-muted"><embed
-                                                    src="{{ asset('public/qr/' . $subscriber->qr) }}" width="100%;"
+                                                    src="{{ asset('qr/' . $subscriber->qr) }}" width="100%;"
                                                     height="150px;" alt="{{ $subscriber->name }}" class="qr-img ">
                                         </div> <!-- .col -->
                                     </div> <!-- .row -->
@@ -269,7 +269,7 @@
                                         <h3 class="h5 mt-4 mb-1">Bank Statement</h3>
 
                                         <embed
-                                            src="{{ asset('public/admin/subscriber/bankstatement/' . $subscriber->bankstatement) }}"
+                                            src="{{ asset('admin/subscriber/bankstatement/' . $subscriber->bankstatement) }}"
                                             width="100%" height="290px" />
 
                                     </div> <!-- .col -->
@@ -287,7 +287,7 @@
                                             <span class="circle circle-lg bg-light">
                                                 <!-- <i class="fe fe-trello fe-24 text-primary"></i> -->
                                                 <a target="_blank" download
-                                                    href="{{ asset('public/admin/subscriber/video/' . $subscriber->video) }}">
+                                                    href="{{ asset('admin/subscriber/video/' . $subscriber->video) }}">
                                                     <i class="fe fe-download fe-24 text-primary ml-3"></i>
                                                 </a>
 
@@ -295,7 +295,7 @@
                                             <span class="circle circle-lg bg-light">
                                                 <!-- <i class="fe fe-trello fe-24 text-primary"></i> -->
                                                 <!-- <a target="_blank" download
-                                                                href="{{ asset('public/admin/subscriber/video/' . $subscriber->video) }}">
+                                                                href="{{ asset('admin/subscriber/video/' . $subscriber->video) }}">
                                                                 <i class="fe fe-download fe-24 text-primary ml-3"></i>
                                                             </a> -->
                                                 @can('Video delete')
@@ -311,7 +311,7 @@
                                             <h3 class="h5 mt-4 mb-1">Video</h3>
 
                                             <embed
-                                                src="{{ asset('public/admin/subscriber/video/' . $subscriber->video) }}"
+                                                src="{{ asset('admin/subscriber/video/' . $subscriber->video) }}"
                                                 width="100%" height="290px" />
 
                                         </div> <!-- .col -->

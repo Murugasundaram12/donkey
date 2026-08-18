@@ -1371,13 +1371,11 @@ class HomeController extends Controller
 
     public function couponsActivate(Request $request)
     {
-
-        $data = Coupons::findOrFail($request->id);
-        $data->active = $request->status;
-        $data->save();
-
-
-
+        $data = Coupons::find($request->id);
+        if ($data && \Illuminate\Support\Facades\Schema::hasColumn('coupons', 'active')) {
+            $data->active = $request->status;
+            $data->save();
+        }
         return response()->json(['success' => 'Coupon status updated successfully.']);
     }
 

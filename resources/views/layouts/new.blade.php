@@ -174,7 +174,7 @@
 
 
 
-<center><img src="{{ asset('public/admin/assets/img/logo.jpg') }}" alt="logo" style="height:25px;width:25px; margin-bottom:-70px;"></center>
+<center><img src="{{ asset('admin/assets/img/logo.jpg') }}" alt="logo" style="height:25px;width:25px; margin-bottom:-70px;"></center>
 <div class="container">
     <div class="card">
         <div class="card-body">

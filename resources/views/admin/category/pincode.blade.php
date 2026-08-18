@@ -39,7 +39,7 @@
                                                 <td>
                                                     <div class="row" style="align-items: center !important;">
                                                         <div class="col-2"><img
-                                                                src="{{ url('public/admin/subscriber/profile/' . $subscriber?->image) }}"
+                                                                src="{{ asset('admin/subscriber/profile/' . $subscriber?->image) }}"
                                                                 alt="User-Ple"
                                                                 style="height: 35px; width:35px;border-radius: 100px;">
                                                         </div>

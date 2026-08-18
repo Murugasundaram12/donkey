@@ -1,0 +1,29 @@
+meta {
+  name: Upload Document
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/documents
+  body: multipart-form
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  document_type: aadhar_front
+  document_file: @file(/path/to/aadhar_front.jpg)
+  aadhar_no: 123456789012
+}
+
+docs {
+  Upload vendor verification document file (allowed types: aadhar_front, aadhar_back, pan_card, bank_statement, customer_document, qr, video, profile).
+}

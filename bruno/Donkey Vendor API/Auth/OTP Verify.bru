@@ -1,0 +1,33 @@
+meta {
+  name: OTP Verify
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/otp/verify
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "mobile": "9876543210",
+  "otp": "1234"
+}
+}
+
+script:post-response {
+  if (res.status === 200 && res.body && res.body.data && res.body.data.token) {
+    bru.setEnvVar("token", res.body.data.token);
+  }
+}
+
+docs {
+  Verify vendor login via mobile OTP. Demo OTP '1234' supported.
+}

@@ -78,7 +78,7 @@
                 <div class="card-header p-4">
                     {{-- <a class="pt-2 d-inline-block" href="index.html" data-abc="true">BBBootstrap.com</a> --}}
                     {{-- <img src="public/assets/images/do.png" alt=""> --}}
-                    <img src="{{ url('public/site/' . $site->main_logo) }}" class=" pt-2 d-inline-block"
+                    <img src="{{ asset('site/' . $site->main_logo) }}" class=" pt-2 d-inline-block"
                         style="width: 80; height:55px;">
                     <div class="float-right">
                         <h3 class="mb-0">Tax Invoice </h3>

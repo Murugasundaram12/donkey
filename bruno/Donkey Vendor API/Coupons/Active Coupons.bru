@@ -1,0 +1,23 @@
+meta {
+  name: Active Coupons
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/coupons/active
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get list of active promotional coupons available for vendor's pincodes.
+}

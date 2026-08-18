@@ -28,7 +28,7 @@
         "currency": "INR",
         "name": "{{ $subscriber[0]->name }}",
         "description": "",
-        "image": "{{ url('public/site/' . $site->main_logo) }}",
+        "image": "{{ asset('site/' . $site->main_logo) }}",
         "callback_url": "https://donkeydeliveries.com/donkey/subscribers/login",
         "handler": function(response) {
             // Hide the loader when payment is completed          

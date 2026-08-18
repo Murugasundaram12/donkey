@@ -140,11 +140,11 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 @if (isset($notification->image))
-                                                    <td><img src="{{ url('public/pushnotification/' . $notification?->image) }}"
+                                                    <td><img src="{{ asset('pushnotification/' . $notification?->image) }}"
                                                             alt="Notif-IMG" style="height: 30px;width:30 px;"></td>
                                                 @else
                                                     <td>
-                                                        <img src="{{ url('public/pushnotification/ip.jpg') }}"
+                                                        <img src="{{ asset('pushnotification/ip.jpg') }}"
                                                             alt="default">
                                                     </td>
                                                 @endif

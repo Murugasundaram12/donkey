@@ -64,7 +64,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="profile">Profile Image:</label>
-                                    <img src="{{ asset('public/admin/admin/profile/') }}/{{ $Complaint->profile }}"
+                                    <img src="{{ asset('admin/admin/profile/') }}/{{ $Complaint->profile }}"
                                         style="width: 40%" height="40%">
                                 </div>
                             </div>

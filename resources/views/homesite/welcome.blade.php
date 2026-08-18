@@ -295,7 +295,7 @@ background-repeat: no-repeat;
                                 class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                         <div class="count"><span>01</span></div>
                         <div class="image" data-parallax='{"y": 30}'><img
-                                src="{{ url('public/assets/images/images1.png') }}" style="max-width: 210px !important;"
+                                src="{{ asset('assets/images/images1.png') }}" style="max-width: 210px !important;"
                                 alt=""></div>
 
                     </div>
@@ -312,7 +312,7 @@ background-repeat: no-repeat;
                                 class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                         <div class="count"><span>02</span></div>
                         <div class="image" data-parallax='{"y": 30}'><img
-                                src="{{ url('public/assets/images/images2.png') }}" style="max-width: 210px !important;"
+                                src="{{ asset('assets/images/images2.png') }}" style="max-width: 210px !important;"
                                 alt=""></div>
                     </div>
                 </div>
@@ -326,7 +326,7 @@ background-repeat: no-repeat;
                                 class="flaticon-up-arrow" style="color:white"></i>More Details</a>
                         <div class="count"><span>03</span></div>
                         <div class="image" data-parallax='{"y": 30}'><img
-                                src="{{ url('public/assets/images/images3.png') }}" style="max-width: 210px !important;"
+                                src="{{ asset('assets/images/images3.png') }}" style="max-width: 210px !important;"
                                 alt=""></div>
                     </div>
                 </div>
@@ -336,7 +336,7 @@ background-repeat: no-repeat;
 
     <!-- About Section -->
     <section class="about-section"
-        style="background-image: url('public/assets/images/bg-1.jpg'); background-repeat: no-repeat;
+        style="background-image: asset('assets/images/bg-1.jpg'); background-repeat: no-repeat;
 background-size: cover; ">
         <div class="auto-container">
             <div class="row">
@@ -400,7 +400,7 @@ background-size: cover; ">
                 <div class="col-lg-6">
                     <div class="image wow fadeInRight" data-aos="fade-in" data-wow-duration="1500ms"
                         data-wow-offset="50">
-                        <img class="ando"  src="{{ url('public/assets/images/services.png') }}" alt="">
+                        <img class="ando"  src="{{ asset('assets/images/services.png') }}" alt="">
                     </div>
                 </div>
 
@@ -474,7 +474,7 @@ background-size: cover; ">
 
     <!-- Work-process Section -->
     <section class="work-process-section">
-        <div class="bg bgim" style="background-image: url('public/assets/images/ban.jpg');"></div>
+        <div class="bg bgim" style="background-image: asset('assets/images/ban.jpg');"></div>
         <div class="auto-container">
             <div class="sec-title text-center light dts">
                 <div class="sub-title text-center" style="color:white !important">Driving Toward Safety</div>
@@ -577,7 +577,7 @@ background-size: cover; ">
     <!-- Modal -->
 
     <!-- Industries Covered -->
-    <section class="industries-covered ceme" style="background-image: url('public/assets/images/sandal.jpg'); height:850px;">
+    <section class="industries-covered ceme" style="background-image: asset('assets/images/sandal.jpg'); height:850px;">
         <div class="background-text" data-parallax='{"x": 100}'></div>
         <div class="outer-box side-container">
             <div class="outer-container">
@@ -585,7 +585,7 @@ background-size: cover; ">
                     data-options='{"loop": true, "center": true, "margin": 0, "autoheight":true, "lazyload":true, "nav": true, "dots": true, "autoplay": true, "autoplayTimeout": 6000, "smartSpeed": 1800, "responsive":{ "0" :{ "items": "1" }, "600" :{ "items" : "1" }, "768" :{ "items" : "1" } , "992":{ "items" : "1" }, "1200":{ "items" : "1" }}}'>
                     <div class="text-block">
                         <div class="inner-box">
-                            <div class="image couosal_image" style="background-image: url('public/assets/images/busi.jpeg');">
+                            <div class="image couosal_image" style="background-image: asset('assets/images/busi.jpeg');">
                             </div>
                             <div class="content wow zoomIn cw" style="border-radius:20px">
                                 <div class="icon"><span><img src="public/assets/images/icons/deal.png" alt=""
@@ -610,7 +610,7 @@ background-size: cover; ">
                     </div>
                     <div class="text-block">
                         <div class="inner-box">
-                            <div class="image couosal_image" style="background-image: url('public/assets/images/rid.jpg');">
+                            <div class="image couosal_image" style="background-image: asset('assets/images/rid.jpg');">
                             </div>
                             <div class="content wow  zoomIn cw" style="border-radius:20px">
                                 <div class="icon"><span><img src="public/assets/images/icons/two.png" alt=""
@@ -634,7 +634,7 @@ background-size: cover; ">
                     </div>
                     <div class="text-block">
                         <div class="inner-box">
-                            <div class="image couosal_image" style="background-image: url('public/assets/images/bscs.jpg');">
+                            <div class="image couosal_image" style="background-image: asset('assets/images/bscs.jpg');">
                             </div>
                             <div class="content wow zoomIn cw" style="border-radius:20px">
                                 <div class="icon"><span><img src="public/assets/images/icons/rating.png" alt=""

@@ -44,6 +44,9 @@ class SubscriberController extends Controller
 
     public function zipcodeE()
     {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('pincode', 'usedBy')) {
+            return response()->json(['message' => 'usedBy column not present in pincode table']);
+        }
         $zipcode = Pincode::where('usedBy', '!=', 0)
             ->select('id', 'usedBy') // Specify columns to select
             ->get();

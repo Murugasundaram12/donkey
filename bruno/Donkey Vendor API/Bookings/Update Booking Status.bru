@@ -1,0 +1,31 @@
+meta {
+  name: Update Booking Status
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/bookings/:id/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "status": 2,
+  "reason": "Completed successfully"
+}
+}
+
+docs {
+  Update booking status (0: Pending, 1: In Progress, 2: Completed, 3: Cancelled).
+}

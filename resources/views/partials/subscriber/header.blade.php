@@ -87,7 +87,7 @@
 @php
     $site = App\Models\site::where('id', 1)->first();
 @endphp
-<link rel="icon" href="{{ url('public/site/' . $site->main_logo) }}" type="image/x-icon">
+<link rel="icon" href="{{ asset('site/' . $site->main_logo) }}" type="image/x-icon">
 
 <nav class="topnav navbar navbar-light">
 
@@ -257,7 +257,7 @@
             <a class="navbar-brand mx-auto flex-fill text-center" href="#">
                 <div class="w-100 d-flex flex-column align-items-center">
                     <a class="navbar-brand mx-auto flex-fill text-center" href="https://www.donkeydeliveries.com/">
-                        <img src="{{ url('public/site/' . $site->main_logo) }}" height="40" alt="do Nk ey PBP Panel">
+                        <img src="{{ asset('site/' . $site->main_logo) }}" height="40" alt="do Nk ey PBP Panel">
                         <h3><span class="mt-2 font-weight-bold">PBP Control Center</span></h3>
                     </a>
                 </div>
