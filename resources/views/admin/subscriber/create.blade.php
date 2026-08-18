@@ -514,7 +514,7 @@
                                                     </div>
 
                                                     <div class="modal-body text-center">
-                                                        <img src="{{ asset('admin/assets/images/pricechart.jpeg') }}"
+                                                        <img src="{{ asset('public/admin/assets/images/pricechart.jpeg') }}"
                                                             alt="Size Chart" class="img-fluid rounded"
                                                             style="max-height:600px;">
                                                     </div>

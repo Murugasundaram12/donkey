@@ -412,7 +412,7 @@ class RegisterController extends BaseController
      */
     public function profileUser(Request $request)
     {
-        $user = Auth::guard('api')->user();
+        $user = $request->user() ?: Auth::guard('api')->user();
         $success['lastname'] =  $user->lastname;
         $success['firstname'] =  $user->firstname;
         $success['email'] =  $user->email;

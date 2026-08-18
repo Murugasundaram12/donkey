@@ -1,5 +1,8 @@
 @extends('layouts.master')
 @section('content')
+    @php
+        $errors = $errors ?? new \Illuminate\Support\ViewErrorBag();
+    @endphp
     <!-- Add the DataTables CSS link -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
     <!-- Font Awesome CSS link -->
@@ -105,6 +108,10 @@
                                         </thead>
                                         <tbody>                                        
                                             @foreach ($coupons as $coupon)
+                                                @php
+                                                    $couponStartDate = $coupon->start_date;
+                                                    $couponExpiryDate = $coupon->expiry_date;
+                                                @endphp
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $coupon->title }}</td>
@@ -140,15 +147,15 @@
                                                             <span class="badge badge-warning">Something Wrong</span>
                                                         @endif
                                                     </td>
-                                                    @if ($coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d'))
+                                                    @if ($couponExpiryDate && $couponExpiryDate->format('Y-m-d') < now()->format('Y-m-d'))
                                                         <td><span class="badge badge-danger">Expired</span></td>
                                                         <td><span class="badge badge-danger">Expired</span></td>
                                                     @else
-                                                        <td>{{ $coupon->start_date->format('dM,Y') }}</td>
-                                                        <td>{{ $coupon->expiry_date->format('dM,Y') }}</td>
+                                                        <td>{{ $couponStartDate ? $couponStartDate->format('dM,Y') : '-' }}</td>
+                                                        <td>{{ $couponExpiryDate ? $couponExpiryDate->format('dM,Y') : '-' }}</td>
                                                     @endif
                                                     @can('Status on')
-                                                        @if ($coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d') && $coupon->status == 0)
+                                                        @if ($couponExpiryDate && $couponExpiryDate->format('Y-m-d') < now()->format('Y-m-d') && $coupon->status == 0)
                                                             <td><span class="badge badge-danger">Expired</span></td>
                                                         @else
                                                             <td>
@@ -338,4 +345,3 @@
     </script>
 @endsection
 @endsection
-

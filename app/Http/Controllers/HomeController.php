@@ -37,6 +37,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 
@@ -67,9 +68,9 @@ class HomeController extends Controller
 
     public function usedPincodes()
     {
-        $pincodes = Pincode::where('usedBy', '!=', 0)
-            ->latest()
-            ->get();
+        $pincodes = Schema::hasColumn('pincode', 'usedBy')
+            ? Pincode::where('usedBy', '!=', 0)->latest()->get()
+            : collect();
         return view('admin.category.pincode', ["pincodes" => $pincodes]);
     }
 
@@ -398,6 +399,28 @@ class HomeController extends Controller
             ->join('subscriber', 'subscriber.id', '=', 'pincode.usedBy')
             ->selectRaw('COALESCE(SUM(booking_payment.total - CASE WHEN booking_payment.coupon_id IS NOT NULL THEN COALESCE(booking_payment.coupon_amount, 0) ELSE 0 END), 0) AS aggregate')
             ->value('aggregate');
+    }
+
+    private function subscriberSubscriptionPriceTotal(array $filters = []): float
+    {
+        if (!Schema::hasColumn('subscriber', 'subscription_price')) {
+            return 0.0;
+        }
+
+        $query = Subscriber::query();
+
+        foreach ($filters as $filter) {
+            if (count($filter) === 2) {
+                $query->where($filter[0], $filter[1]);
+                continue;
+            }
+
+            if (count($filter) === 3) {
+                $query->where($filter[0], $filter[1], $filter[2]);
+            }
+        }
+
+        return (float) $query->sum('subscription_price');
     }
 
     //End user
@@ -1207,10 +1230,12 @@ class HomeController extends Controller
         $result = [];
         $noti = false;
         //$count = Drivernotify::where('readBy', null)->latest()->count();
-        $count = Drivernotify::whereNull('readBy')
-            ->where('modifiedBy', 'REGEXP', '^[0-9]+$')
-            ->latest()
-            ->count();
+        $count = Schema::hasColumn('driver_notify', 'readBy')
+            ? Drivernotify::whereNull('readBy')
+                ->where('modifiedBy', 'REGEXP', '^[0-9]+$')
+                ->latest()
+                ->count()
+            : 0;
         if ($count > 0) {
             $noti = true;
         }
@@ -1248,6 +1273,9 @@ class HomeController extends Controller
 
     public function readBy(Drivernotify $readBy)
     {
+        if (!Schema::hasColumn('driver_notify', 'readBy')) {
+            return back()->with('success', "Message read Successfully");
+        }
         $readBy->update(['readBy' => Auth::id()]);
         return back()->with('success', "Message read Successfully");
     }

@@ -8,6 +8,7 @@ use App\Models\Pincode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class CouponController extends Controller
@@ -18,7 +19,10 @@ class CouponController extends Controller
       ->latest()
       ->get();
     foreach ($coupons as $coupon) {
-      if ($coupon->expiry_date->format('Y-m-d') < now()) {
+      if ($coupon->expiry_date && $coupon->expiry_date->format('Y-m-d') < now()->format('Y-m-d')) {
+        if (!Schema::hasColumn('coupons', 'status')) {
+          continue;
+        }
         $coupon->update([
           'status' => 0
         ]);
@@ -34,7 +38,9 @@ class CouponController extends Controller
    */
   public function create()
   {
-    $pincodes = Pincode::where('usedBy', '!=', 0)->get();
+    $pincodes = Schema::hasColumn('pincode', 'usedBy')
+      ? Pincode::where('usedBy', '!=', 0)->get()
+      : collect();
     $subscribers = Subscriber::all();
     return view("admin.coupon.create", ['subscribers' => $subscribers, 'pincodes' => $pincodes]);
   }
@@ -144,6 +150,9 @@ class CouponController extends Controller
     $coupon = Coupon::where('id', $request->couponId)
       ?->first();
     if (isset($coupon)) {
+      if (!Schema::hasColumn('coupons', 'status')) {
+        return response()->json([$result => false]);
+      }
       $coupon->status = $request->status == 1 ? 1 : 0;
       $coupon->update();
       return response()->json([$result => true]);
@@ -151,4 +160,3 @@ class CouponController extends Controller
     return response()->json([$result => false]);
   }
 }
-

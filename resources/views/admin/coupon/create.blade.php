@@ -1,5 +1,8 @@
 @extends('layouts.master')
 @section('content')
+    @php
+        $errors = $errors ?? new \Illuminate\Support\ViewErrorBag();
+    @endphp
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     {{-- jquery --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

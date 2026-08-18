@@ -60,7 +60,7 @@ Route::post('/login', [App\Http\Controllers\API\RegisterController::class, 'logi
 Route::post('sendMessage', [MessageControler::class, 'createMessage'])->name('sendMessage');
 Route::get('reciveMessage', [MessageControler::class, 'reciveMessage'])->name('reciveMessage');
 //Route::middleware('auth:sanctum')->group( function () {
-Route::get('/profiles', [App\Http\Controllers\API\RegisterController::class, 'profileUser'])->name('profileUser');
+Route::get('/profiles', [App\Http\Controllers\API\RegisterController::class, 'profileUser'])->middleware('auth:sanctum')->name('profileUser');
 Route::post('/profile/verify', [App\Http\Controllers\API\RegisterController::class, 'userVerify'])->name('userVerify');
 Route::post("/booking/calculation", [App\Http\Controllers\API\otherController::class, "bookingCalculation"])->name('bookingCalculation');
 Route::post('/booking/{action}', [App\Http\Controllers\API\Booking::class, 'index'])->name('index');
@@ -76,7 +76,7 @@ Route::post('/driverlogincheck', [App\Http\Controllers\API\RegisterController::c
 
 // Route::post('notificationtodriver', [App\Http\Controllers\API\RegisterController::class, 'notificationtodriver'])->name('notificationtodriver');
 // Route::post('pincheck', [App\Http\Controllers\API\RegisterController::class, 'pincheck'])->name('pincheck');
-Route::post('pincheck', [App\Http\Controllers\API\otherController::class, 'pincheck'])->name('pincheck');
+Route::match(['get', 'post'], 'pincheck', [App\Http\Controllers\API\otherController::class, 'pincheck'])->name('pincheck');
 Route::post('notificationtodriver', [App\Http\Controllers\API\RegisterController::class, 'notificationtodriver'])->name('notificationtodriver');
 Route::post('userprofile', [App\Http\Controllers\API\RegisterController::class, 'userprofile'])->name('userprofile');
 

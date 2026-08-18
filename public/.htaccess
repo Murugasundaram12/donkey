@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Normalize legacy asset URLs that still include an extra /public/ segment.
+    RewriteRule ^public/(.*)$ $1 [L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

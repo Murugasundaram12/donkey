@@ -9,26 +9,26 @@
     <link rel="icon" href="{{ asset('icons/logo.png') }}">
     <title>do N key - PBP Control Center</title>
     <!-- Simple bar CSS -->
-    <link rel="stylesheet" href="{{ asset('admin/css/simplebar.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/simplebar.css') }}">
     <!-- Fonts CSS -->
     <link
         href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap"
         rel="stylesheet">
     <!-- Icons CSS -->
-    <link rel="stylesheet" href="{{ asset('admin/css/feather.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/select2.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/dropzone.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/uppy.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/jquery.steps.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/jquery.timepicker.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/css/quill.snow.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/feather.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/select2.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/dropzone.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/uppy.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/jquery.steps.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/jquery.timepicker.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/quill.snow.css') }}">
     <!--Datatable-->
-    <link rel="stylesheet" href="{{ asset('admin/css/dataTables.bootstrap4.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/dataTables.bootstrap4.css') }}">
     <!-- Date Range Picker CSS -->
-    <link rel="stylesheet" href="{{ asset('admin/css/daterangepicker.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/daterangepicker.css') }}">
     <!-- App CSS -->
-    <link rel="stylesheet" href="{{ asset('admin/css/app-light.css') }}" id="lightTheme">
-    <link rel="stylesheet" href="{{ asset('admin/css/app-dark.css') }}" id="darkTheme" disabled>
+    <link rel="stylesheet" href="{{ asset('public/admin/css/app-light.css') }}" id="lightTheme">
+    <link rel="stylesheet" href="{{ asset('public/admin/css/app-dark.css') }}" id="darkTheme" disabled>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <style>
@@ -48,42 +48,42 @@
     @include('partials.success-modal')
 
     @include('partials.subscriber.footer')
-    <script src="{{ asset('admin/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('admin/js/popper.min.js') }}"></script>
-    <script src="{{ asset('admin/js/moment.min.js') }}"></script>
-    <script src="{{ asset('admin/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('admin/js/simplebar.min.js') }}"></script>
-    <script src="{{ asset('admin/js/daterangepicker.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.stickOnScroll.js') }}"></script>
-    <script src="{{ asset('admin/js/tinycolor-min.js') }}"></script>
-    <script src="{{ asset('admin/js/config.js') }}"></script>
-    <script src="{{ asset('admin/js/d3.min.js') }}"></script>
-    <script src="{{ asset('admin/js/topojson.min.js') }}"></script>
-    <script src="{{ asset('admin/js/datamaps.all.min.js') }}"></script>
-    <script src="{{ asset('admin/js/datamaps-zoomto.js') }}"></script>
-    <script src="{{ asset('admin/js/datamaps.custom.js') }}"></script>
-    <script src="{{ asset('admin/js/Chart.min.js') }}"></script>
-    <script src="{{ asset('admin/js/multiselect-dropdown.js') }}?v={{ filemtime(public_path('admin/js/multiselect-dropdown.js')) }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/popper.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/moment.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/simplebar.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/daterangepicker.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.stickOnScroll.js') }}"></script>
+    <script src="{{ asset('public/admin/js/tinycolor-min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/config.js') }}"></script>
+    <script src="{{ asset('public/admin/js/d3.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/topojson.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/datamaps.all.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/datamaps-zoomto.js') }}"></script>
+    <script src="{{ asset('public/admin/js/datamaps.custom.js') }}"></script>
+    <script src="{{ asset('public/admin/js/Chart.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/multiselect-dropdown.js') }}?v={{ filemtime(public_path('admin/js/multiselect-dropdown.js')) }}"></script>
     <script>
     /* defind global options */
     Chart.defaults.global.defaultFontFamily = base.defaultFontFamily;
     Chart.defaults.global.defaultFontColor = colors.mutedColor;
     </script>
-    <script src="{{ asset('admin/js/gauge.min.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.sparkline.min.js') }}"></script>
-    <script src="{{ asset('admin/js/apexcharts.min.js') }}"></script>
-    <script src="{{ asset('admin/js/apexcharts.custom.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.mask.min.js') }}"></script>
-    <script src="{{ asset('admin/js/select2.min.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.steps.min.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.validate.min.js') }}"></script>
-    <script src="{{ asset('admin/js/jquery.timepicker.js') }}"></script>
-    <script src="{{ asset('admin/js/dropzone.min.js') }}"></script>
-    <script src="{{ asset('admin/js/uppy.min.js') }}"></script>
-    <script src="{{ asset('admin/js/quill.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/gauge.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.sparkline.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/apexcharts.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/apexcharts.custom.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.mask.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/select2.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.steps.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.validate.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.timepicker.js') }}"></script>
+    <script src="{{ asset('public/admin/js/dropzone.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/uppy.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/quill.min.js') }}"></script>
 
-    <script src="{{ asset('admin/js/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('admin/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('public/admin/js/dataTables.bootstrap4.min.js') }}"></script>
     <script>
     $('.select2').select2({
         theme: 'bootstrap4',
@@ -237,7 +237,7 @@
     })();
     </script>
 
-    <script src="{{ asset('admin/js/apps.js') }}"></script>
+    <script src="{{ asset('public/admin/js/apps.js') }}"></script>
     @yield('scripts')
     <script>
     var timeoutTime = 1800;

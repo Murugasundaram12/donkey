@@ -524,8 +524,21 @@ class otherController extends BaseController
     public function appVerision()
     {
         $app_verision = site::where('id', 1)
-            ->select(['user_app', 'driver_app'])
+            ->select([
+                'image',
+                'address',
+                'updated_at',
+                'phone',
+                'sitename',
+                'created_at',
+                'driver_app',
+                'id',
+                'map',
+                'email',
+                'user_app',
+            ])
             ?->first();
+
         return new JsonResponse([
             'status' => true,
             'message' => $app_verision
@@ -1880,8 +1893,17 @@ class otherController extends BaseController
             $c = DB::table('price')->where('pincode', $request->input('pincode'))->where('category', $request->input('category'))->count();
             if ($c > 0) {
                 $data = DB::table('pincode')->where('pincode', $request->input('pincode'))->get();
-                $subscriber = Subscriber::where('id', $data[0]->usedBy)->first();
-                if (($subscriber->activestatus != 1) || ($subscriber->blockedstatus != 1)) {
+                $subscriber = null;
+                if (isset($data[0]->usedBy)) {
+                    $subscriber = Subscriber::where('id', $data[0]->usedBy)->first();
+                } else {
+                    $pincodeObj = Pincode::where('pincode', $request->input('pincode'))?->first();
+                    $pbc = Pincodebasedcategory::where('pincode_id', $pincodeObj?->id)->where('category_id', $request->input('category'))->first();
+                    if ($pbc && $pbc->subscriber_id) {
+                        $subscriber = Subscriber::where('id', $pbc->subscriber_id)->first();
+                    }
+                }
+                if ($subscriber && (($subscriber->status != 1) || ($subscriber->blockedstatus != 1))) {
                     return $this->sendError('Pincode Not Available Please Enter Another Pincode.');
                 }
                 $pincode = Pincode::where('pincode', $request->pincode)?->first();
@@ -1932,7 +1954,7 @@ class otherController extends BaseController
         $vouchers = Voucher::get('images');
         foreach ($vouchers as $ban => $value) {
 
-            $data['vouchers'][$ban] = $url . 'public/admin/voucher/' . $value['images'];
+            $data['vouchers'][$ban] = asset('admin/voucher/' . $value['images']);
         }
         // $banner=banner::get();
         // $data['banners']=banner::get('images');

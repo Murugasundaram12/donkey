@@ -1,6 +1,7 @@
 
   @extends('layouts.master')
   @section('content')
+     @php($errors = $errors ?? new \Illuminate\Support\ViewErrorBag())
      <div class="container-fluid">
       <div class="row justify-content-center">
         <div class="col-12">

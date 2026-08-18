@@ -92,8 +92,8 @@
         ? url('public/site/' . $site->favicon)
         : asset('assets/images/favicon.png');
     $logoUrl = ($logoPath && file_exists($logoPath))
-        ? asset('admin/assets/images/new_logo.png')
-        : url('public/site/' . $site->main_logo);
+        ? url('public/site/' . $site->main_logo)
+        : asset('public/admin/assets/images/new_logo.png');
 @endphp
 <link rel="icon" href="{{ $faviconUrl }}" type="image/x-icon">
 <nav class="topnav navbar navbar-light">
@@ -135,7 +135,7 @@
                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="avatar avatar-sm mt-2">
                         <div style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%;">
-                            <img src="{{ asset('admin/admin/profile/' . ($admin->profile ?? '')) }}" alt="..."
+                            <img src="{{ asset('public/admin/admin/profile/' . ($admin->profile ?? '')) }}" alt="..."
                                 class="avatar-img rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     </span>

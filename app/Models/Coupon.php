@@ -41,12 +41,24 @@ class Coupon extends Model
 
     public function getStartDateAttribute($value)
     {
-        return Carbon::parse($value);
+        $raw = filled($value) ? $value : ($this->attributes['valid_from'] ?? null);
+        return filled($raw) ? Carbon::parse($raw) : null;
     }
 
     public function getExpiryDateAttribute($value)
     {
-        return Carbon::parse($value);
+        $raw = filled($value) ? $value : ($this->attributes['valid_to'] ?? null);
+        return filled($raw) ? Carbon::parse($raw) : null;
+    }
+
+    public function getTitleAttribute($value)
+    {
+        return filled($value) ? $value : ($this->attributes['name'] ?? null);
+    }
+
+    public function getLimitAttribute($value)
+    {
+        return filled($value) ? $value : ($this->attributes['user_limit'] ?? 0);
     }
 
     public function pincode(): BelongsTo
@@ -59,4 +71,3 @@ class Coupon extends Model
         return $this->hasMany(Usedcoupon::class);
     }
 }
-

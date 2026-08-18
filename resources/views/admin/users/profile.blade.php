@@ -45,7 +45,7 @@
                     <div class="row mt-5 align-items-center">
                         <div class="col-md-3 text-center mb-5">
                             <div class="card border-0 bg-transparent">
-                                <img src="{{ asset('admin/admin/profile/'.$admin->profile) }}" class="card-img-top img-fluid rounded">
+                                <img src="{{ asset('public/admin/admin/profile/'.$admin->profile) }}" class="card-img-top img-fluid rounded">
                             </div>
                         </div>
                         <div class="col">

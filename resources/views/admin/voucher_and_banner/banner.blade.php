@@ -52,7 +52,7 @@
 
 <div class="row container" style="margin-top:10px">
 <div class="col-md-4">
-  <img src="{{url('admin/banner/').'/'.$v->images}}" alt="" style="height:200px;width:200px;border-radius:10px">
+  <img src="{{url('public/admin/banner/').'/'.$v->images}}" alt="" style="height:200px;width:200px;border-radius:10px">
 </div>
 <div class="col-md-4 d-flex align-items-center "  >
 <a class="btn btn-primary mr-4" onclick="showmodal('{{$v->id}}')" href="#" >Edit</a>

@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class banner extends Model
 {
     use HasFactory;
-    protected $table = 'banners';
-    protected $fillable=[
-    'title',
-    'image',
-    'link',
+    protected $fillable = [
+        'title',
+        'image',
+        'images',
+        'link',
     ];
+
+    public function getImageAttribute()
+    {
+        return $this->attributes['images'] ?? $this->attributes['image'] ?? null;
+    }
 }

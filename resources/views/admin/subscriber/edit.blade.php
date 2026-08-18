@@ -737,7 +737,7 @@
                         <div class="card-body">
                             <strong class="card-title">Aadhar Front</strong>
                             <div class="row ">
-                                <embed src="{{ asset('admin/subscriber/aadhar/'.$subscriber->aadharImage) }}"
+                                <embed src="{{ asset('public/admin/subscriber/aadhar/'.$subscriber->aadharImage) }}"
                                     width="150px;" height="93px;" alt="{{ $subscriber->name }}" class="avatar-img ">
 
                                 <!-- <img src="{{ asset('admin/subscriber/aadhar/'.$subscriber->aadharImage) }}"
@@ -746,7 +746,7 @@
                             </div>
                             <strong class="card-title">Aadhar Back</strong>
                             <div class="row">
-                                <embed src="{{ asset('admin/subscriber/aadhar/back/'.$subscriber->aadharBackImage) }}"
+                                <embed src="{{ asset('public/admin/subscriber/aadhar/back/'.$subscriber->aadharBackImage) }}"
                                     width="150px;" height="93px;" alt="{{ $subscriber->name }}" class="avatar-img ">
                                 <!-- <img src="{{ asset('admin/subscriber/aadhar/back/'.$subscriber->aadharBackImage) }}"
                                     width="150px;" height="93px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
@@ -754,7 +754,7 @@
                             </div>
                             <strong class="card-title">Pancard</strong>
                             <div class="row">
-                                <embed src="{{ asset('admin/subscriber/pan/'.$subscriber->pancardImage) }}"
+                                <embed src="{{ asset('public/admin/subscriber/pan/'.$subscriber->pancardImage) }}"
                                     width="150px;" height="93px;" alt="{{ $subscriber->name }}" class="avatar-img ">
                                 <!-- <img src="{{ asset('admin/subscriber/pan/'.$subscriber->pancardImage) }}" width="150px;"
                                     height="93px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
@@ -763,14 +763,14 @@
                             <strong class="card-title">BankStatement</strong>
                             <div class="row">
 
-                                <embed src="{{ asset('admin/subscriber/bankstatement/'.$subscriber->bankstatement) }}"
+                                <embed src="{{ asset('public/admin/subscriber/bankstatement/'.$subscriber->bankstatement) }}"
                                     width="150px;" height="93px;" />
 
                             </div>
                             <strong class="card-title">Profile</strong>
                             <div class="row">
 
-                                <img src="{{ asset('admin/subscriber/profile/'.$subscriber->image) }}" width="150px;"
+                                <img src="{{ asset('public/admin/subscriber/profile/'.$subscriber->image) }}" width="150px;"
                                     height="93px;" alt="{{ $subscriber->name }}" class="avatar-img ">
 
                             </div>
@@ -778,7 +778,7 @@
                             <strong class="card-title">Document</strong>
                             <div class="row">
 
-                                <embed src="{{ asset('admin/subscriber/document/'.$subscriber->customerdocument) }}"
+                                <embed src="{{ asset('public/admin/subscriber/document/'.$subscriber->customerdocument) }}"
                                     width="150px;" height="93px;" />
                                 <!-- <img src="{{ asset('admin/subscriber/video/'.$subscriber->video) }}" width="150px;"
                                     height="93px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
@@ -789,7 +789,7 @@
                             <strong class="card-title">Video</strong>
                             <div class="row">
 
-                                <embed src="{{ asset('admin/subscriber/video/'.$subscriber->video) }}" width="150px;"
+                                <embed src="{{ asset('public/admin/subscriber/video/'.$subscriber->video) }}" width="150px;"
                                     height="93px;" />
                                 <!-- <img src="{{ asset('admin/subscriber/video/'.$subscriber->video) }}" width="150px;"
                                     height="93px;" alt="{{ $subscriber->name }}" class="avatar-img "> -->
@@ -839,4 +839,3 @@ $('#subscriptionDate').change(function() {
 })
 </script>
 @endsection
-
