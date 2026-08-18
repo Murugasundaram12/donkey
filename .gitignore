@@ -18,3 +18,23 @@ yarn-error.log
 *.zip
 *.log
 error_log
+*.sql
+scratch/
+.system_generated/
+
+# User uploads and sensitive documents
+/public/subscriber/driver/*
+/public/userprofile/*
+/public/admin/*
+/public/attachment/*
+/public/banner/*
+/public/pushnotification/*
+/public/qr/*
+/public/site/*
+!.gitkeep
+
+# Windows path artifacts
+D:*
+"D:*"
+/public/profile.jpg
+
