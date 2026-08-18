@@ -125,7 +125,7 @@ class HomeController extends Controller
         // dd($subscriptionAmount);
 
         $subscriber = $subscriber->count();
-        $enduser = Enduser::all()->count();
+        $enduser = Enduser::where('is_driver', 0)->count();
         $category = Category::all()->count();
         $id = Auth::id();
 
@@ -155,10 +155,10 @@ class HomeController extends Controller
     public function dashboardBackup()
     {
         $subscriber = Subscriber::get();
-        $subscriptionAmount = $subscriber->sum('subscription_price');
+        $subscriptionAmount = $subscriber->sum('platform_fee');
         // dd($subscriptionAmount);
         $subscriber = $subscriber->count();
-        $enduser = Enduser::all()->count();
+        $enduser = Enduser::where('is_driver', 0)->count();
         $driversCount = Driver::all()->count();
         $category = Category::all()->count();
         $complaintCount = Complaints::all()->count();
@@ -189,9 +189,9 @@ class HomeController extends Controller
             return $booking->bookingPayment->sum('total');
         });
         $totalServiceAmount = $bikeTaxiTotal + $pickupTotal + $dropAndDeliveryTotal;
-        $inactiveSubcribers = Subscriber::where('activestatus', 0)->get()->count();
+        $inactiveSubcribers = Subscriber::where('status', 0)->get()->count();
 
-        $inactivesubamount = Subscriber::where('activestatus', 0)->get()->sum('subscription_price');
+        $inactivesubamount = Subscriber::where('status', 0)->get()->sum('platform_fee');
         $completeRides = Booking::where('status', 2)->get()->count();
         $cancelledRides = Booking::where('status', 3)->get()->count();
         $inprocessRides = Booking::where('status', 1)->get()->count();
@@ -269,9 +269,9 @@ class HomeController extends Controller
 
     public function dashboard()
     {
-        $subscriptionAmount = Subscriber::sum('subscription_price');
+        $subscriptionAmount = Subscriber::selectRaw('SUM(CAST(platform_fee AS DECIMAL(10,2))) as total')->value('total') ?? 0;
         $subscriberCount = Subscriber::count();
-        $enduser = Enduser::count();
+        $enduser = \Illuminate\Support\Facades\Schema::hasColumn('users', 'is_driver') ? Enduser::where('is_driver', 0)->count() : Enduser::count();
         $driversCount = Driver::count();
         $category = Category::count();
         $complaintCount = Complaints::count();
@@ -279,7 +279,7 @@ class HomeController extends Controller
         $employeeCount = Employee::count();
         $feedbackCount = Feedback::count();
         $newsletterCount = NewsLetter::count();
-        $solvedComplaints = Complaints::whereNotNull('solved_by')->count();
+        $solvedComplaints = \Illuminate\Support\Facades\Schema::hasColumn('complaints', 'solved_by') ? Complaints::whereNotNull('solved_by')->count() : 0;
 
         $id = Auth::id();
         $checking = Checking::where('admin_id', $id)->latest()->first();
@@ -292,17 +292,17 @@ class HomeController extends Controller
         $cabTotal = $this->bookingPaymentTotal(['category' => 5]);
 
         $totalServiceAmount = $bikeTaxiTotal + $pickupTotal + $dropAndDeliveryTotal + $autoTotal + $cabTotal;
-        $inactiveSubscribers = Subscriber::where('activestatus', 0)->count();
-        $inactiveSubscriptionAmount = Subscriber::where('activestatus', 0)->sum('subscription_price');
+        $inactiveSubscribers = Subscriber::where('status', 0)->count();
+        $inactiveSubscriptionAmount = Subscriber::where('status', 0)->selectRaw('SUM(CAST(platform_fee AS DECIMAL(10,2))) as total')->value('total') ?? 0;
         $completeRides = Booking::where('status', 2)->count();
         $cancelledRides = Booking::where('status', 3)->count();
         $inprocessRides = Booking::where('status', 1)->count();
         $blockedRiders = Driver::where('status', 2)->count();
         $blockedSubscribers = Subscriber::where('blockedstatus', 0)->count();
         $thirtyDaysAgo = now()->subDays(30);
-        $pincodeSales = Pincode::where('usedBy', '!=', '0')
-            ->where('updated_at', '>=', $thirtyDaysAgo)
-            ->count();
+        $pincodeSales = \Illuminate\Support\Facades\Schema::hasColumn('pincode', 'usedBy')
+            ? Pincode::where('usedBy', '!=', '0')->where('updated_at', '>=', $thirtyDaysAgo)->count()
+            : 0;
         $salesCount = $pincodeSales;
         $bookingCost = $totalBookingAmount;
         $totalBookingCostWithServiceCost = $this->assignedPincodeBookingPaymentTotal();
@@ -327,7 +327,7 @@ class HomeController extends Controller
 
         $expiredSubscriberQuery = Subscriber::whereDate('expiryDate', '<', now()->format('Y-m-d'));
         $expiredSubscriberCount = (clone $expiredSubscriberQuery)->count();
-        $expiredSubscriptionPrice = (clone $expiredSubscriberQuery)->sum('subscription_price');
+        $expiredSubscriptionPrice = (clone $expiredSubscriberQuery)->selectRaw('SUM(CAST(platform_fee AS DECIMAL(10,2))) as total')->value('total') ?? 0;
 
         return view('admin.dashboard', compact(
             'expiredSubscriberCount',
@@ -385,6 +385,13 @@ class HomeController extends Controller
 
     private function assignedPincodeBookingPaymentTotal(): float
     {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('pincode', 'usedBy')) {
+            return (float) BookingPayment::query()
+                ->join('booking', 'booking.booking_id', '=', 'booking_payment.booking_id')
+                ->selectRaw('COALESCE(SUM(booking_payment.total - CASE WHEN booking_payment.coupon_id IS NOT NULL THEN COALESCE(booking_payment.coupon_amount, 0) ELSE 0 END), 0) AS aggregate')
+                ->value('aggregate');
+        }
+
         return (float) BookingPayment::query()
             ->join('booking', 'booking.booking_id', '=', 'booking_payment.booking_id')
             ->join('pincode', 'pincode.pincode', '=', 'booking.pincode')
@@ -405,14 +412,17 @@ class HomeController extends Controller
     {
         $endusers = Enduser::where('is_driver', 0)
             ->when(request('search'), function ($query, $search) {
-                $query->where('user_id', 'LIKE', "$search%")
-                    ->orWhere('name', 'LIKE', "$search%")
-                    ->orWhere('email', 'LIKE', "$search%")
-                    ->orWhere('phone', 'LIKE', "$search%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('user_id', 'LIKE', "$search%")
+                        ->orWhere('name', 'LIKE', "$search%")
+                        ->orWhere('email', 'LIKE', "$search%")
+                        ->orWhere('phone', 'LIKE', "$search%");
+                });
             })
             ->with('enduserreason')
+            ->withCount('referrals')
             ->latest()
-            ->paginate(25)
+            ->paginate(16)
             ->withQueryString();
         // dd($enduser);
         return view('admin.enduser.index', ['endusers' => $endusers]);
@@ -479,7 +489,7 @@ class HomeController extends Controller
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
+                $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
             }
             // Compile headers in one variable
             $headers = array(
@@ -573,9 +583,8 @@ class HomeController extends Controller
         $driver = Driver::join('subscriber', 'driver.subscriberId', '=', 'subscriber.id')
             ->latest()
             ->select('driver.*', 'subscriber.name as subscribername')
-            ->paginate(50)
-            ->withQueryString();
-        $driverUserIds = $driver->getCollection()->pluck('userid')->filter()->unique();
+            ->get();
+        $driverUserIds = $driver->pluck('userid')->filter()->unique();
         $driverUsers = User::whereIn('id', $driverUserIds)->get()->keyBy('id');
         $driverRatings = BookingRating::whereIn('driver_id', $driverUserIds)
             ->selectRaw('driver_id, ROUND(AVG(rating), 1) as average_rating')
@@ -644,7 +653,7 @@ class HomeController extends Controller
             'customerdocument' => 'nullable|mimes:pdf',
             'profile' => 'nullable',
             'type' => ['required', 'array'],
-            'type.*' => ['required'],
+            'type.*' => ['required', 'in:1,2,3'],
             'bankacno' => 'nullable',
             'description' => 'nullable',
             'ifsccode' => 'nullable'
@@ -728,12 +737,7 @@ class HomeController extends Controller
         $driver->subscriberId = $request->get('subscriber');
         $driver->type = $typeString;
         $driver->save();
-        $message = 'Your document has been submitted successfully. Our team will verify it and get back to you shortly. For follow-up, you can send a WhatsApp message to 9069067008.';
-        return redirect()->route('drivers')->with([
-            'success' => 'Driver added!',
-            'success_message' => $message,
-            'show_success_modal' => true
-        ]);
+        return redirect()->route('drivers')->with('success', 'Rider added successfully.');
     }
 
     public function driverstorebackup(Request $request)
@@ -847,7 +851,7 @@ class HomeController extends Controller
         $admins = Admin::all();
         $employees = Employee::all();
         //dd($pincode);
-        $blocklist = Blocklist::join('driver', 'driver.id', '=', 'blocklist.blockedId')->join('subscriber', 'subscriber.id', '=', 'blocklist.blockedBy')->where('table', 'driver')->paginate(100, array('blocklist.*', 'driver.name as drivername', 'subscriber.name as subscribername', 'driver.status as driverstatus'));
+        $blocklist = Blocklist::join('driver', 'driver.id', '=', 'blocklist.blockedId')->join('subscriber', 'subscriber.id', '=', 'blocklist.blockedBy')->where('table', 'driver')->paginate(16, array('blocklist.*', 'driver.name as drivername', 'subscriber.name as subscribername', 'driver.status as driverstatus'));
         $notification = Drivernotify::where([['modifiedId', $id]])->get();
         return view('admin.driver.show', compact('user', 'driver', 'pincode', 'blocklist', 'notification', 'subscriber', 'admins', 'employees'));
     }
@@ -857,9 +861,15 @@ class HomeController extends Controller
     {
 
         $data = Driver::findOrFail($request->id);
-        $data->status = $request->status;
+        $status = (int) $request->status;
+        $data->status = $status;
         $data->save();
 
+        if ($data->userid) {
+            User::where('id', $data->userid)->update([
+                'is_live' => $status === 1 ? 1 : 0,
+            ]);
+        }
 
 
         return response()->json(['success' => 'Status updated successfully.']);
@@ -936,7 +946,7 @@ class HomeController extends Controller
             'licenceexpiry' => 'nullable',
             'profile' => 'nullable',
             'type' => ['required', 'array'],
-            'type.*' => ['required'],
+            'type.*' => ['required', 'in:1,2,3'],
             'description' => 'nullable',
             'bankacno' => 'nullable',
             'ifsccode' => 'nullable',
@@ -1041,7 +1051,7 @@ class HomeController extends Controller
         }
         // $u->dop = $request->get('dob');
         // $u->gender = $request->get('gender');
-        return redirect()->route('drivers')->with('success', 'Driver Updated');
+        return redirect()->route('drivers')->with('success', 'Rider updated successfully.');
     }
 
     public function driverupdatebackup(Request $request, $id)
@@ -1176,7 +1186,7 @@ class HomeController extends Controller
     }
     public function drivernotify()
     {
-        $driver = Drivernotify::join('driver', 'driver.id', '=', 'driver_notify.modifiedId')->join('subscriber', 'subscriber.id', '=', 'driver_notify.modifiedBy')->orderBy('driver_notify.id', 'DESC')->paginate(100, array('driver_notify.*', 'driver.name as drivername', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberid'));
+        $driver = Drivernotify::join('driver', 'driver.id', '=', 'driver_notify.modifiedId')->join('subscriber', 'subscriber.id', '=', 'driver_notify.modifiedBy')->orderBy('driver_notify.id', 'DESC')->get(array('driver_notify.*', 'driver.name as drivername', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberid'));
         // dd($driver);
         $driver_ids = [];
         foreach ($driver as $single_driver) {
@@ -1243,14 +1253,14 @@ class HomeController extends Controller
     }
     public function subscriberblockList()
     {
-        $blocklist = Blocklist::join('subscriber', 'subscriber.id', '=', 'blocklist.blockedId')->where('table', 'subscriber')->paginate(100, array('blocklist.*', 'subscriber.name as subscribername', 'subscriber.status as subscriberstatus', 'subscriber.subscriberId as subscriberId'));
+        $blocklist = Blocklist::join('subscriber', 'subscriber.id', '=', 'blocklist.blockedId')->where('table', 'subscriber')->get(array('blocklist.*', 'subscriber.name as subscribername', 'subscriber.status as subscriberstatus', 'subscriber.subscriberId as subscriberId'));
         //   dd($blocklist);
         //   $blocklist = Blocklist::where('table',subscriber);
         return view('admin.block.subscriber', compact('blocklist'));
     }
     public function driverblockList()
     {
-        // $blocklist=Blocklist::join('driver','driver.id', '=', 'blocklist.blockedId')->where('table','driver')->paginate(100, array('blocklist.*','driver.name as drivername' ));
+        // $blocklist=Blocklist::join('driver','driver.id', '=', 'blocklist.blockedId')->where('table','driver')->paginate(16, array('blocklist.*','driver.name as drivername' ));
         $blocklist = SubBlock::with('driver', 'subscriber')
             ->latest()->get();
         // dd($blocklist);
@@ -1258,13 +1268,13 @@ class HomeController extends Controller
     }
     public function adminBlockeddriver()
     {
-        $blocklist = Blocklist::join('driver', 'driver.id', '=', 'blocklist.blockedId')->where([['table', 'driver']])->paginate(100, array('blocklist.*', 'driver.name as drivername', 'driver.status as driverstatus', 'driver.userid as driverId'));
+        $blocklist = Blocklist::join('driver', 'driver.id', '=', 'blocklist.blockedId')->where([['table', 'driver']])->get(array('blocklist.*', 'driver.name as drivername', 'driver.status as driverstatus', 'driver.userid as driverId'));
 
         return view('admin.block.admindriver', compact('blocklist'));
     }
     public function subscriberunblockList()
     {
-        $unblocklist = Unblocklist::join('subscriber', 'subscriber.id', '=', 'unblocklist.unblockedId')->where('table', 'subscriber')->paginate(100, array('unblocklist.*', 'subscriber.name as subscribername', 'subscriber.status as subscriberstatus', 'subscriber.subscriberId as subscriberId'));
+        $unblocklist = Unblocklist::join('subscriber', 'subscriber.id', '=', 'unblocklist.unblockedId')->where('table', 'subscriber')->get(array('unblocklist.*', 'subscriber.name as subscribername', 'subscriber.status as subscriberstatus', 'subscriber.subscriberId as subscriberId'));
         // dd($unblocklist);
         return view('admin.unblock.subscriber', compact('unblocklist'));
     }
@@ -1276,7 +1286,7 @@ class HomeController extends Controller
     }
     public function adminUnblockeddriver()
     {
-        $unblocklist = Unblocklist::join('driver', 'driver.id', '=', 'unblocklist.unblockedId')->where([['table', 'driver']])->paginate(100, array('unblocklist.*', 'driver.name as drivername', 'driver.status as driverstatus', 'driver.userid as driverId'));
+        $unblocklist = Unblocklist::join('driver', 'driver.id', '=', 'unblocklist.unblockedId')->where([['table', 'driver']])->get(array('unblocklist.*', 'driver.name as drivername', 'driver.status as driverstatus', 'driver.userid as driverId'));
 
         return view('admin.unblock.admindriver', compact('unblocklist'));
     }
@@ -1397,7 +1407,7 @@ class HomeController extends Controller
             //->orWhere('pricenotify.datas', 'LIKE', "%image%")
             //->orWhere('pricenotify.datas', 'LIKE', "%video%")
             ->orderBy('pricenotify.created_at', 'DESC') // Order the records by 'created_at' in descending order
-            ->paginate(1000, ['pricenotify.*', 'pricenotify.read as read', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberId', 'admin.emp_id as adminname']);
+            ->get(['pricenotify.*', 'pricenotify.read as read', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberId', 'admin.emp_id as adminname']);
         // dd($notify);
         return view('admin.subscriber.pricenotify', compact('notify'));
     }
@@ -1428,7 +1438,7 @@ class HomeController extends Controller
                     ->orWhere('pricenotify.datas', 'LIKE', "%video%");
             })
             ->orderBy('pricenotify.created_at', 'DESC') // Order the records by 'created_at' in descending order
-            ->paginate(1000, ['pricenotify.*', 'pricenotify.read as read', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberId', 'admin.emp_id as adminname']);
+            ->get(['pricenotify.*', 'pricenotify.read as read', 'subscriber.name as subscribername', 'subscriber.subscriberId as subscriberId', 'admin.emp_id as adminname']);
         // dd($notify);
         return view('admin.subscriber.notify', compact('notify'));
     }

@@ -8,10 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 
 class Subscriber extends Authenticatable
 {
-    use HasFactory, HasRoles;
+    use HasFactory, HasRoles, HasApiTokens;
 
     /**
      * Created By accessor - "Self" if no admin created it
@@ -38,44 +39,35 @@ class Subscriber extends Authenticatable
 
         return $this->created_at?->format('d-m-Y');
     }
+
+    /**
+     * Backward compatibility accessor/mutator for legacy subscription_price field
+     */
+    public function getSubscriptionPriceAttribute()
+    {
+        return $this->attributes['platform_fee'] ?? $this->getAttributeFromArray('platform_fee') ?? '0';
+    }
+
+    public function setSubscriptionPriceAttribute($value)
+    {
+        $this->attributes['platform_fee'] = $value;
+    }
+
+    /**
+     * Backward compatibility accessor/mutator for legacy activestatus field
+     */
+    public function getActivestatusAttribute()
+    {
+        return $this->attributes['status'] ?? $this->getAttributeFromArray('status') ?? 1;
+    }
+
+    public function setActivestatusAttribute($value)
+    {
+        $this->attributes['status'] = $value;
+    }
+
     protected $table = 'subscriber';
-    protected $guard = [];
-    protected $fillable = [
-        'notify',
-        'platform_fee',
-        'need_to_pay',
-        // Service base prices
-        'biketaxi_price',
-        'pickup_price',
-        'buy_price',
-        'auto_price',
-        'cab_price',
-        // Bike Taxi distance prices
-        'bt_price1',
-        'bt_price2',
-        'bt_price3',
-        'bt_price4',
-        // Pickup distance prices
-        'pk_price1',
-        'pk_price2',
-        'pk_price3',
-        'pk_price4',
-        // Buy & Delivery distance prices
-        'bd_price1',
-        'bd_price2',
-        'bd_price3',
-        'bd_price4',
-        // Auto distance prices
-        'at_price1',
-        'at_price2',
-        'at_price3',
-        'at_price4',
-        // Cab distance prices
-        'cab_price1',
-        'cab_price2',
-        'cab_price3',
-        'cab_price4'
-    ];
+    protected $guarded = [];
     protected $dateFormat = 'Y-m-d';
     public function subUnblock(): BelongsTo
     {
@@ -104,7 +96,6 @@ class Subscriber extends Authenticatable
 
     protected $casts = [
         'subscriptionDate' => 'datetime',
-        'expiryDate' => 'datetime',
-        'phone_verified_at' => 'datetime',
+        'expiryDate' => 'datetime'
     ];
 }
