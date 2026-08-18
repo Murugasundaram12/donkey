@@ -1,0 +1,23 @@
+meta {
+  name: Delete Document
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/vendor/documents/:type
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Remove a specific uploaded vendor document by type.
+}

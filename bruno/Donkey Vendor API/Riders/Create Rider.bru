@@ -1,0 +1,41 @@
+meta {
+  name: Create Rider
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/riders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "name": "Rider John",
+  "mobile": "9876500001",
+  "email": "riderjohn@example.com",
+  "password": "password123",
+  "pincode": [
+    "600001"
+  ],
+  "vehicleNo": "TN01AB1234",
+  "vehicleModelNo": "Honda Activa 6G",
+  "aadharNo": "123456789012",
+  "drivingLicence": "TN0120230001234",
+  "rcbook": "RC987654321"
+}
+}
+
+docs {
+  Create a new rider account under vendor.
+}

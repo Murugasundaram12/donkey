@@ -1,0 +1,23 @@
+meta {
+  name: Accept Booking
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/bookings/:id/accept
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Vendor accepts an incoming booking order.
+}

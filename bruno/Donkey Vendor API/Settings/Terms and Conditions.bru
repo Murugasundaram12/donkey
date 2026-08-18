@@ -1,0 +1,19 @@
+meta {
+  name: Terms and Conditions
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/info/terms
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get vendor terms and conditions.
+}

@@ -1,0 +1,19 @@
+meta {
+  name: About App
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/info/about
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get vendor application version and company info.
+}

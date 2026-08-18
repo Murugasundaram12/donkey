@@ -1,0 +1,33 @@
+meta {
+  name: Vendor Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "login": "vendor@example.com",
+  "password": "password123"
+}
+}
+
+script:post-response {
+  if (res.status === 200 && res.body && res.body.data && res.body.data.token) {
+    bru.setEnvVar("token", res.body.data.token);
+  }
+}
+
+docs {
+  Vendor login using email, mobile, or subscriberId with password. Automatically saves Bearer token into {{token}}.
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Get Business Info
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/business
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Fetch vendor business details, location, GST, and assigned pincodes.
+}

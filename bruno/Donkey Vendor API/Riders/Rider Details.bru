@@ -1,0 +1,23 @@
+meta {
+  name: Rider Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/riders/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get rider profile details by ID.
+}

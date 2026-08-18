@@ -1,0 +1,23 @@
+meta {
+  name: Vendor Reports
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/reports
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get vendor analytics and category revenue breakdown (period query param: today, yesterday, this_week, this_month, custom).
+}

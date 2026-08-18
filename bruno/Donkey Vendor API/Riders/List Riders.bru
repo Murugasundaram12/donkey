@@ -1,0 +1,23 @@
+meta {
+  name: List Riders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/riders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  List riders/drivers belonging to vendor.
+}

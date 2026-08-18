@@ -1,0 +1,23 @@
+meta {
+  name: Today Bookings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/bookings/today
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Fetch vendor's bookings for current date.
+}

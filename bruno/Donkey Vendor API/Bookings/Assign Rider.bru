@@ -1,0 +1,30 @@
+meta {
+  name: Assign Rider
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/bookings/:id/assign-rider
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "driver_id": 1
+}
+}
+
+docs {
+  Assign a specific vendor rider to a booking.
+}

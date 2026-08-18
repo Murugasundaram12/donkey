@@ -1,0 +1,32 @@
+meta {
+  name: Update Rider
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/vendor/riders/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "name": "Rider John Updated",
+  "vehicleNo": "TN01AB9999",
+  "location": "North Zone"
+}
+}
+
+docs {
+  Update rider info.
+}

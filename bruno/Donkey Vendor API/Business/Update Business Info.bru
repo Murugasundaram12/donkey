@@ -1,0 +1,32 @@
+meta {
+  name: Update Business Info
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/business/update
+  body: multipart-form
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  name: My Vendor Business
+  email: vendor@example.com
+  mobile: 9876543210
+  location: Downtown Center
+  gst: GSTIN987654321
+  image: @file(/path/to/business_logo.png)
+}
+
+docs {
+  Update vendor business profile and logo image.
+}

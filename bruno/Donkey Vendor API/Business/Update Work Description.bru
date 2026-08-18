@@ -1,0 +1,39 @@
+meta {
+  name: Update Work Description
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/work-description/update
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "description": "Express logistics and parcel delivery",
+  "biketaxi_price": 30,
+  "pickup_price": 50,
+  "buy_price": 40,
+  "auto_price": 60,
+  "cab_price": 100,
+  "bt_price1": 10,
+  "bt_price2": 15,
+  "bt_price3": 20,
+  "bt_price4": 25
+}
+}
+
+docs {
+  Update service pricing and business description.
+}

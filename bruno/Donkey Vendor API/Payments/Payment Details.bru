@@ -1,0 +1,23 @@
+meta {
+  name: Payment Details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/payments/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get detailed breakdown of a single payment record.
+}

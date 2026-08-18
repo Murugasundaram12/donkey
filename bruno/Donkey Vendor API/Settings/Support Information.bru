@@ -1,0 +1,19 @@
+meta {
+  name: Support Information
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/info/support
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get support email, helpline number, and contact details.
+}

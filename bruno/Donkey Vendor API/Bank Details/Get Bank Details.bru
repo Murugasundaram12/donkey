@@ -1,0 +1,23 @@
+meta {
+  name: Get Bank Details
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/bank-details
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Retrieve vendor bank account number, IFSC code, and statement URL.
+}
