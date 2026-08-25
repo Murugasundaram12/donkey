@@ -133,13 +133,16 @@ class otherController extends BaseController
             'success' => true,
             'message' => 'Price calculated successfully',
             'data' => [
-                'total' => $total,
-                'base_price' => $base_price,
-                'service_cost' => $service_cost,
-                'tax' => $tax,
+                'total' => (int) $total,
+                'base_price' => (int) $base_price,
+                'tax' => (int) $tax,
+                'tax_split_2' => (int) $tax_split_2,
+                'tax_split_1' => (int) $tax_split_1,
+                'service_cost' => (int) $service_cost,
+                'total_without_base_price' => (int) $total_without_base_price,
                 'tax_split' => [
-                    'cgst' => $tax_split_1,
-                    'sgst' => $tax_split_2
+                    'cgst' => (int) $tax_split_1,
+                    'sgst' => (int) $tax_split_2
                 ]
             ]
         ]);

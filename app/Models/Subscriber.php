@@ -66,6 +66,24 @@ class Subscriber extends Authenticatable
         $this->attributes['status'] = $value;
     }
 
+    /**
+     * Pincode attribute accessor with fallback to pincodebasedcategories table
+     */
+    public function getPincodeAttribute()
+    {
+        $value = $this->getAttributeFromArray('pincode');
+        if (!empty($value) && $value !== 'null') {
+            return $value;
+        }
+
+        $pincodeIds = \App\Models\Pincodebasedcategory::where('subscriber_id', $this->id)
+            ->pluck('pincode_id')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return !empty($pincodeIds) ? json_encode($pincodeIds) : null;
+    }
     protected $table = 'subscriber';
     protected $guarded = [];
     protected $dateFormat = 'Y-m-d';

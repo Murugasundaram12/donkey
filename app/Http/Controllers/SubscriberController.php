@@ -73,7 +73,7 @@ class SubscriberController extends Controller
         $subscriber = Subscriber::whereIn('created_by', $adminIds)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(50)
+            ->paginate(15)
             ->withQueryString();
         //dd($subscriber);
         $pincode = Pincode::all();
@@ -106,7 +106,7 @@ class SubscriberController extends Controller
         })
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(50)
+            ->paginate(15)
             ->withQueryString();
 
         $pincode = Pincode::all();
@@ -933,8 +933,15 @@ class SubscriberController extends Controller
     public function show($id)
     {
         $subscriber = Subscriber::find($id);
-        $pin = json_decode($subscriber->pincode);
-        $pincode = Pincode::whereIn('id', $pin)->get();
+        if (!$subscriber) {
+            return back()->with('error', 'Subscriber not found.');
+        }
+        $pin = json_decode($subscriber->pincode ?? '', true);
+        $pin = is_array($pin) ? $pin : [];
+        if (empty($pin)) {
+            $pin = Pincodebasedcategory::where('subscriber_id', $subscriber->id)->pluck('pincode_id')->toArray();
+        }
+        $pincode = !empty($pin) ? Pincode::whereIn('id', $pin)->get() : collect();
         $pricenotify = Pricenotify::where('modifiedId', $id)->latest()->get();
         $statusnotify = statusnotify::where('modifiedId', $id)->latest()->get();
         $empolyee_id = Employee::where('email', $subscriber->email)->first()->emp_id ?? null;
@@ -1074,7 +1081,8 @@ class SubscriberController extends Controller
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
+                $projectId = config('services.firebase.user_project_id', 'donkey-user');
+                $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
             }
             // Compile headers in one variable
             $headers = array(

@@ -164,14 +164,24 @@
                                                 <td>{{$subscriber->location}}</td>
                                                 <td>
                                                     @php
-                                                        $subspin = json_decode($subscriber->pincode, true) ?? [];
+                                                        $subspin = json_decode($subscriber->pincode, true);
+                                                        if (!is_array($subspin) || empty($subspin)) {
+                                                            if (!empty($subscriber->pincode)) {
+                                                                $subspin = explode(',', $subscriber->pincode);
+                                                            } else {
+                                                                $subspin = \App\Models\Pincodebasedcategory::where('subscriber_id', $subscriber->id)->pluck('pincode_id')->toArray();
+                                                            }
+                                                        }
+                                                        $subspin = array_map('intval', array_filter((array)$subspin));
+                                                        $subscriberPins = [];
+                                                        foreach ($pincode as $pin) {
+                                                            if (in_array((int)$pin->id, $subspin, true)) {
+                                                                $subscriberPins[] = $pin->pincode;
+                                                            }
+                                                        }
                                                     @endphp
 
-                                                    @foreach ($pincode as $pin)
-                                                        @if(in_array($pin->id, $subspin))
-                                                            {{ $pin->pincode }}
-                                                        @endif
-                                                    @endforeach
+                                                    {{ !empty($subscriberPins) ? implode(', ', $subscriberPins) : '-' }}
                                                 </td>
                                                 <td>{{$subscriber->account_type ? $subscriber->account_type : "N/A"}}</td>
                                                 <td>{{$subscriber->mobile}}</td>
@@ -182,12 +192,9 @@
                                                             <span class="badge badge-danger">Blocked</span>
                                                         @else
                                                             <div class="check-box text-left">
-
-
-
                                                                 <input type="checkbox" data-id="{{ $subscriber->id }}" name="status"
                                                                     class="js-switchs " {{ $subscriber->activestatus == 1 ? 'checked' : '' }}>
-                                                                </di v>
+                                                            </div>
                                                         @endif
                                                     </td>
                                                 @endcan
@@ -253,8 +260,7 @@
                                                             <div class="modal-body">
                                                                 <div class="form-group">
 
-                                                                    <label for="recipient-name" class="col-form-label">Subscrib
-                                                                        e r Name:</label>
+                                                                    <label for="recipient-name" class="col-form-label">Subscriber Name:</label>
                                                                     <input type="text" class="form-control" id="recipient-name"
                                                                         value="{{$subscriber->name}}" readonly>
 
@@ -300,9 +306,8 @@
                                                             <div class="modal-body">
                                                                 <div class="form-group">
 
-                                                                    <label for="recipient-name" class="col-form-label">Subscrib
-                                                                        e r Name:</label>
-                                                                    <input type="text" class="form-control" i d="recipient-name"
+                                                                    <label for="recipient-name" class="col-form-label">Subscriber Name:</label>
+                                                                    <input type="text" class="form-control" id="recipient-name"
                                                                         value="{{$subscriber->name}}" readonly>
                                                                     <input type="hidden" class="form-control"
                                                                         id="recipient-name" name='id'
@@ -379,9 +384,8 @@
                                                             <div class="modal-body">
                                                                 <div class="form-group">
 
-                                                                    <label for="recipient-name" class="col-form-label">Subscrib
-                                                                        e r Name:</label>
-                                                                    <input type="text" class="form-control" i d="recipient-name"
+                                                                    <label for="recipient-name" class="col-form-label">Subscriber Name:</label>
+                                                                    <input type="text" class="form-control" id="recipient-name"
                                                                         value="{{$subscriber->name}}" readonly>
                                                                     <input type="hidden" class="form-control"
                                                                         id="recipient-name" name='id'
@@ -438,8 +442,13 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                                <div class="mt-3">
-                                    {{ $subscriberPage->links() }}
+                                <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                    <div class="text-muted mb-2 mb-md-0">
+                                        Showing {{ $subscriberPage->firstItem() ?? 0 }} to {{ $subscriberPage->lastItem() ?? 0 }} of {{ $subscriberPage->total() }} entries
+                                    </div>
+                                    <div>
+                                        {{ $subscriberPage->links('pagination::bootstrap-4') }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -487,6 +496,7 @@
     <script>
         $('#dataTable-1').DataTable({
             autoWidth: true,
+            paging: false,
             "lengthMenu": [
                 [16, 32, 64, -1],
                 [16, 32, 64, "All"]
@@ -515,7 +525,7 @@
                 title: 'Are you sure?',
                 text: 'This record and it`s details will be permanantly deleted!',
                 icon: 'warning',
-                buttons: ["C ancel", "Yes!"],
+                buttons: ["Cancel", "Yes!"],
             }).then(function (value) {
                 if (value) {
                     window.location.href = url;
@@ -525,7 +535,7 @@
     </script>
     <script>
         $(document).ready(function () {
-            $('.statuschangeselecttexta rea').slideUp()
+            $('.statuschangeselecttextarea').slideUp()
             $('.close1').click(function () {
                 window.location.reload();
             });

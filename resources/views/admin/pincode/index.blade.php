@@ -95,8 +95,13 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                                <div class="mt-3">
-                                    {{ $pincode->links('pagination::bootstrap-4') }}
+                                <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                    <div class="text-muted mb-2 mb-md-0">
+                                        Showing {{ $pincode->firstItem() ?? 0 }} to {{ $pincode->lastItem() ?? 0 }} of {{ $pincode->total() }} entries
+                                    </div>
+                                    <div>
+                                        {{ $pincode->links('pagination::bootstrap-4') }}
+                                    </div>
                                 </div>
                             </div>
                         </div>

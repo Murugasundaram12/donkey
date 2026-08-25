@@ -69,8 +69,8 @@ class PincodeController extends Controller
     {
         $pincode = Pincode::with(['subscriber'])
             ->latest()
-            ->paginate(16);
-        //dd($pincode);
+            ->paginate(15);
+        //
         return view('admin.pincode.index', compact('pincode'));
     }
 

@@ -82,10 +82,11 @@ class SubscriberReportController extends Controller
             '1'=> '1',
             '2'=>'2'
         ];
-       $pinnumber = json_decode($subscriber->pincode);
+       $pinnumber = json_decode($subscriber->pincode ?? '', true);
+       $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
-        $pincodes = Pincode::whereIn('id', $pinnumber)->get();
+        $pincodes = !empty($pinnumber) ? Pincode::whereIn('id', $pinnumber)->get() : collect();
         $drivers = $subscriber->driver;
         $driverIds = $drivers->pluck('userid')->all();
         //dd($driverIds);
@@ -181,10 +182,11 @@ class SubscriberReportController extends Controller
     public function downloadexcel(Subscriber $subscriber)
     {
         // dd($subscriber);
-       $pinnumber = json_decode($subscriber->pincode);
+       $pinnumber = json_decode($subscriber->pincode ?? '', true);
+       $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
-        $pincodes = Pincode::whereIn('id', $pinnumber)->get();
+        $pincodes = !empty($pinnumber) ? Pincode::whereIn('id', $pinnumber)->get() : collect();
         $drivers = $subscriber->driver;
         $driverIds = $drivers->pluck('userid')->all();
         //dd($driverIds);
@@ -230,10 +232,11 @@ class SubscriberReportController extends Controller
 
     public function downloadPDF(Subscriber $subscriber)
     {
-       $pinnumber = json_decode($subscriber->pincode);
+       $pinnumber = json_decode($subscriber->pincode ?? '', true);
+       $pinnumber = is_array($pinnumber) ? $pinnumber : [];
         //dd($pinnumber);
         $users = User::select('id', 'user_id')->get();
-        $pincodes = Pincode::whereIn('id', $pinnumber)->get();
+        $pincodes = !empty($pinnumber) ? Pincode::whereIn('id', $pinnumber)->get() : collect();
         $drivers = $subscriber->driver;
         $driverIds = $drivers->pluck('userid')->all();
         //dd($driverIds);

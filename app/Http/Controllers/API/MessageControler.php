@@ -79,11 +79,13 @@ class MessageControler extends Controller
             if ($user->is_driver == 1) {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->driverToken;
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-driver/messages:send";
+                $projectId = config('services.firebase.driver_project_id', 'donkey-driver');
+                $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
+                $projectId = config('services.firebase.user_project_id', 'donkey-user');
+                $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
             }
             // Compile headers in one variable
             $headers = array(

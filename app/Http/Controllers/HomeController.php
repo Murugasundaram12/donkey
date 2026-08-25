@@ -422,7 +422,7 @@ class HomeController extends Controller
             ->with('enduserreason')
             ->withCount('referrals')
             ->latest()
-            ->paginate(16)
+            ->paginate(15)
             ->withQueryString();
         // dd($enduser);
         return view('admin.enduser.index', ['endusers' => $endusers]);
@@ -489,7 +489,8 @@ class HomeController extends Controller
             } else {
                 $token = $user->device_token;
                 $fcm_token = $fcm_token->userToken;
-                $url = "https://fcm.googleapis.com/v1/projects/doncky-user/messages:send";
+                $projectId = config('services.firebase.user_project_id', 'donkey-user');
+                $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
             }
             // Compile headers in one variable
             $headers = array(
@@ -583,8 +584,9 @@ class HomeController extends Controller
         $driver = Driver::join('subscriber', 'driver.subscriberId', '=', 'subscriber.id')
             ->latest()
             ->select('driver.*', 'subscriber.name as subscribername')
-            ->get();
-        $driverUserIds = $driver->pluck('userid')->filter()->unique();
+            ->paginate(15)
+            ->withQueryString();
+        $driverUserIds = $driver->getCollection()->pluck('userid')->filter()->unique();
         $driverUsers = User::whereIn('id', $driverUserIds)->get()->keyBy('id');
         $driverRatings = BookingRating::whereIn('driver_id', $driverUserIds)
             ->selectRaw('driver_id, ROUND(AVG(rating), 1) as average_rating')
@@ -844,9 +846,13 @@ class HomeController extends Controller
     public function show($id)
     {
         $driver = Driver::find($id);
+        if (!$driver) {
+            return back()->with('error', 'Driver not found.');
+        }
         $user = User::where('id', $driver->userid)->get();
-        $pin = json_decode($driver->pincode);
-        $pincode = Pincode::whereIn('id', $pin)->get();
+        $pin = json_decode($driver->pincode ?? '', true);
+        $pin = is_array($pin) ? $pin : [];
+        $pincode = !empty($pin) ? Pincode::whereIn('id', $pin)->get() : collect();
         $subscriber = Subscriber::get();
         $admins = Admin::all();
         $employees = Employee::all();

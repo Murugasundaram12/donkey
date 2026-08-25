@@ -44,13 +44,14 @@ class SubscriberActionController extends Controller
     {
         $user = Session::get('subscribers');
         if (isset($user->subscriberId)) {
-            $pincode = json_decode($user->pincode);
+            $pincode = json_decode($user->pincode ?? '', true);
             // dd($pincode);
         } else {
-            $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
-            $pincode = json_decode($subscriber->pincode);
+            $subscriber = Subscriber::where('id', $user?->subscriber_id)->first();
+            $pincode = json_decode($subscriber?->pincode ?? '', true);
         }
-        $pincode = Pincode::whereIn('id', $pincode)->get();
+        $pincode = is_array($pincode) ? $pincode : [];
+        $pincode = !empty($pincode) ? Pincode::whereIn('id', $pincode)->get() : collect();
         // dd($pincode);
         return view('subscriber.complaints.create', compact('pincode'));
     }
@@ -197,13 +198,14 @@ class SubscriberActionController extends Controller
     {
         $user = Session::get('subscribers');
         if (isset($user->subscriberId)) {
-            $pincode = json_decode($user->pincode);
+            $pincode = json_decode($user->pincode ?? '', true);
         } else {
-            $subscriber = Subscriber::where('id', $user->subscriber_id)->first();
+            $subscriber = Subscriber::where('id', $user?->subscriber_id)->first();
             // dd($subscriber);
-            $pincode = json_decode($subscriber->pincode);
+            $pincode = json_decode($subscriber?->pincode ?? '', true);
         }
-        $pincode = Pincode::whereIn('id', $pincode)->get();
+        $pincode = is_array($pincode) ? $pincode : [];
+        $pincode = !empty($pincode) ? Pincode::whereIn('id', $pincode)->get() : collect();
         // dd($pincode);
         return view('subscriber.enquiry.create', compact('pincode'));
     }

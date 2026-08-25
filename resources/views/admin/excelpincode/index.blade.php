@@ -123,8 +123,13 @@
         </div>
     </div>
 </div>
-<div class="custom-pagination"style="height:30px;" >
-    {{ $excelPincodes->links() }}
+<div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+    <div class="text-muted mb-2 mb-md-0">
+        Showing {{ $excelPincodes->firstItem() ?? 0 }} to {{ $excelPincodes->lastItem() ?? 0 }} of {{ $excelPincodes->total() }} entries
+    </div>
+    <div>
+        {{ $excelPincodes->links('pagination::bootstrap-4') }}
+    </div>
 </div>
 
 @endsection

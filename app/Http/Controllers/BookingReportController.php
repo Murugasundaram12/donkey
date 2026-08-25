@@ -102,7 +102,7 @@ class BookingReportController extends Controller
             $bookings = $bookings->whereRelation('bookingPayment','type', '=', $request->type);
             }
             
-            $bookings = $bookings->latest()->paginate(50)->withQueryString();
+            $bookings = $bookings->latest()->paginate(15)->withQueryString();
             $categories = Category::whereIn('id', $bookings->getCollection()->pluck('category')->filter()->unique())
                 ->pluck('category', 'id');
             $subscribers = Subscriber::whereIn(

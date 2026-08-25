@@ -254,8 +254,13 @@ input:checked[type="checkbox"]::after {
                                     @endforeach
                                 </tbody>
                             </table>
-                            <div class="mt-3">
-                                {{ $driverPage->links() }}
+                            <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                <div class="text-muted mb-2 mb-md-0">
+                                    Showing {{ $driverPage->firstItem() ?? 0 }} to {{ $driverPage->lastItem() ?? 0 }} of {{ $driverPage->total() }} entries
+                                </div>
+                                <div>
+                                    {{ $driverPage->links('pagination::bootstrap-4') }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -300,6 +305,7 @@ input:checked[type="checkbox"]::after {
 <script>
 $('#dataTable-1').DataTable({
     autoWidth: true,
+    paging: false,
     "lengthMenu": [
         [16, 32, 64, -1],
         [16, 32, 64, "All"]

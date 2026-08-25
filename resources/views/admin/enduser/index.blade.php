@@ -326,8 +326,13 @@
                                         @endif
                                     </tbody>
                                 </table>
-                                <div class="float-right">
-                                    {{ $endusers->links('pagination::bootstrap-4') }}
+                                <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                    <div class="text-muted mb-2 mb-md-0">
+                                        Showing {{ $endusers->firstItem() ?? 0 }} to {{ $endusers->lastItem() ?? 0 }} of {{ $endusers->total() }} entries
+                                    </div>
+                                    <div>
+                                        {{ $endusers->links('pagination::bootstrap-4') }}
+                                    </div>
                                 </div>
                             </div>
 
@@ -342,6 +347,7 @@
     <script>
         $('#dataTable-1').DataTable({
             autoWidth: true,
+            paging: false,
             "lengthMenu": [
                 [16, 32, 64, -1],
                 [16, 32, 64, "All"]

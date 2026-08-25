@@ -77,7 +77,7 @@
                     </table>
                 </div>
                 <div class="mt-4">
-                    {{ $companies->links() }}
+                    {{ $companies->links('pagination::bootstrap-4') }}
                 </div>
             </div>
         </div>

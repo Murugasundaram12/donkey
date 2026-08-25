@@ -281,8 +281,13 @@
                                             </tr>
                                         </tfoot>
                                     </table>
-                                    <div class="mt-3">
-                                        {{ $bookings->links() }}
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                        <div class="text-muted mb-2 mb-md-0">
+                                            Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} entries
+                                        </div>
+                                        <div>
+                                            {{ $bookings->links('pagination::bootstrap-4') }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -303,7 +308,7 @@
                     [16, 32, 64, -1],
                     [16, 32, 64, "All"]
                 ],
-                "paging": true, // Enable pagination
+                "paging": false, // Disable DataTables client-side pagination
                 "searching": false // Disable search bar
             });
         });

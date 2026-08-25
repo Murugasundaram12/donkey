@@ -26,7 +26,7 @@ class ExcelPincodeController extends Controller
                 ->orWhere('statename','LIKE',"$search%")
                 ->orWhere('tier','LIKE',"$search%");
             });
-        })->latest()->paginate(25);       
+        })->latest()->paginate(15);
        
         // dd($excelPincodes);
         return view('admin.excelpincode.index', ['excelPincodes' => $excelPincodes]);

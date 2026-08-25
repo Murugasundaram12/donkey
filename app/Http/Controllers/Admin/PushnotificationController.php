@@ -70,29 +70,34 @@ class PushnotificationController extends Controller
     {
         // dd($type, $title, $content);
 
+        $userProjectId = config('services.firebase.user_project_id', 'donkey-user');
+        $driverProjectId = config('services.firebase.driver_project_id', 'donkey-driver');
+        $userUrl = "https://fcm.googleapis.com/v1/projects/{$userProjectId}/messages:send";
+        $driverUrl = "https://fcm.googleapis.com/v1/projects/{$driverProjectId}/messages:send";
+
         if ($type == 2) {
             //user
             // dd("user");
             $tokens = User::where('is_driver', 0)->whereNotNull('device_token')->get()->pluck('device_token');
-            $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
+            $url = $userUrl;
             $fcm_token = site::where('id', 1)->first()->userToken;
             $result = $this->SendNotificationToUser($tokens, $url, $fcm_token, $title, $content, $imageUrl);
         } elseif ($type == 3) {
             //driver
             $tokens = User::where('is_driver', 1)->whereNotNull('device_token')->get()->pluck('device_token');
-            $url = "https://fcm.googleapis.com/v1/projects/donkey-driver/messages:send";
+            $url = $driverUrl;
             $fcm_token = site::where('id', 1)->first()->driverToken;
             $result = $this->SendNotificationToDriver($tokens, $url, $fcm_token, $title, $content, $imageUrl);
         } else {
             if ($type == 1) {
                 //user
                 $tokens = User::where('is_driver', 0)->whereNotNull('device_token')->get()->pluck('device_token');
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-user/messages:send";
+                $url = $userUrl;
                 $fcm_token = site::where('id', 1)->first()->userToken;
                 $result = $this->SendNotificationToUser($tokens, $url, $fcm_token, $title, $content, $imageUrl);
                 //driver
                 $tokens = User::where('is_driver', 1)->whereNotNull('device_token')->get()->pluck('device_token');
-                $url = "https://fcm.googleapis.com/v1/projects/donkey-driver/messages:send";
+                $url = $driverUrl;
                 $fcm_token = site::where('id', 1)->first()->driverToken;
                 $result = $this->SendNotificationToDriver($tokens, $url, $fcm_token, $title, $content, $imageUrl);
             }
