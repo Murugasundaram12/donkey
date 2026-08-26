@@ -1,0 +1,23 @@
+meta {
+  name: Pincode Summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/vendor/pincodes/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get overall pincode coverage summary for vendor (total, active, pending, inactive).
+}

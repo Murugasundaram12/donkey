@@ -1,0 +1,23 @@
+meta {
+  name: Service Dashboard Summary
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/vendor/services/dashboard
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get service status and pending rider approval counts required by the Services screen.
+}

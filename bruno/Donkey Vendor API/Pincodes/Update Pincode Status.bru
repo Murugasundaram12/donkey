@@ -1,0 +1,30 @@
+meta {
+  name: Update Pincode Status
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/vendor/pincodes/84/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "status": "active"
+  }
+}
+
+docs {
+  Update status (active or inactive) for a specific pincode belonging to vendor.
+}

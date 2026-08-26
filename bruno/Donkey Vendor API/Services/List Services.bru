@@ -1,0 +1,23 @@
+meta {
+  name: List Services
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/vendor/services
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get all services available to the authenticated vendor along with status and pending rider approval count.
+}

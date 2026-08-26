@@ -1,0 +1,23 @@
+meta {
+  name: List Pincodes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/vendor/pincodes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  List all pincodes assigned to the authenticated vendor with status details.
+}

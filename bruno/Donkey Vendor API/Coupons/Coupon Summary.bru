@@ -1,0 +1,23 @@
+meta {
+  name: Coupon Summary
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/vendor/coupons/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get coupon statistics (active, inactive, total) for the authenticated vendor.
+}

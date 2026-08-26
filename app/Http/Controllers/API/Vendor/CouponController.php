@@ -53,4 +53,38 @@ class CouponController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Coupon Statistics Summary for Vendor
+     */
+    public function summary(Request $request)
+    {
+        $vendor = $request->user();
+
+        $subscribersPin = json_decode($vendor->pincode, true);
+        $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
+        $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
+
+        $query = Coupon::where(function ($q) use ($vendor, $pincodes) {
+            $q->where('created_by', $vendor->id);
+            if (!empty($pincodes)) {
+                $q->orWhereIn('pincode_id', $pincodes);
+            }
+        });
+
+        $activeCount = (clone $query)->where('status', 1)->count();
+        $inactiveCount = (clone $query)->where('status', '!=', 1)->count();
+        $totalCount = $activeCount + $inactiveCount;
+
+        return response()->json([
+            'success' => true,
+            'status' => true,
+            'message' => 'Coupon summary retrieved successfully',
+            'data' => [
+                'active' => $activeCount,
+                'inactive' => $inactiveCount,
+                'total' => $totalCount,
+            ]
+        ]);
+    }
 }

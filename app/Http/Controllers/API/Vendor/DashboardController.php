@@ -97,6 +97,9 @@ class DashboardController extends Controller
         // Notifications
         $notificationsCount = Pushnotification::count();
 
+        // Services Summary
+        $servicesSummary = (new \App\Http\Controllers\API\Vendor\ServiceController())->getVendorServicesData($vendor);
+
         return response()->json([
             'status' => true,
             'message' => 'Dashboard metrics fetched successfully',
@@ -122,6 +125,7 @@ class DashboardController extends Controller
                 ],
                 'active_coupons_count' => $activeCouponsCount,
                 'notifications_count' => $notificationsCount,
+                'services_summary' => $servicesSummary,
             ]
         ]);
     }

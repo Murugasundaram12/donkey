@@ -214,8 +214,19 @@ Route::prefix('vendor')->group(function () {
         // Riders
         Route::apiResource('riders', \App\Http\Controllers\API\Vendor\RiderController::class);
 
+        // Services
+        Route::get('services/dashboard', [\App\Http\Controllers\API\Vendor\ServiceController::class, 'dashboard']);
+        Route::get('services', [\App\Http\Controllers\API\Vendor\ServiceController::class, 'index']);
+        Route::put('services/{service_id}/status', [\App\Http\Controllers\API\Vendor\ServiceController::class, 'updateStatus']);
+
+        // Pincodes
+        Route::get('pincodes/summary', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'summary']);
+        Route::get('pincodes', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'index']);
+        Route::put('pincodes/{pincode_id}/status', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'updateStatus']);
+
         // Coupons
         Route::get('coupons/active', [\App\Http\Controllers\API\Vendor\CouponController::class, 'active']);
+        Route::get('coupons/summary', [\App\Http\Controllers\API\Vendor\CouponController::class, 'summary']);
 
         // Payments
         Route::get('payments', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'index']);

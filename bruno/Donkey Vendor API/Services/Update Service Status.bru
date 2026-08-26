@@ -1,0 +1,30 @@
+meta {
+  name: Update Service Status
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{base_url}}/api/vendor/services/1/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{vendor_token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "status": "active"
+  }
+}
+
+docs {
+  Update the status (active or inactive) of a specific service for the authenticated vendor.
+}
