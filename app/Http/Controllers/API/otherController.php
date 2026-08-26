@@ -92,7 +92,7 @@ class otherController extends BaseController
         }
 
         $subscriber = Subscriber::where('id', $pincodeData->usedBy)->first();
-        if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+        if (!$subscriber || !\App\Models\Subscriber::isSubscriberActive($subscriber)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Subscriber inactive or blocked'
@@ -1192,7 +1192,7 @@ class otherController extends BaseController
         }
 
         $subscriber = Subscriber::where('id', $pincode->usedBy)->first();
-        if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+        if (!$subscriber || !\App\Models\Subscriber::isSubscriberActive($subscriber)) {
             return response()->json([
                 'status' => false,
                 'message' => "Unable to make booking, subscriber inactive or blocked"
@@ -1826,7 +1826,7 @@ class otherController extends BaseController
         if ($service > 0) {
             $pincodeData = DB::table('pincode')->where('pincode', $validated['pincode'])?->first();
             $subscriber = DB::table('subscriber')->where('id', $pincodeData?->usedBy)?->first();
-            if (($subscriber?->activestatus == 1) && ($subscriber?->blockedstatus == 1)) {
+            if (\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                 $data = $pincodeData;
                 return $this->sendResponse($data, 'This pincode is  available.');
             } else {
@@ -1853,7 +1853,7 @@ class otherController extends BaseController
             if ($c > 0) {
                 $data = DB::table('pincode')->where('pincode', $request->input('pincode'))->get();
                 $subscriber = Subscriber::where('id', $data[0]->usedBy)->first();
-                if (($subscriber->activestatus != 1) || ($subscriber->blockedstatus != 1)) {
+                if (!\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                     return $this->sendError('Pincode Not Available Please Enter Another Pincode.');
                 }
                 $pincode = Pincode::where('pincode', $request->pincode)?->first();
@@ -1889,7 +1889,7 @@ class otherController extends BaseController
             if ($c > 0) {
                 $data = DB::table('pincode')->where('pincode', $request->input('pincode'))->get();
                 $subscriber = Subscriber::where('id', $data[0]->usedBy)->first();
-                if (($subscriber->activestatus != 1) || ($subscriber->blockedstatus != 1)) {
+                if (!\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                     return $this->sendError('Pincode Not Available Please Enter Another Pincode.');
                 }
                 $pincode = Pincode::where('pincode', $request->pincode)?->first();
@@ -3065,7 +3065,7 @@ class otherController extends BaseController
             }
 
             $subscriber = DB::table("subscriber")->where('id', $Driver?->subscriberId)?->first();
-            if (($subscriber?->activestatus == 1) && ($subscriber?->blockedstatus == 1)) {
+            if (\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                 // $user = User::where('user_id', $driver_id)->get();
                 // $driver = Driver::where('userid', $driver_id)->get(['pincode']);
                 $driver = Driver::leftjoin('users', 'users.id', '=', 'driver.userid')->where(['driver.userid' => $driver_id, 'users.is_live' => 1])->get(['pincode']);
@@ -3202,7 +3202,7 @@ class otherController extends BaseController
 
         $subscriber = DB::table("subscriber")->where('id', $driver?->subscriberId)?->first();
 
-        if (($subscriber?->activestatus == 1) && ($subscriber?->blockedstatus == 1)) {
+        if (\App\Models\Subscriber::isSubscriberActive($subscriber)) {
             $driverLatitude = $driver?->lat;
             $driverLongitude = $driver?->long;
 
@@ -4289,7 +4289,7 @@ class otherController extends BaseController
             $deviceToken = $user?->device_token;
 
             $subscriber = DB::table("subscriber")->where('id', $driver?->subscriberId)->first();
-            if (($subscriber?->activestatus == 1) && ($subscriber?->blockedstatus == 1)) {
+            if (\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                 if (isset($deviceToken)) {
                     // Send notification using FCM or any other service
                     $this->sendNotification($deviceToken, $notificationData);
@@ -4364,7 +4364,7 @@ class otherController extends BaseController
             $deviceToken = $user?->device_token;
 
             $subscriber = DB::table("subscriber")->where('id', $driver?->subscriberId)->first();
-            if (($subscriber?->activestatus == 1) && ($subscriber?->blockedstatus == 1)) {
+            if (\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                 if (isset($deviceToken)) {
                     // Send notification using FCM or any other service
                     $this->sendNotification($deviceToken, $notificationData);
@@ -4920,7 +4920,7 @@ class otherController extends BaseController
             }
 
             $subscriber = Subscriber::where('id', $pincode->usedBy)->first();
-            if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+            if (!$subscriber || !\App\Models\Subscriber::isSubscriberActive($subscriber)) {
                 return response()->json([
                     'status' => false,
                     'message' => "Unable to make booking, subscriber inactive or blocked"

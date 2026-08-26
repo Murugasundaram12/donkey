@@ -67,6 +67,35 @@ class Subscriber extends Authenticatable
     }
 
     /**
+     * Check if a subscriber account is active based on blockedstatus and subscription expiry date.
+     * Expiry date is the source of truth for expiration.
+     */
+    public static function isSubscriberActive($subscriber): bool
+    {
+        if (!$subscriber) {
+            return false;
+        }
+
+        $blockedstatus = is_object($subscriber) ? ($subscriber->blockedstatus ?? 1) : 1;
+        if ((int) $blockedstatus === 0) {
+            return false;
+        }
+
+        $expiryDate = is_object($subscriber) ? ($subscriber->expiryDate ?? null) : null;
+        if (!empty($expiryDate)) {
+            try {
+                $expiry = \Carbon\Carbon::parse($expiryDate)->endOfDay();
+                return !$expiry->isPast();
+            } catch (\Throwable $e) {
+                // fallthrough to status check
+            }
+        }
+
+        $status = is_object($subscriber) ? ($subscriber->status ?? $subscriber->activestatus ?? 1) : 1;
+        return (int) $status === 1;
+    }
+
+    /**
      * Pincode attribute accessor with fallback to pincodebasedcategories table
      */
     public function getPincodeAttribute()

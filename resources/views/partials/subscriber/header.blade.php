@@ -146,21 +146,40 @@
             @endif
         @endif
 
-        @if (isset($user->subscriberId))
-            @if ($user->activestatus == 0)
-                <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
-                    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
-                    </script>
-                <script>
-                    $(function () {
-                        //$('.error-msg').text("{{ session('error') }}");
-                        $('#inactivemodal').modal('show');
-                        $('#closeButton').click(function () {
-                            $('#inactivemodal').modal('hide'); // Manually close the modal
-                        });
-                    });
+        @php
+            $isSubscriberExpired = false;
+            $subscriberObj = null;
+            if (isset($user->subscriberId)) {
+                $subscriberObj = $user;
+            } elseif (isset($user) && !empty($user?->subscriber_id)) {
+                $subscriberObj = App\Models\Subscriber::where('id', $user?->subscriber_id)?->first();
+            }
+
+            if ($subscriberObj && !empty($subscriberObj->expiryDate)) {
+                try {
+                    $expiryDateObj = \Carbon\Carbon::parse($subscriberObj->expiryDate)->endOfDay();
+                    $isSubscriberExpired = $expiryDateObj->isPast();
+                } catch (\Throwable $e) {
+                    $isSubscriberExpired = ($subscriberObj->activestatus == 0);
+                }
+            } elseif ($subscriberObj) {
+                $isSubscriberExpired = ($subscriberObj->activestatus == 0);
+            }
+        @endphp
+
+        @if (isset($user) && $isSubscriberExpired)
+            <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+                integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
                 </script>
-            @endif
+            <script>
+                $(function () {
+                    //$('.error-msg').text("{{ session('error') }}");
+                    $('#inactivemodal').modal('show');
+                    $('#closeButton').click(function () {
+                        $('#inactivemodal').modal('hide'); // Manually close the modal
+                    });
+                });
+            </script>
         @endif
 
         <div class="modal fade" id="inactivemodal" tabindex="-1" aria-labelledby="epinmodalLabel" aria-hidden="true"

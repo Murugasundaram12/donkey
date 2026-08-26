@@ -476,7 +476,7 @@ class Booking extends BaseController
 		}
 
 		$subscriber = Subscriber::where('id', $pincodeData->usedBy)->first();
-		if (!$subscriber || $subscriber->activestatus != 1 || $subscriber->blockedstatus != 1) {
+		if (!$subscriber || !\App\Models\Subscriber::isSubscriberActive($subscriber)) {
 			return false;
 		}
 

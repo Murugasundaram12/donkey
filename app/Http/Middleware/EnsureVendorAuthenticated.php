@@ -34,7 +34,19 @@ class EnsureVendorAuthenticated
             ], Response::HTTP_FORBIDDEN);
         }
 
-        if (isset($user->status) && (int) $user->status === 0) {
+        $isExpired = false;
+        if (!empty($user->expiryDate)) {
+            try {
+                $expiry = \Carbon\Carbon::parse($user->expiryDate)->endOfDay();
+                $isExpired = $expiry->isPast();
+            } catch (\Throwable $e) {
+                $isExpired = (isset($user->status) && (int) $user->status === 0);
+            }
+        } else {
+            $isExpired = (isset($user->status) && (int) $user->status === 0);
+        }
+
+        if ($isExpired) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your vendor account is inactive or expired. Please contact admin.'
