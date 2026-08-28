@@ -24,12 +24,14 @@ body:json {
   "name": "Rider John",
   "mobile": "9876500001",
   "email": "riderjohn@example.com",
+  "dob": "1998-05-15",
+  "type": "1",
+  "vehicleNo": "TN01AB1234",
+  "vehicleModelNo": "Honda Activa 6G",
   "password": "password123",
   "pincode": [
     "600001"
   ],
-  "vehicleNo": "TN01AB1234",
-  "vehicleModelNo": "Honda Activa 6G",
   "aadharNo": "123456789012",
   "drivingLicence": "TN0120230001234",
   "rcbook": "RC987654321"
@@ -38,4 +40,5 @@ body:json {
 
 docs {
   Create a new rider account under vendor.
+  Supports optional multipart file `profile_image`, `dob` (YYYY-MM-DD), `type` (Category ID e.g. "1"), `vehicleModelNo`, and `vehicleNo`.
 }

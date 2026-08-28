@@ -64,16 +64,18 @@ class RiderController extends Controller
             'name' => 'required|string|max:255',
             'mobile' => 'required|string|max:15|unique:driver,mobile|unique:users,phone',
             'email' => 'nullable|email|unique:driver,email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'pincode' => 'required',
+            'password' => 'nullable|string|min:6',
+            'pincode' => 'nullable',
             'vehicleNo' => 'required|string|max:100',
             'vehicleModelNo' => 'required|string|max:100',
-            'aadharNo' => 'required|string|unique:driver,aadharNo',
-            'drivingLicence' => 'required|string',
-            'rcbook' => 'required|string',
+            'aadharNo' => 'nullable|string|unique:driver,aadharNo',
+            'drivingLicence' => 'nullable|string',
+            'rcbook' => 'nullable|string',
             'gender' => 'nullable|string',
             'location' => 'nullable|string',
             'type' => 'nullable',
+            'dob' => 'nullable|date_format:Y-m-d',
+            'profile_image' => 'nullable|file|image|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -92,20 +94,36 @@ class RiderController extends Controller
             $type = implode(',', $type);
         }
 
+        // Handle Profile Image Upload
+        $profileImageName = null;
+        if ($request->hasFile('profile_image')) {
+            $file = $request->file('profile_image');
+            $extension = $file->getClientOriginalExtension();
+            $profileImageName = time() . '_' . uniqid() . '.' . $extension;
+            $file->move(public_path('userprofile'), $profileImageName);
+        }
+
+        $passwordRaw = $request->password ?: Str::random(10);
+        $pincodes = $request->pincode ? (is_array($request->pincode) ? json_encode($request->pincode) : $request->pincode) : ($vendor->pincode ?: json_encode([]));
+        $aadharNo = $request->aadharNo ?: ('AADHAR-' . time() . rand(100, 999));
+        $drivingLicence = $request->drivingLicence ?: ('DL-' . time() . rand(100, 999));
+        $rcbook = $request->rcbook ?: ('RC-' . time() . rand(100, 999));
+
         // Create User account for driver
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->mobile,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($passwordRaw),
             'user_id' => 'DK-' . uniqid(),
             'is_driver' => 1,
             'is_live' => 0,
             'gender' => $request->gender ?: 'male',
+            'dob' => $request->dob,
+            'profile_image' => $profileImageName,
+            'image' => $profileImageName,
             'otp' => rand(1000, 9999),
         ]);
-
-        $pincodes = is_array($request->pincode) ? json_encode($request->pincode) : $request->pincode;
 
         $driver = new Driver();
         $driver->subscriberId = $vendor->id;
@@ -113,19 +131,20 @@ class RiderController extends Controller
         $driver->name = $request->name;
         $driver->mobile = $request->mobile;
         $driver->email = $request->email;
-        $driver->password = Hash::make($request->password);
-        $driver->source = $request->password;
+        $driver->password = Hash::make($passwordRaw);
+        $driver->source = $passwordRaw;
         $driver->pincode = $pincodes;
         $driver->location = $request->location;
         $driver->vehicleNo = $request->vehicleNo;
         $driver->vehicleModelNo = $request->vehicleModelNo;
-        $driver->aadharNo = $request->aadharNo;
-        $driver->drivingLicence = $request->drivingLicence;
-        $driver->rcbook = $request->rcbook;
-        $driver->aadharFrontImage = $request->input('aadharFrontImage', 'default_front.jpg');
+        $driver->aadharNo = $aadharNo;
+        $driver->drivingLicence = $drivingLicence;
+        $driver->rcbook = $rcbook;
+        $driver->aadharFrontImage = $profileImageName ?: $request->input('aadharFrontImage', 'default_front.jpg');
         $driver->aadharBackImage = $request->input('aadharBackImage', 'default_back.jpg');
+        $driver->language = $request->input('language', 'English');
         $driver->type = $type ?: '1';
-        $driver->status = 1; // Auto-active when added by vendor
+        $driver->status = 0; // Set to pending approval (0) as per rider approval flow
         $driver->save();
 
         return response()->json([
