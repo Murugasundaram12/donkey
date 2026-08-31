@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/vendor/coupons/summary
+  url: {{baseUrl}}/api/vendor/coupons/summary
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{vendor_token}}
+  token: {{token}}
 }
 
 headers {
@@ -19,5 +19,5 @@ headers {
 }
 
 docs {
-  Get coupon statistics (active, inactive, total) for the authenticated vendor.
+  Get coupon summary metrics for vendor.
 }

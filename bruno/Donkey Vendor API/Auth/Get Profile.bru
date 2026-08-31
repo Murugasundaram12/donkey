@@ -20,4 +20,11 @@ headers {
 
 docs {
   Retrieve authenticated vendor profile details.
+  Response includes:
+  - payment_status: 1 (Payment/subscription active & valid), 0 (Expired or inactive)
+  - payment_expiry: Expiration date (YYYY-MM-DD)
+  - status: Vendor account status
+  - blocked_status: Account block status (1 = Active, 0 = Blocked)
+  
+  Note: This endpoint remains accessible even when vendor payment is expired so vendor can inspect account status.
 }

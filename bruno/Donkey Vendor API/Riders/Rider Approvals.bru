@@ -1,0 +1,23 @@
+meta {
+  name: Rider Approvals
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/riders/approvals
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get list of pending rider approval requests for authenticated vendor.
+}

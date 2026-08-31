@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'company.api' => \App\Http\Middleware\EnsureApiKeyIsValid::class,
         'detect.company' => \App\Http\Middleware\DetectCompany::class,
+        'vendor.payment' => \App\Http\Middleware\EnsureVendorPaymentValid::class,
     ];
 
     // protected function schedule(Schedule $schedule): void

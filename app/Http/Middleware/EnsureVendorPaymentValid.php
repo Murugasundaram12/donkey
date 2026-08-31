@@ -5,12 +5,16 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\Subscriber;
+use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureVendorAuthenticated
+class EnsureVendorPaymentValid
 {
     /**
      * Handle an incoming request.
+     *
+     * Checks if the authenticated vendor's payment/subscription is valid.
+     * Protected vendor business endpoints rely on this middleware.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -27,10 +31,31 @@ class EnsureVendorAuthenticated
             ], Response::HTTP_UNAUTHORIZED);
         }
 
+        // 1. Check blocked status
         if (isset($user->blockedstatus) && (int) $user->blockedstatus === 0) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your vendor account has been blocked. Please contact admin.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        // 2. Check subscription / payment expiration
+        $isExpired = false;
+        if (!empty($user->expiryDate)) {
+            try {
+                $expiry = Carbon::parse($user->expiryDate)->endOfDay();
+                $isExpired = $expiry->isPast();
+            } catch (\Throwable $e) {
+                $isExpired = (isset($user->status) && (int) $user->status === 0);
+            }
+        } else {
+            $isExpired = (isset($user->status) && (int) $user->status === 0);
+        }
+
+        if ($isExpired) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your subscription/payment has expired. Please renew your payment.'
             ], Response::HTTP_FORBIDDEN);
         }
 

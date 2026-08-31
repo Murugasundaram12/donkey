@@ -5,13 +5,17 @@ meta {
 }
 
 put {
-  url: {{base_url}}/api/vendor/services/1/status
+  url: {{baseUrl}}/api/vendor/services/:service_id/status
   body: json
   auth: bearer
 }
 
+params:path {
+  service_id: 1
+}
+
 auth:bearer {
-  token: {{vendor_token}}
+  token: {{token}}
 }
 
 headers {
@@ -20,11 +24,12 @@ headers {
 }
 
 body:json {
-  {
-    "status": "active"
-  }
+{
+  "status": "active"
+}
 }
 
 docs {
-  Update the status (active or inactive) of a specific service for the authenticated vendor.
+  Update the status ("active" or "inactive") of a specific service for the authenticated vendor.
+  Supported status values: "active", "inactive".
 }

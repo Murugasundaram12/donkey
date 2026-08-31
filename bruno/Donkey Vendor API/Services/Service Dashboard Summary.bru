@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/vendor/services/dashboard
+  url: {{baseUrl}}/api/vendor/services/dashboard
   body: none
   auth: bearer
 }
 
 auth:bearer {
-  token: {{vendor_token}}
+  token: {{token}}
 }
 
 headers {
@@ -19,5 +19,5 @@ headers {
 }
 
 docs {
-  Get service status and pending rider approval counts required by the Services screen.
+  Get service dashboard summary for authenticated vendor.
 }

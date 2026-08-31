@@ -10,6 +10,10 @@ get {
   auth: bearer
 }
 
+params:path {
+  id: 1
+}
+
 auth:bearer {
   token: {{token}}
 }
@@ -19,5 +23,6 @@ headers {
 }
 
 docs {
-  Get detailed breakdown of a single payment record.
+  Get detailed breakdown of a single payment record or subscription plan.
+  Note: Exempt from payment expiration blocking to allow renewal verification.
 }

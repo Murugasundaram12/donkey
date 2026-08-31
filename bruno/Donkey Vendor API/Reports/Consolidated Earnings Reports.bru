@@ -1,0 +1,41 @@
+meta {
+  name: Consolidated Earnings Reports
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/earnings-reports?period=this_month
+  body: none
+  auth: bearer
+}
+
+params:query {
+  period: this_month
+  ~start_date: 2026-08-01
+  ~end_date: 2026-08-31
+  ~status: 2
+  ~category_id: 1
+  ~rider_id: 5
+  ~page: 1
+  ~per_page: 15
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get consolidated vendor earnings and reports with summary metrics, detailed booking-wise breakdown, and paginated report list.
+  Filters:
+  - period: today, yesterday, this_week, this_month, custom, all
+  - start_date / end_date (YYYY-MM-DD for custom period)
+  - status: 0 (Pending), 1 (In Progress), 2 (Completed), 3 (Cancelled)
+  - category_id / service_id: filter by service
+  - rider_id / driver_id: filter by rider
+  - page, per_page: pagination controls
+}

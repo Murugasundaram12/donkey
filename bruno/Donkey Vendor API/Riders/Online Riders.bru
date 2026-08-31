@@ -1,0 +1,23 @@
+meta {
+  name: Online Riders
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/riders/online
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  List active riders belonging to vendor who are currently online (is_live = 1).
+}

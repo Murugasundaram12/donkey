@@ -19,5 +19,16 @@ headers {
 }
 
 docs {
-  Fetch vendor dashboard metrics (booking totals, earnings, online/offline riders, active coupons).
+  Fetch vendor dashboard metrics.
+  Response structure:
+  - bookings_summary: total, today, incomplete, completed, cancelled
+  - earnings_summary: total, today, this_month
+  - riders_summary: total, online, offline, pending_approval
+  - active_coupons_count: count of active vendor coupons
+  - notifications_count: count of unread notifications
+  - services_summary: total_services, active_services
+  
+  HTTP Status Codes:
+  - 200 OK: Valid vendor payment and authenticated
+  - 403 Forbidden: Vendor payment expired ("Your subscription/payment has expired. Please renew your payment.")
 }

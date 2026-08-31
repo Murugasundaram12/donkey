@@ -5,13 +5,17 @@ meta {
 }
 
 put {
-  url: {{base_url}}/api/vendor/pincodes/84/status
+  url: {{baseUrl}}/api/vendor/pincodes/:pincode_id/status
   body: json
   auth: bearer
 }
 
+params:path {
+  pincode_id: 1
+}
+
 auth:bearer {
-  token: {{vendor_token}}
+  token: {{token}}
 }
 
 headers {
@@ -20,11 +24,12 @@ headers {
 }
 
 body:json {
-  {
-    "status": "active"
-  }
+{
+  "status": "active"
+}
 }
 
 docs {
-  Update status (active or inactive) for a specific pincode belonging to vendor.
+  Update the status ("active" or "inactive") of a specific pincode belonging to vendor.
+  Supported status values: "active", "inactive".
 }

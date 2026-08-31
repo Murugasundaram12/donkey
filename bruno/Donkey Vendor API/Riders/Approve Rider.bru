@@ -1,0 +1,27 @@
+meta {
+  name: Approve Rider
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/riders/:id/approve
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Approve a pending rider account (sets status = 1).
+}

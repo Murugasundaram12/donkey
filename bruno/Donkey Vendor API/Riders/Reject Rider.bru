@@ -1,0 +1,27 @@
+meta {
+  name: Reject Rider
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/riders/:id/reject
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Reject or block a rider account (sets status = 2).
+}

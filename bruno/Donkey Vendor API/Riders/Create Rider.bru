@@ -6,7 +6,7 @@ meta {
 
 post {
   url: {{baseUrl}}/api/vendor/riders
-  body: json
+  body: multipartForm
   auth: bearer
 }
 
@@ -15,30 +15,64 @@ auth:bearer {
 }
 
 headers {
-  Content-Type: application/json
   Accept: application/json
 }
 
-body:json {
-{
-  "name": "Rider John",
-  "mobile": "9876500001",
-  "email": "riderjohn@example.com",
-  "dob": "1998-05-15",
-  "type": "1",
-  "vehicleNo": "TN01AB1234",
-  "vehicleModelNo": "Honda Activa 6G",
-  "password": "password123",
-  "pincode": [
-    "600001"
-  ],
-  "aadharNo": "123456789012",
-  "drivingLicence": "TN0120230001234",
-  "rcbook": "RC987654321"
-}
+body:multipart-form {
+  name: Rider John
+  mobile: 9876500001
+  email: riderjohn@example.com
+  password: password123
+  gender: Male
+  dob: 1998-05-15
+  location: Chennai
+  pincode[0]: 1
+  language[0]: English
+  language[1]: Tamil
+  aadharNo: 123456789012
+  description: 123 Main Street, Chennai
+  bankacno: 9876543210123
+  ifsccode: SBIN0001234
+  licenceexpiry: 2030-12-31
+  vehicleNo: TN01AB1234
+  vehicleModelNo: Honda Activa 6G
+  type[0]: 1
+  type[1]: 2
+  profile: @file()
+  aadharFrontImage: @file()
+  aadharBackImage: @file()
+  drivingLicence: @file()
+  rcbook: @file()
+  bike: @file()
+  customerdocument: @file()
 }
 
 docs {
   Create a new rider account under vendor.
-  Supports optional multipart file `profile_image`, `dob` (YYYY-MM-DD), `type` (Category ID e.g. "1"), `vehicleModelNo`, and `vehicleNo`.
+  Parity with admin /subscribers/createDriver form.
+  Fields:
+  - name (required)
+  - mobile (required, max 15, unique)
+  - email (optional, unique)
+  - password (required)
+  - gender (required: Male/Female/Other)
+  - dob (optional: YYYY-MM-DD)
+  - location (optional)
+  - pincode (required: array of pincode IDs belonging to vendor)
+  - language (required: array of languages)
+  - aadharNo (required: numeric, unique)
+  - description (optional: address)
+  - bankacno (optional)
+  - ifsccode (optional)
+  - licenceexpiry (optional: YYYY-MM-DD)
+  - vehicleNo (required)
+  - vehicleModelNo (required)
+  - type (required: array of service category IDs e.g. 1=Bike, 2=Auto, 3=Cab)
+  - profile / profile_image (file)
+  - aadharFrontImage (file)
+  - aadharBackImage (file)
+  - drivingLicence (file)
+  - rcbook (file)
+  - bike (file)
+  - customerdocument (file)
 }

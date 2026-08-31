@@ -63,18 +63,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Check account expiry
-        if ($vendor->expiryDate) {
-            $expiry = Carbon::parse($vendor->expiryDate);
-            if ($expiry->isPast()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Your subscription has expired. Please renew or contact admin.'
-                ], 403);
-            }
-        }
-
-        // Generate Sanctum access token
+        // Generate Sanctum access token (allowed even if subscription expired so vendor can access renewal APIs)
         $token = $vendor->createToken('vendor_app_token')->plainTextToken;
 
         return response()->json([
@@ -301,6 +290,19 @@ class AuthController extends Controller
         $pincodes = json_decode($vendor->pincode, true);
         $pincodes = is_array($pincodes) ? array_values($pincodes) : [];
 
+        $paymentStatus = 1;
+        if (isset($vendor->blockedstatus) && (int)$vendor->blockedstatus === 0) {
+            $paymentStatus = 0;
+        } elseif (!empty($vendor->expiryDate)) {
+            try {
+                $paymentStatus = Carbon::parse($vendor->expiryDate)->endOfDay()->isPast() ? 0 : 1;
+            } catch (\Throwable $e) {
+                $paymentStatus = (int) ($vendor->status ?? 1);
+            }
+        } else {
+            $paymentStatus = (int) ($vendor->status ?? 1);
+        }
+
         return [
             'id' => (int) $vendor->id,
             'subscriber_id' => (string) $vendor->subscriberId,
@@ -311,6 +313,8 @@ class AuthController extends Controller
             'pincode' => $pincodes,
             'status' => (int) $vendor->status,
             'blocked_status' => (int) $vendor->blockedstatus,
+            'payment_status' => (int) $paymentStatus,
+            'payment_expiry' => $vendor->expiryDate ? Carbon::parse($vendor->expiryDate)->format('Y-m-d') : null,
             'subscription_date' => $vendor->subscriptionDate ? Carbon::parse($vendor->subscriptionDate)->format('Y-m-d') : null,
             'expiry_date' => $vendor->expiryDate ? Carbon::parse($vendor->expiryDate)->format('Y-m-d') : null,
             'need_to_pay' => (float) $vendor->need_to_pay,
