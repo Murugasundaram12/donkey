@@ -128,23 +128,20 @@ class otherController extends BaseController
         $tax_split_1 = round($tax / 2, 2);
         $tax_split_2 = round($tax / 2, 2);
         $total = round($base_price + $tax + $service_cost, 2);
+        $total_without_base_price = round($tax + $service_cost, 2);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Price calculated successfully',
             'data' => [
                 'total' => (int) $total,
                 'base_price' => (int) $base_price,
-                'tax' => (int) $tax,
+                'tax' => (float) $tax,
                 'tax_split_2' => (int) $tax_split_2,
                 'tax_split_1' => (int) $tax_split_1,
                 'service_cost' => (int) $service_cost,
                 'total_without_base_price' => (int) $total_without_base_price,
-                'tax_split' => [
-                    'cgst' => (int) $tax_split_1,
-                    'sgst' => (int) $tax_split_2
-                ]
-            ]
+            ],
+            'success' => true,
+            'message' => 'Price calculated successfully',
         ]);
     }
 
