@@ -526,17 +526,23 @@ class otherController extends BaseController
 
     public function appVerision()
     {
-        $app_verision = site::where('id', 1)->first();
-        $payload = [
-            'user_app' => (string) ($app_verision->user_app ?? '1.0.0'),
-            'driver_app' => (string) ($app_verision->driver_app ?? '1.0.0'),
-        ];
+        $appVersion = site::where('id', 1)->first();
+
         return new JsonResponse([
             'status' => true,
-            'message' => 'App version retrieved successfully',
-            'data' => $payload,
-            'user_app' => $payload['user_app'],
-            'driver_app' => $payload['driver_app'],
+            'message' => [
+                'image' => $appVersion?->image,
+                'address' => $appVersion?->address,
+                'updated_at' => $appVersion?->updated_at,
+                'phone' => $appVersion?->phone,
+                'sitename' => $appVersion?->sitename,
+                'created_at' => $appVersion?->created_at,
+                'driver_app' => $appVersion?->driver_app,
+                'id' => $appVersion?->id,
+                'map' => $appVersion?->map,
+                'email' => $appVersion?->email,
+                'user_app' => $appVersion?->user_app,
+            ],
         ]);
     }
 
