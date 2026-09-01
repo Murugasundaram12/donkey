@@ -1770,7 +1770,9 @@ class otherController extends BaseController
             'Content-Type: application/json',
         ];
 
-        $body = "Passenger needs a ride \nDistance: " . $notification_data[4] . "\nPincode: " . $notification_data[5];
+        $body = "Passenger needs a ride\n"
+            . "Distance: " . ($notification_data[4] ?? '')
+            . "\nPincode: " . ($notification_data[5] ?? '');
         $apiBody = [
             'message' => [
                 'token' => $deviceToken,
@@ -1779,9 +1781,9 @@ class otherController extends BaseController
                     'body' => $body,
                 ],
                 'android' => [
-                    'priority' => 'high',
+                    'priority' => 'HIGH',
                     'notification' => [
-                        'sound' => 'default',
+                        'sound' => 'notification', // 'default'-க்கு பதிலாக 'notification'
                         'channel_id' => '1101',
                     ],
                 ],
