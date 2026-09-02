@@ -132,7 +132,7 @@ class PushnotificationController extends Controller
                             'priority' => 'high',
                             'notification' => [
                                 'sound' => 'default',
-                                'channel_id' => '1101',
+                                'channel_id' => '100',
                                 'image' => $imageUrl
                             ]
                         ],
@@ -212,7 +212,7 @@ class PushnotificationController extends Controller
                             'priority' => 'high',
                             'notification' => [
                                 'sound' => 'default',
-                                'channel_id' => '1101',
+                                'channel_id' => '100',
                                 'image' => $imageUrl
                             ]
                         ],

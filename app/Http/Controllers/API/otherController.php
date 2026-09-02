@@ -2319,7 +2319,7 @@ class otherController extends BaseController
                         'priority' => 'high',
                         'notification' => [
                             'sound' => 'default',
-                            'channel_id' => '1101'
+                            'channel_id' => '100'
                         ]
                     ],
                     'apns' => [
@@ -2736,7 +2736,7 @@ class otherController extends BaseController
                         'priority' => 'high',
                         'notification' => [
                             'sound' => 'default',
-                            'channel_id' => '1101'
+                            'channel_id' => '100'
                         ]
                     ],
                     'apns' => [
@@ -4517,7 +4517,7 @@ class otherController extends BaseController
                     'priority' => 'high',
                     'notification' => [
                         'sound' => 'default',
-                        'channel_id' => '1101'
+                        'channel_id' => '100'
                     ]
                 ],
                 'apns' => [

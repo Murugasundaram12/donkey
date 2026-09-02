@@ -519,7 +519,7 @@ class HomeController extends Controller
                         'priority' => 'high',
                         'notification' => [
                             'sound' => 'default',
-                            'channel_id' => '1101'
+                            'channel_id' => '100'
                         ]
                     ],
                     'apns' => [
