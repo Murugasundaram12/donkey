@@ -55,6 +55,11 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($request->filled('device_token')) {
+            $vendor->device_token = $request->input('device_token');
+            $vendor->save();
+        }
+
         // Check blocked status
         if (isset($vendor->blockedstatus) && (int)$vendor->blockedstatus === 0) {
             return response()->json([

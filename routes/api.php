@@ -249,6 +249,7 @@ Route::prefix('vendor')->group(function () {
 
             // Notifications
             Route::get('notifications', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'index']);
+            Route::get('notifications/unread-count', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'unreadCount']);
             Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
             Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
 

@@ -1689,11 +1689,16 @@ class otherController extends BaseController
             return 0;
         }
 
-        $drivers = $this->activeDriversForNotification([$pin->id], $type);
+        $subscriberId = $pin->usedBy;
+        if (empty($subscriberId)) {
+            return 0;
+        }
+
+        $drivers = $this->activeDriversForNotification([$pin->id], $type, $subscriberId);
 
         if ($drivers->isEmpty()) {
             $nearbyPincodeIds = $this->nearbyPincodeIds($pin);
-            $drivers = $this->activeDriversForNotification($nearbyPincodeIds, $type);
+            $drivers = $this->activeDriversForNotification($nearbyPincodeIds, $type, $subscriberId);
         }
 
         foreach ($drivers as $driver) {
@@ -1728,7 +1733,7 @@ class otherController extends BaseController
             ->all();
     }
 
-    private function activeDriversForNotification(array $pincodeIds, int $type)
+    private function activeDriversForNotification(array $pincodeIds, int $type, $subscriberId)
     {
         $pincodeIds = array_map('intval', array_filter($pincodeIds));
         if (empty($pincodeIds)) {
@@ -1746,6 +1751,7 @@ class otherController extends BaseController
             ->where('users.device_token', '!=', '')
             ->where('subscriber.activestatus', 1)
             ->where('subscriber.blockedstatus', 1)
+            ->where('subscriber.id', $subscriberId)
             ->get(['driver.userid', 'driver.pincode', 'users.device_token'])
             ->filter(function ($driver) use ($pincodeIds) {
                 $driverPincodes = json_decode((string) $driver->pincode, true);
@@ -1784,7 +1790,7 @@ class otherController extends BaseController
                     'priority' => 'HIGH',
                     'notification' => [
                         'sound' => 'notification', // 'default'-க்கு பதிலாக 'notification'
-                        'channel_id' => '1101',
+                        'channel_id' => '100',
                     ],
                 ],
                 'apns' => [
@@ -3098,7 +3104,18 @@ class otherController extends BaseController
                         //     }
                         // }
                         // if($counti==0){}
-                        $result = DB::table("booking")->where('status', 0)->whereIn('category', $category)->where('pincode', $value[0]['pincode'])->where('accepted', NULL)->get(['customer_id', 'category', 'distance', 'pincode', 'booking_id', 'status', 'ignored']);
+                        $result = DB::table("booking")
+                            ->where('status', 0)
+                            ->whereIn('category', $category)
+                            ->where('pincode', $value[0]['pincode'])
+                            ->where('accepted', NULL)
+                            ->whereExists(function ($query) use ($Driver) {
+                                $query->select(DB::raw(1))
+                                    ->from('pincode')
+                                    ->whereColumn('pincode.pincode', 'booking.pincode')
+                                    ->where('pincode.usedBy', $Driver->subscriberId);
+                            })
+                            ->get(['customer_id', 'category', 'distance', 'pincode', 'booking_id', 'status', 'ignored']);
                         // Only push non-empty results
                         if (!$result->isEmpty()) {
                             array_push($book1, $result);
@@ -3228,6 +3245,12 @@ class otherController extends BaseController
                 ->whereIn('category', $category)
                 ->where('status', 0) // Filter bookings by status if needed
                 ->where('accepted', NULL)
+                ->whereExists(function ($query) use ($driver) {
+                    $query->select(DB::raw(1))
+                        ->from('pincode')
+                        ->whereColumn('pincode.pincode', 'booking.pincode')
+                        ->where('pincode.usedBy', $driver->subscriberId);
+                })
                 ->whereBetween('user_lat', [$minLatDegrees, $maxLatDegrees])
                 ->whereBetween('user_long', [$minLngDegrees, $maxLngDegrees])
                 ->get();

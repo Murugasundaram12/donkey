@@ -1,0 +1,23 @@
+meta {
+  name: Get Unread Notification Count
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/notifications/unread-count
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Return the unread notification count for the authenticated vendor.
+}

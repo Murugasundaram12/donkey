@@ -8,6 +8,7 @@ use App\Models\Coupon;
 use App\Models\Driver;
 use App\Models\Pincode;
 use App\Models\Pushnotification;
+use App\Services\VendorNotificationService;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -95,7 +96,7 @@ class DashboardController extends Controller
         }
 
         // Notifications
-        $notificationsCount = Pushnotification::count();
+        $notificationsCount = app(VendorNotificationService::class)->unreadCount($vendor);
 
         // Services Summary
         $servicesSummary = (new \App\Http\Controllers\API\Vendor\ServiceController())->getVendorServicesData($vendor);

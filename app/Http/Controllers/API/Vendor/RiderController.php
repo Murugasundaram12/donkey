@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\User;
+use App\Services\VendorNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -259,6 +260,14 @@ class RiderController extends Controller
                 return $driver;
             });
 
+            app(VendorNotificationService::class)->create(
+                $vendor,
+                'Riders',
+                'Rider Added Successfully',
+                $driver->name . ' has been added successfully.',
+                ['event' => 'rider_added', 'rider_id' => (int) $driver->id]
+            );
+
             return response()->json([
                 'status' => true,
                 'message' => 'Rider created successfully',
@@ -438,6 +447,12 @@ class RiderController extends Controller
         $rider->status = 1;
         $rider->save();
 
+        app(VendorNotificationService::class)->create(
+            $vendor, 'Riders', 'Rider Approved',
+            $rider->name . ' has been approved successfully.',
+            ['event' => 'rider_approved', 'rider_id' => (int) $rider->id]
+        );
+
         return response()->json([
             'status' => true,
             'message' => 'Rider approved successfully',
@@ -464,6 +479,12 @@ class RiderController extends Controller
 
         $rider->status = 2; // Blocked / Rejected
         $rider->save();
+
+        app(VendorNotificationService::class)->create(
+            $vendor, 'Riders', 'Rider Rejected',
+            $rider->name . ' has been rejected.',
+            ['event' => 'rider_rejected', 'rider_id' => (int) $rider->id]
+        );
 
         return response()->json([
             'status' => true,

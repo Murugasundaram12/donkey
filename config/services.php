@@ -33,6 +33,8 @@ return [
     'firebase' => [
         'user_project_id' => env('FCM_USER_PROJECT_ID', 'donkey-user'),
         'driver_project_id' => env('FCM_DRIVER_PROJECT_ID', 'donkey-driver'),
+        'vendor_project_id' => env('FCM_VENDOR_PROJECT_ID'),
+        'vendor_access_token' => env('FCM_VENDOR_ACCESS_TOKEN'),
     ],
 
     'whatsapp' => [

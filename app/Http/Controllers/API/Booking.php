@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Validator;
 use DB;
 use App\Models\Subscriber;
+use App\Services\VendorNotificationService;
 
 
 class Booking extends BaseController
@@ -625,8 +626,15 @@ class Booking extends BaseController
 			DB::table('booking_location_mapping')->insert($update_location_mapping);
 		}
 
+		app(VendorNotificationService::class)->create(
+			$subscriber,
+			'Bookings',
+			'New Booking Received',
+			'You have received a new booking.',
+			['event' => 'new_booking', 'booking_id' => $booking_id]
+		);
+
 
 		return $booking_id;
 	}
 }
-

@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/vendor/notifications
+  url: {{baseUrl}}/api/vendor/notifications?category=All&per_page=15
   body: none
   auth: bearer
 }
@@ -19,5 +19,5 @@ headers {
 }
 
 docs {
-  List push notifications for vendor.
+  List only global/system and authenticated-vendor notifications. Supported category values: All, Payments, Riders, Bookings, System.
 }

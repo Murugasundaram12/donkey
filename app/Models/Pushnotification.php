@@ -11,8 +11,17 @@ class Pushnotification extends Model
 
     protected $fillable = [
         'type',
+        'subscriber_id',
+        'category',
         'title',
         'content',
-        'image'
+        'image',
+        'read_at',
+        'data',
+    ];
+
+    protected $casts = [
+        'read_at' => 'datetime',
+        'data' => 'array',
     ];
 }
