@@ -631,7 +631,7 @@ class Booking extends BaseController
 			'Bookings',
 			'New Booking Received',
 			'You have received a new booking.',
-			['event' => 'new_booking', 'booking_id' => $booking_id]
+			['event' => 'new_booking', 'booking_id' => $booking_id, 'deep_link' => 'booking_details']
 		);
 
 

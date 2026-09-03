@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class EarningsReportController extends Controller
 {
@@ -19,25 +20,28 @@ class EarningsReportController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate([
+            'period' => ['nullable', Rule::in(['today', 'yesterday', 'this_week', 'this_month', 'custom', 'all'])],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'category_id' => ['nullable', 'integer', 'exists:category,id'],
+            'service_id' => ['nullable', 'integer', 'exists:category,id'],
+        ]);
         $vendor = $request->user();
 
-        // 1. Get vendor pincodes for backup pincode matching
-        $subscribersPin = json_decode($vendor->pincode, true);
-        $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
-        $pincodes = !empty($subscribersPin) ? Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray() : [];
-
-        // Vendor riders
-        $vendorRiderIds = Driver::where('subscriberId', $vendor->id)->pluck('id')->toArray();
+        // Financial reports are strictly vendor-owned. Pincode availability is
+        // intentionally not an ownership boundary for earnings.
+        $vendorRiders = Driver::where('subscriberId', $vendor->id)->get();
+        $vendorRiderIds = $vendorRiders->flatMap(fn ($rider) => [$rider->id, $rider->userid])
+            ->filter()->unique()->values()->all();
 
         // Base booking query strictly scoped to authenticated vendor
-        $baseVendorQuery = Booking::query()->where(function ($query) use ($vendor, $pincodes, $vendorRiderIds) {
+        $baseVendorQuery = Booking::query()->where(function ($query) use ($vendor, $vendorRiderIds) {
             $query->where('assigned_subscriber_id', $vendor->id)
                   ->orWhere('provider_accepted_by', $vendor->id);
             if (!empty($vendorRiderIds)) {
                 $query->orWhereIn('driver_id', $vendorRiderIds);
-            }
-            if (!empty($pincodes)) {
-                $query->orWhereIn('pincode', $pincodes);
+                $query->orWhereIn('accepted', $vendorRiderIds);
             }
         });
 
@@ -129,6 +133,47 @@ class EarningsReportController extends Controller
         $selectedCompletedIds = (clone $filteredQuery)->where('status', 2)->pluck('booking_id')->toArray();
         $selectedPeriodEarnings = !empty($selectedCompletedIds) ? (float) DB::table('booking_payment')->whereIn('booking_id', $selectedCompletedIds)->sum('total') : 0.0;
 
+        $selectedTotalBookings = (clone $filteredQuery)->count();
+        $selectedCompletedBookings = (clone $filteredQuery)->where('status', 2)->get(['booking_id', 'category']);
+        $selectedCompletedCount = $selectedCompletedBookings->count();
+        $selectedIncompleteCount = (clone $filteredQuery)->whereIn('status', [0, 1])->count();
+        $selectedCancelledCount = (clone $filteredQuery)->where('status', 3)->count();
+        $selectedPayments = !empty($selectedCompletedIds)
+            ? DB::table('booking_payment')->whereIn('booking_id', $selectedCompletedIds)->get()->keyBy('booking_id')
+            : collect();
+
+        $serviceTotals = collect([1, 2, 3, 4, 5])->mapWithKeys(fn ($id) => [(string) $id => 0.0]);
+        $selectedCompletedBookings->groupBy('category')->each(function ($bookings, $categoryId) use (&$serviceTotals, $selectedPayments) {
+            $serviceTotals[(string) $categoryId] = (float) $bookings->sum(
+                fn ($booking) => (float) ($selectedPayments->get($booking->booking_id)->total ?? 0)
+            );
+        });
+        $categoryNames = Category::whereIn('id', [1, 2, 3, 4, 5])->pluck('category', 'id');
+        $displayNames = [1 => 'Bike Taxi', 2 => 'Delivery', 3 => 'Courier', 4 => 'Auto', 5 => 'Rentals'];
+        $topServices = $serviceTotals->sortDesc()->map(function ($amount, $categoryId) use ($categoryNames, $displayNames, $selectedPeriodEarnings) {
+            $categoryId = (int) $categoryId;
+            return [
+                'id' => $categoryId,
+                'name' => (string) ($displayNames[$categoryId] ?? $categoryNames->get($categoryId) ?: 'Service #' . $categoryId),
+                'earnings' => round($amount, 2),
+                'percentage' => $selectedPeriodEarnings > 0 ? round(($amount / $selectedPeriodEarnings) * 100, 2) : 0.0,
+            ];
+        })->values();
+
+        // Build the chart from completed bookings and their persisted payments.
+        $chartData = (clone $filteredQuery)->where('status', 2)->get(['booking_id', 'created_at'])
+            ->groupBy(fn ($booking) => Carbon::parse($booking->created_at)->format('Y-m-d'))
+            ->map(function ($bookings, $date) use ($selectedPayments) {
+                $amount = $bookings->sum(fn ($booking) => (float) ($selectedPayments->get($booking->booking_id)->total ?? 0));
+                return ['date' => $date, 'amount' => round($amount, 2)];
+            })->sortKeys()->values();
+
+        // No booking commission rule exists in this codebase. platform_fee is
+        // subscription accounting, not a per-booking commission.
+        $commission = null;
+        $netEarnings = null;
+        $avgOrderValue = $selectedCompletedCount > 0 ? $selectedPeriodEarnings / $selectedCompletedCount : 0.0;
+
         // 4. Paginate detailed bookings
         $perPage = (int) $request->get('per_page', 15);
         $paginatedBookings = $filteredQuery->orderBy('created_at', 'desc')->paginate($perPage);
@@ -139,7 +184,12 @@ class EarningsReportController extends Controller
         $customerIds = collect($paginatedBookings->items())->pluck('customer_id')->filter()->toArray();
         $categoryIds = collect($paginatedBookings->items())->pluck('category')->filter()->toArray();
 
-        $driversMap = !empty($driverIds) ? Driver::whereIn('id', $driverIds)->get()->keyBy('id') : collect();
+        $driversMap = $vendorRiders->flatMap(function ($driver) {
+            return [
+                (string) $driver->id => $driver,
+                (string) $driver->userid => $driver,
+            ];
+        });
         $customersMap = !empty($customerIds) ? User::whereIn('id', $customerIds)->get()->keyBy('id') : collect();
         $categoriesMap = !empty($categoryIds) ? Category::whereIn('id', $categoryIds)->get()->keyBy('id') : collect();
         $paymentsMap = !empty($bookingIds) ? DB::table('booking_payment')->whereIn('booking_id', $bookingIds)->get()->keyBy('booking_id') : collect();
@@ -207,7 +257,18 @@ class EarningsReportController extends Controller
                     'completed_bookings' => $completedBookingsCount,
                     'in_progress_bookings' => $inProgressBookingsCount,
                     'cancelled_bookings' => $cancelledBookingsCount,
+                    'selected_total_bookings' => $selectedTotalBookings,
+                    'selected_completed_bookings' => $selectedCompletedCount,
+                    'selected_incomplete_bookings' => $selectedIncompleteCount,
+                    'selected_cancelled_bookings' => $selectedCancelledCount,
+                    'avg_order_value' => round($avgOrderValue, 2),
+                    'commission' => $commission,
+                    'net_earnings' => $netEarnings,
+                    'commission_available' => false,
+                    'commission_note' => 'No per-booking commission rule is configured; net earnings cannot be calculated from existing business rules.',
                 ],
+                'earnings_chart' => $chartData,
+                'top_services' => $topServices,
                 'filters_applied' => [
                     'period' => $period,
                     'start_date' => $startDate ? $startDate->toDateTimeString() : null,

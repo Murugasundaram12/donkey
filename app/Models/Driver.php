@@ -11,9 +11,7 @@ class Driver extends Model
     use HasFactory;
     protected $table = 'driver';
 
-    protected $fillable = [
-        'riderAgreement',
-    ];
+    protected $guarded = [];
 
 
     public function subscriber(): BelongsTo

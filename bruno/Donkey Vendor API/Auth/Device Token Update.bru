@@ -1,0 +1,30 @@
+meta {
+  name: Device Token Update
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/device-token
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "device_token": "SAMPLE_FCM_DEVICE_TOKEN_FOR_TESTING"
+  }
+}
+
+docs {
+  Updates the authenticated vendor's FCM device token. Token is saved to subscriber.device_token.
+}

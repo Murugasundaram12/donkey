@@ -28,7 +28,11 @@ class BookingController extends Controller
                 $query->where('assigned_subscriber_id', $vendor->id)
                       ->orWhere('provider_accepted_by', $vendor->id);
                 if (!empty($pincodes)) {
-                    $query->orWhereIn('pincode', $pincodes);
+                    $query->orWhere(function ($available) use ($pincodes) {
+                        $available->whereNull('assigned_subscriber_id')
+                            ->whereNull('provider_accepted_by')
+                            ->whereIn('pincode', $pincodes);
+                    });
                 }
             });
     }

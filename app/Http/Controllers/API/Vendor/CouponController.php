@@ -17,7 +17,7 @@ class CouponController extends Controller
     {
         $vendor = $request->user();
 
-        $subscribersPin = json_decode($vendor->pincode, true);
+        $subscribersPin = json_decode((string) $vendor->pincode, true);
         $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
         $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
 
@@ -25,7 +25,9 @@ class CouponController extends Controller
             ->where(function ($q) use ($vendor, $pincodes) {
                 $q->where('created_by', $vendor->id);
                 if (!empty($pincodes)) {
-                    $q->orWhereIn('pincode_id', $pincodes);
+                    $q->orWhere(function ($legacy) use ($pincodes) {
+                        $legacy->whereNull('created_by')->whereIn('pincode_id', $pincodes);
+                    });
                 }
             })
             ->orderBy('created_at', 'desc')
@@ -61,14 +63,16 @@ class CouponController extends Controller
     {
         $vendor = $request->user();
 
-        $subscribersPin = json_decode($vendor->pincode, true);
+        $subscribersPin = json_decode((string) $vendor->pincode, true);
         $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
         $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
 
         $query = Coupon::where(function ($q) use ($vendor, $pincodes) {
             $q->where('created_by', $vendor->id);
             if (!empty($pincodes)) {
-                $q->orWhereIn('pincode_id', $pincodes);
+                $q->orWhere(function ($legacy) use ($pincodes) {
+                    $legacy->whereNull('created_by')->whereIn('pincode_id', $pincodes);
+                });
             }
         });
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\User;
+use App\Models\Booking;
 use App\Services\VendorNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -101,7 +102,7 @@ class RiderController extends Controller
         $vendor = $request->user();
 
         // 1. Pincode Validation: Must belong to authenticated vendor's assigned pincodes
-        $vendorPincodes = json_decode($vendor->pincode, true);
+        $vendorPincodes = json_decode((string) $vendor->pincode, true);
         $vendorPincodes = is_array($vendorPincodes) ? array_map('intval', array_values($vendorPincodes)) : [];
 
         $inputPincodes = $request->pincode;
@@ -532,6 +533,67 @@ class RiderController extends Controller
         ]);
     }
 
+    /**
+     * Vendor rider overview. Online/offline are approved riders only; pending
+     * and rejected riders are returned as separate counts so totals reconcile.
+     */
+    public function overview(Request $request)
+    {
+        $vendor = $request->user();
+        $riders = Driver::where('subscriberId', $vendor->id)->where('status', 1)->get();
+        $userIds = $riders->pluck('userid')->filter()->values();
+        $liveUsers = User::whereIn('id', $userIds)->where('is_live', 1)->get()->keyBy('id');
+
+        $identityIds = $riders->flatMap(function ($rider) {
+            return [(string) $rider->id, (string) $rider->userid];
+        })->filter()->unique()->values()->all();
+
+        $engagedIdentities = [];
+        if (!empty($identityIds)) {
+            $engagedIdentities = Booking::query()
+                ->where('status', 1)
+                ->where(function ($query) use ($vendor) {
+                    $query->where('assigned_subscriber_id', $vendor->id)
+                        ->orWhere('provider_accepted_by', $vendor->id);
+                })
+                ->where(function ($query) use ($identityIds) {
+                    $query->whereIn('driver_id', $identityIds)->orWhereIn('accepted', $identityIds);
+                })
+                ->get(['driver_id', 'accepted'])
+                ->flatMap(fn ($booking) => [(string) $booking->driver_id, (string) $booking->accepted])
+                ->filter()->unique()->values()->all();
+        }
+
+        $isEngaged = fn ($rider) => in_array((string) $rider->id, $engagedIdentities, true)
+            || in_array((string) $rider->userid, $engagedIdentities, true);
+        $online = $riders->filter(fn ($rider) => $liveUsers->has($rider->userid))->values();
+        $engaged = $online->filter($isEngaged)->values();
+        $offline = $riders->reject(fn ($rider) => $liveUsers->has($rider->userid))->values();
+
+        $formatList = function ($items, $status) {
+            return $items->map(function ($rider) use ($status) {
+                $item = $this->formatRider($rider);
+                $item['online_status'] = $status;
+                return $item;
+            })->values();
+        };
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Rider overview retrieved successfully',
+            'data' => [
+                'total_riders' => $riders->count(),
+                'online_riders' => $online->count(),
+                'engaged_riders' => $engaged->count(),
+                'offline_riders' => $offline->count(),
+                'pending_approval_riders' => Driver::where('subscriberId', $vendor->id)->where('status', 0)->count(),
+                'online' => $formatList($online, 'Online'),
+                'engaged' => $formatList($engaged, 'On Trip'),
+                'offline' => $formatList($offline, 'Offline'),
+            ],
+        ]);
+    }
+
     private function formatRider($r): array
     {
         $statusText = match ((int) $r->status) {
@@ -541,7 +603,7 @@ class RiderController extends Controller
             default => 'Unknown',
         };
 
-        $pincodes = json_decode($r->pincode, true);
+        $pincodes = json_decode((string) $r->pincode, true);
         $pincodes = is_array($pincodes) ? array_values($pincodes) : [];
 
         $user = $r->userid ? User::find($r->userid) : null;

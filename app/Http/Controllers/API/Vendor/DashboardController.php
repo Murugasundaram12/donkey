@@ -33,7 +33,11 @@ class DashboardController extends Controller
             $query->where('assigned_subscriber_id', $vendor->id)
                   ->orWhere('provider_accepted_by', $vendor->id);
             if (!empty($pincodes)) {
-                $query->orWhereIn('pincode', $pincodes);
+                $query->orWhere(function ($available) use ($pincodes) {
+                    $available->whereNull('assigned_subscriber_id')
+                        ->whereNull('provider_accepted_by')
+                        ->whereIn('pincode', $pincodes);
+                });
             }
         });
 
@@ -100,6 +104,8 @@ class DashboardController extends Controller
 
         // Services Summary
         $servicesSummary = (new \App\Http\Controllers\API\Vendor\ServiceController())->getVendorServicesData($vendor);
+        $pincodeCoverage = (new \App\Http\Controllers\API\Vendor\PincodeController())->summary($request)->getData(true)['data'];
+        $couponSummary = (new \App\Http\Controllers\API\Vendor\CouponController())->summary($request)->getData(true)['data'];
 
         return response()->json([
             'status' => true,
@@ -127,6 +133,8 @@ class DashboardController extends Controller
                 'active_coupons_count' => $activeCouponsCount,
                 'notifications_count' => $notificationsCount,
                 'services_summary' => $servicesSummary,
+                'pincode_coverage' => $pincodeCoverage,
+                'coupons_summary' => $couponSummary,
             ]
         ]);
     }

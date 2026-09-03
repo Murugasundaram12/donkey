@@ -136,7 +136,7 @@ class PincodeController extends Controller
 
     private function getVendorPincodes($vendor)
     {
-        $subscribersPin = json_decode($vendor->pincode, true);
+        $subscribersPin = json_decode((string) $vendor->pincode, true);
         $pincodeIds = is_array($subscribersPin) ? array_map('intval', array_values($subscribersPin)) : [];
 
         $usedByPinIds = Pincode::where('usedBy', $vendor->id)->pluck('id')->toArray();

@@ -288,6 +288,33 @@ class AuthController extends Controller
     }
 
     /**
+     * Update FCM Device Token
+     */
+    public function updateDeviceToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'device_token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $vendor = $request->user();
+        $vendor->device_token = $request->input('device_token');
+        $vendor->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Device token updated successfully'
+        ]);
+    }
+
+    /**
      * Format vendor output structure
      */
     private function formatVendorData(Subscriber $vendor): array

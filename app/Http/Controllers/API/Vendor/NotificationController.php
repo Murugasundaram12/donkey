@@ -35,15 +35,19 @@ class NotificationController extends Controller
             ->paginate((int) $request->get('per_page', 15));
 
         $formatted = collect($notifications->items())->map(function ($n) use ($vendor) {
+            $isRead = app(VendorNotificationService::class)->isRead($n, $vendor);
             return [
                 'id' => (int) $n->id,
                 'title' => (string) $n->title,
                 'content' => (string) $n->content,
+                'message' => (string) $n->content,
                 'image_url' => $n->image ? asset('public/' . $n->image) : null,
                 'type' => (int) ($n->type ?? 1),
                 'category' => (string) ($n->category ?: 'System'),
-                'read' => app(VendorNotificationService::class)->isRead($n, $vendor),
+                'is_read' => $isRead,
+                'read' => $isRead,
                 'created_at' => $n->created_at ? $n->created_at->toDateTimeString() : null,
+                'data' => $n->data ?: null,
             ];
         });
 

@@ -12,9 +12,14 @@ class VendorNotificationService
 {
     public const CATEGORIES = ['Payments', 'Riders', 'Bookings', 'System'];
 
-    public function create(Subscriber|int $vendor, string $category, string $title, string $content, array $data = []): Pushnotification
+    public function create(Subscriber|int|null $vendor, string $category, string $title, string $content, array $data = []): Pushnotification
     {
-        $vendorId = $vendor instanceof Subscriber ? $vendor->id : $vendor;
+        $vendorId = null;
+        if ($vendor instanceof Subscriber) {
+            $vendorId = $vendor->id;
+        } elseif (is_numeric($vendor) && (int) $vendor > 0) {
+            $vendorId = (int) $vendor;
+        }
 
         $notification = Pushnotification::create([
             'subscriber_id' => $vendorId,
@@ -25,7 +30,10 @@ class VendorNotificationService
             'data' => $data ?: null,
         ]);
 
-        $this->sendPush($vendor instanceof Subscriber ? $vendor : Subscriber::find($vendorId), $notification);
+        if ($vendorId) {
+            $this->sendPush($vendor instanceof Subscriber ? $vendor : Subscriber::find($vendorId), $notification);
+        }
+
         return $notification;
     }
 
@@ -33,14 +41,16 @@ class VendorNotificationService
     {
         return Pushnotification::query()
             ->where(function ($query) use ($vendor) {
-                // NULL is reserved for admin-created global/system notices.
-                $query->whereNull('subscriber_id')->orWhere('subscriber_id', $vendor->id);
+                // NULL or 0 is reserved for admin-created global/system notices.
+                $query->whereNull('subscriber_id')
+                    ->orWhere('subscriber_id', 0)
+                    ->orWhere('subscriber_id', $vendor->id);
             });
     }
 
     public function isRead(Pushnotification $notification, Subscriber $vendor): bool
     {
-        if ($notification->subscriber_id === null) {
+        if (empty($notification->subscriber_id)) {
             return DB::table('pushnotification_reads')->where([
                 'pushnotification_id' => $notification->id,
                 'subscriber_id' => $vendor->id,
@@ -56,7 +66,7 @@ class VendorNotificationService
 
     public function markRead(Pushnotification $notification, Subscriber $vendor): void
     {
-        if ($notification->subscriber_id === null) {
+        if (empty($notification->subscriber_id)) {
             DB::table('pushnotification_reads')->updateOrInsert(
                 ['pushnotification_id' => $notification->id, 'subscriber_id' => $vendor->id],
                 ['read_at' => now(), 'updated_at' => now(), 'created_at' => now()]

@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Driver;
 use App\Models\Pincode;
 use App\Models\Pincodebasedcategory;
+use App\Models\Coupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -113,12 +114,18 @@ class ServiceController extends Controller
     {
         $vendor = $request->user();
         $services = $this->getVendorServicesData($vendor);
+        $pincodes = (new PincodeController())->summary($request)->getData(true)['data'];
+        $coupons = $this->getVendorCouponSummary($vendor);
 
         return response()->json([
             'success' => true,
             'status' => true,
             'message' => 'Service dashboard summary retrieved successfully',
-            'data' => $services,
+            'data' => [
+                'services' => $services,
+                'pincode_coverage' => $pincodes,
+                'coupons' => $coupons,
+            ],
         ]);
     }
 
@@ -127,7 +134,9 @@ class ServiceController extends Controller
      */
     public function getVendorServicesData($vendor): array
     {
-        $categories = Category::orderBy('id', 'asc')->get();
+        $categories = Category::whereIn('id', array_keys(self::$serviceNames))
+            ->orderByRaw('FIELD(id, 1, 2, 4, 3, 5)')
+            ->get();
         $pincodeIds = $this->getVendorPincodeIds($vendor);
 
         $result = [];
@@ -173,9 +182,31 @@ class ServiceController extends Controller
         return $result;
     }
 
+    private function getVendorCouponSummary($vendor): array
+    {
+        $pincodeIds = $this->getVendorPincodeIds($vendor);
+        $pincodes = Pincode::whereIn('id', $pincodeIds)->pluck('pincode')->toArray();
+
+        $query = Coupon::where(function ($q) use ($vendor, $pincodes) {
+            $q->where('created_by', $vendor->id);
+            // Legacy unowned coupons remain visible only when their pincode is
+            // owned by this vendor; another vendor's coupon is never included.
+            if (!empty($pincodes)) {
+                $q->orWhere(function ($legacy) use ($pincodes) {
+                    $legacy->whereNull('created_by')->whereIn('pincode_id', $pincodes);
+                });
+            }
+        });
+
+        $active = (clone $query)->where('status', 1)->count();
+        $inactive = (clone $query)->where('status', '!=', 1)->count();
+
+        return ['active' => $active, 'inactive' => $inactive, 'total' => $active + $inactive];
+    }
+
     private function getVendorPincodeIds($vendor): array
     {
-        $subscribersPin = json_decode($vendor->pincode, true);
+        $subscribersPin = json_decode((string) $vendor->pincode, true);
         $pincodeIds = is_array($subscribersPin) ? array_map('intval', array_values($subscribersPin)) : [];
 
         $usedByPinIds = Pincode::where('usedBy', $vendor->id)->pluck('id')->toArray();

@@ -190,6 +190,7 @@ Route::prefix('vendor')->group(function () {
         // Auth & Renewal Exempt Routes (accessible even if payment expired)
         Route::get('me', [\App\Http\Controllers\API\Vendor\AuthController::class, 'me']);
         Route::post('password/change', [\App\Http\Controllers\API\Vendor\AuthController::class, 'changePassword']);
+        Route::post('device-token', [\App\Http\Controllers\API\Vendor\AuthController::class, 'updateDeviceToken']);
         Route::post('logout', [\App\Http\Controllers\API\Vendor\AuthController::class, 'logout']);
 
         // Payments / Subscription Renewal Routes (accessible when expired to allow renewal)
@@ -219,6 +220,7 @@ Route::prefix('vendor')->group(function () {
 
             // Riders
             Route::get('riders/approvals', [\App\Http\Controllers\API\Vendor\RiderController::class, 'approvals']);
+            Route::get('riders/overview', [\App\Http\Controllers\API\Vendor\RiderController::class, 'overview']);
             Route::post('riders/{id}/approve', [\App\Http\Controllers\API\Vendor\RiderController::class, 'approve']);
             Route::post('riders/{id}/reject', [\App\Http\Controllers\API\Vendor\RiderController::class, 'reject']);
             Route::get('riders/online', [\App\Http\Controllers\API\Vendor\RiderController::class, 'online']);
