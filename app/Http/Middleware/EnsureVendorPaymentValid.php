@@ -40,19 +40,7 @@ class EnsureVendorPaymentValid
         }
 
         // 2. Check subscription / payment expiration
-        $isExpired = false;
-        if (!empty($user->expiryDate)) {
-            try {
-                $expiry = Carbon::parse($user->expiryDate)->endOfDay();
-                $isExpired = $expiry->isPast();
-            } catch (\Throwable $e) {
-                $isExpired = (isset($user->status) && (int) $user->status === 0);
-            }
-        } else {
-            $isExpired = (isset($user->status) && (int) $user->status === 0);
-        }
-
-        if ($isExpired) {
+        if (!Subscriber::isSubscriberActive($user)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your subscription/payment has expired. Please renew your payment.'

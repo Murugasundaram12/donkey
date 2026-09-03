@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
@@ -21,6 +22,7 @@ class AuthController extends Controller
             'email' => 'nullable|string',
             'mobile' => 'nullable|string',
             'password' => 'required|string',
+            'device_token' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -55,11 +57,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if ($request->filled('device_token')) {
-            $vendor->device_token = $request->input('device_token');
-            $vendor->save();
-        }
-
         // Check blocked status
         if (isset($vendor->blockedstatus) && (int)$vendor->blockedstatus === 0) {
             return response()->json([
@@ -68,7 +65,32 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Generate Sanctum access token (allowed even if subscription expired so vendor can access renewal APIs)
+        // Check subscription expiry
+        if (!empty($vendor->expiryDate)) {
+            try {
+                if (Carbon::parse($vendor->expiryDate)->endOfDay()->isPast()) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Your subscription has expired. Please renew your subscription to continue.',
+                        'data' => [
+                            'payment_status' => 0,
+                            'payment_expiry' => Carbon::parse($vendor->expiryDate)->format('Y-m-d'),
+                        ]
+                    ], 403);
+                }
+            } catch (\Throwable $e) {
+                // Ignore parse errors safely
+            }
+        }
+
+        // Update last login and device token (always update without comparing)
+        if (Schema::hasColumn('subscriber', 'last_login')) {
+            $vendor->last_login = date("Y-m-d H:i:s");
+        }
+        $vendor->device_token = $request->input('device_token');
+        $vendor->save();
+
+        // Generate Sanctum access token
         $token = $vendor->createToken('vendor_app_token')->plainTextToken;
 
         return response()->json([

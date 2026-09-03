@@ -230,4 +230,74 @@ class VendorNotificationTest extends TestCase
         $resA2->assertJson(['data' => ['unread_count' => 0]]);
         $resB2->assertJson(['data' => ['unread_count' => 1]]);
     }
+
+    public function test_vendor_can_send_test_notification()
+    {
+        $vendor = $this->createVendor(['device_token' => 'TEST_DEVICE_TOKEN_999']);
+        $token = $vendor->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/vendor/notifications/send-test', [
+                'category' => 'System',
+                'title' => 'Test Notification',
+                'content' => 'This is a test notification from Bruno.',
+                'data' => [
+                    'deep_link' => 'booking_details',
+                    'booking_id' => 'BK-1001'
+                ]
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'status' => true,
+                'message' => 'Test notification sent successfully',
+                'data' => [
+                    'title' => 'Test Notification',
+                    'content' => 'This is a test notification from Bruno.',
+                    'category' => 'System',
+                    'is_read' => false,
+                    'data' => [
+                        'deep_link' => 'booking_details',
+                        'booking_id' => 'BK-1001'
+                    ]
+                ]
+            ]);
+
+        $this->assertDatabaseHas('pushnotifications', [
+            'subscriber_id' => $vendor->id,
+            'title' => 'Test Notification',
+            'category' => 'System',
+        ]);
+    }
+
+    public function test_expired_vendor_cannot_send_test_notification_and_record_not_created()
+    {
+        $expiredVendor = $this->createVendor([
+            'device_token' => 'EXPIRED_DEVICE_TOKEN',
+            'expiryDate' => '2020-01-01 23:59:59',
+        ]);
+        $token = $expiredVendor->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/vendor/notifications/send-test', [
+                'category' => 'System',
+                'title' => 'Expired Test Notification',
+                'content' => 'This should be blocked.',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'status' => false,
+                'message' => 'Your subscription/payment has expired. Please renew your payment.',
+            ]);
+
+        $this->assertDatabaseMissing('pushnotifications', [
+            'subscriber_id' => $expiredVendor->id,
+            'title' => 'Expired Test Notification',
+        ]);
+    }
 }

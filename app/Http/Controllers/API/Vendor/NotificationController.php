@@ -95,8 +95,49 @@ class NotificationController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'All notifications marked as read'
-            , 'data' => ['updated' => $updated]
+            'message' => 'All notifications marked as read',
+            'data' => ['updated' => $updated]
         ]);
+    }
+
+    /**
+     * Send Test Notification to Authenticated Vendor
+     */
+    public function sendTest(Request $request)
+    {
+        $request->validate([
+            'category' => ['nullable', 'string', Rule::in(VendorNotificationService::CATEGORIES)],
+            'title' => 'required|string',
+            'content' => 'required|string',
+            'data' => 'nullable|array',
+        ]);
+
+        $vendor = $request->user();
+        $category = $request->input('category', 'System');
+        $title = $request->input('title');
+        $content = $request->input('content');
+        $data = $request->input('data', []);
+
+        $notification = app(VendorNotificationService::class)->create(
+            $vendor,
+            $category,
+            $title,
+            $content,
+            $data
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Test notification sent successfully',
+            'data' => [
+                'id' => (int) $notification->id,
+                'title' => (string) $notification->title,
+                'content' => (string) $notification->content,
+                'category' => (string) $notification->category,
+                'is_read' => false,
+                'data' => $notification->data,
+                'created_at' => $notification->created_at ? $notification->created_at->toDateTimeString() : null,
+            ]
+        ], 200);
     }
 }

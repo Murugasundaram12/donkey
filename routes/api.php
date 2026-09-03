@@ -254,6 +254,7 @@ Route::prefix('vendor')->group(function () {
             Route::get('notifications/unread-count', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'unreadCount']);
             Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
             Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
+            Route::post('notifications/send-test', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'sendTest']);
 
             // Earnings & Reports
             Route::get('earnings-reports', [\App\Http\Controllers\API\Vendor\EarningsReportController::class, 'index']);
