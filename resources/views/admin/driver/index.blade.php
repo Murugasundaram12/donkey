@@ -155,12 +155,22 @@ input:checked[type="checkbox"]::after {
 
                                         <td>{{$driver->subscribername}}</td>
                                         <td>
-                                            @php $drpin=json_decode($driver->pincode);
-                                            foreach($pincode as $pin) { @endphp
-                                            @if(in_array($pin->id, $drpin))
-                                            {{ $pin->pincode }}
-                                            @endif
-                                            @php } @endphp
+                                            @php
+                                                $drpin = json_decode($driver->pincode, true);
+                                                if (!is_array($drpin) && !empty($driver->pincode)) {
+                                                    $drpin = explode(',', $driver->pincode);
+                                                }
+                                                $drpin = array_map('intval', array_filter((array)$drpin));
+                                                $driverPins = [];
+                                                if (!empty($drpin) && !empty($pincode)) {
+                                                    foreach ($pincode as $pin) {
+                                                        if (in_array((int)$pin->id, $drpin, true)) {
+                                                            $driverPins[] = $pin->pincode;
+                                                        }
+                                                    }
+                                                }
+                                            @endphp
+                                            {!! !empty($driverPins) ? implode('<br>', $driverPins) : '-' !!}
                                         </td>
                                         <td>{{$driver->mobile}}</td>
                                         <td>

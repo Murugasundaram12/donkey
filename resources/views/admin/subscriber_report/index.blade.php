@@ -114,18 +114,25 @@
 
                                                     <td>
                                                         @php
-                                                            // Ensure $subscriber and $pincode are defined and contain valid data
-                                                            $subspin = json_decode($subscriber?->pincode);
-
-                                                            // Loop through each pincode and check if it's in the subscriber's pincode array
-                                                            foreach ($pincode as $pin) {
-                                                                // Ensure $pin->id exists and is a valid value
-                                                                if (in_array($pin->id, $subspin)) {
-                                                                    // Output the pincode if it's found in the subscriber's pincode array
-                                                                    echo $pin->pincode . '<br>';
+                                                            $subspin = json_decode($subscriber?->pincode, true);
+                                                            if (!is_array($subspin) || empty($subspin)) {
+                                                                if (!empty($subscriber?->pincode)) {
+                                                                    $subspin = explode(',', $subscriber->pincode);
+                                                                } else {
+                                                                    $subspin = \App\Models\Pincodebasedcategory::where('subscriber_id', $subscriber?->id)->pluck('pincode_id')->toArray();
+                                                                }
+                                                            }
+                                                            $subspin = array_map('intval', array_filter((array)$subspin));
+                                                            $subscriberPins = [];
+                                                            if (!empty($subspin) && !empty($pincode)) {
+                                                                foreach ($pincode as $pin) {
+                                                                    if (in_array((int)$pin->id, $subspin, true)) {
+                                                                        $subscriberPins[] = $pin->pincode;
+                                                                    }
                                                                 }
                                                             }
                                                         @endphp
+                                                        {!! !empty($subscriberPins) ? implode('<br>', $subscriberPins) : '-' !!}
                                                     </td>
 
                                                     <td>{{ $subscriber->joined_date }}</td>

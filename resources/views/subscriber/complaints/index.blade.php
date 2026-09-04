@@ -81,10 +81,12 @@
                                                     <td>{{ $complaint->mobile }}</td>
                                                     <td>
                                                         @php
-                                                            $subspin = $complaint->pincode;
-                                                            foreach ($pincode as $pin) {
-                                                                if (in_array($pin->id, $subspin)) {
-                                                                    echo $pin->pincode . '<br>';
+                                                            $subspin = is_array($complaint->pincode) ? $complaint->pincode : (json_decode($complaint->pincode, true) ?? []);
+                                                            if (is_array($subspin)) {
+                                                                foreach ($pincode as $pin) {
+                                                                    if (in_array($pin->id, $subspin)) {
+                                                                        echo $pin->pincode . '<br>';
+                                                                    }
                                                                 }
                                                             }
                                                         @endphp
