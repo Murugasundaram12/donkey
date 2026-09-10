@@ -124,9 +124,20 @@ class otherController extends BaseController
 
         $base_price = round($price->amount * $request->distance, 2);
         $subtotal = $base_price + $service_cost;
-        $tax = round($subtotal * 0.18, 2);
-        $tax_split_1 = round($tax / 2, 2);
-        $tax_split_2 = round($tax / 2, 2);
+
+        $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
+        if ($taxRate <= 0) {
+            $tax = 0.0;
+            $tax_split_1 = 0;
+            $tax_split_2 = 0;
+        } else {
+            $tax = round($subtotal * ($taxRate / 100), 2);
+            $taxSplit1Rate = isset($price->tax_split_1) ? (float) $price->tax_split_1 : ($taxRate / 2);
+            $taxSplit2Rate = isset($price->tax_split_2) ? (float) $price->tax_split_2 : ($taxRate / 2);
+            $tax_split_1 = round($subtotal * ($taxSplit1Rate / 100), 2);
+            $tax_split_2 = round($subtotal * ($taxSplit2Rate / 100), 2);
+        }
+
         $total = round($base_price + $tax + $service_cost, 2);
         $total_without_base_price = round($tax + $service_cost, 2);
 
@@ -1335,8 +1346,22 @@ class otherController extends BaseController
                 default => 2
             };
 
-            $tax = 0.18 * ($service_cost + ($price->amount * $distance));
+            $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
             $base = round(($price->amount * $distance));
+            $taxableAmount = $service_cost + ($price->amount * $distance);
+
+            if ($taxRate <= 0) {
+                $tax = 0.0;
+                $tax_split_1 = 0.0;
+                $tax_split_2 = 0.0;
+            } else {
+                $tax = round(($taxRate / 100) * $taxableAmount, 2);
+                $taxSplit1Rate = isset($price->tax_split_1) ? (float) $price->tax_split_1 : ($taxRate / 2);
+                $taxSplit2Rate = isset($price->tax_split_2) ? (float) $price->tax_split_2 : ($taxRate / 2);
+                $tax_split_1 = round(($taxSplit1Rate / 100) * $taxableAmount, 2);
+                $tax_split_2 = round(($taxSplit2Rate / 100) * $taxableAmount, 2);
+            }
+
             $total = round($tax + $service_cost + $base);
 
             DB::table('booking_payment')->insert([
@@ -1344,6 +1369,8 @@ class otherController extends BaseController
                 "booking_id" => $booking_id,
                 "base_price" => $base,
                 "tax" => $tax,
+                "tax_split_1" => $tax_split_1,
+                "tax_split_2" => $tax_split_2,
                 "total" => $total,
                 "service_cost" => $service_cost,
                 "coupon_amount" => $d->get('coupon_amount') ?: null,
