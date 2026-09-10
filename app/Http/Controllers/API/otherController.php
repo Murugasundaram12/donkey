@@ -122,7 +122,11 @@ class otherController extends BaseController
         ];
         $service_cost = $serviceCostMap[$request->category] ?? 2;
 
-        $base_price = round($price->amount * $request->distance, 2);
+        $distance = (float) $request->distance;
+        $category = (int) $request->category;
+        $billingDistance = ($category === 3 && $distance > 0 && $distance < 1.0) ? 1.0 : $distance;
+
+        $base_price = round($price->amount * $billingDistance, 2);
         $subtotal = $base_price + $service_cost;
 
         $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
@@ -143,8 +147,8 @@ class otherController extends BaseController
 
         return response()->json([
             'data' => [
-                'total' => (int) $total,
-                'base_price' => (int) $base_price,
+                'total' => (int) round($total),
+                'base_price' => (int) round($base_price),
                 'tax' => (float) $tax,
                 'tax_split_2' => (int) $tax_split_2,
                 'tax_split_1' => (int) $tax_split_1,
@@ -1346,9 +1350,13 @@ class otherController extends BaseController
                 default => 2
             };
 
+            $distanceVal = (float) $distance;
+            $categoryVal = (int) $category;
+            $billingDistance = ($categoryVal === 3 && $distanceVal > 0 && $distanceVal < 1.0) ? 1.0 : $distanceVal;
+
             $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
-            $base = round(($price->amount * $distance));
-            $taxableAmount = $service_cost + ($price->amount * $distance);
+            $base = round(($price->amount * $billingDistance));
+            $taxableAmount = $service_cost + ($price->amount * $billingDistance);
 
             if ($taxRate <= 0) {
                 $tax = 0.0;
