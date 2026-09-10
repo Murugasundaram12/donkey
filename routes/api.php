@@ -246,6 +246,7 @@ Route::prefix('vendor')->group(function () {
 
             // Documents
             Route::get('documents', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'index']);
+            Route::get('documents/{type}/file', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'showFile']);
             Route::post('documents', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'store']);
             Route::delete('documents/{type}', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'destroy']);
 

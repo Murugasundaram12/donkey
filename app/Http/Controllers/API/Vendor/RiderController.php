@@ -631,14 +631,47 @@ class RiderController extends Controller
             'ifsccode' => (string) ($r->ifsccode ?? ''),
             'licenceexpiry' => (string) ($r->licenceexpiry ?? ''),
             'aadhar_no' => (string) ($r->aadharNo ?? ''),
-            'profile_image' => $profileImage ? asset('subscriber/driver/profile/' . $profileImage) : null,
-            'aadhar_front_image' => $r->aadharFrontImage ? asset('subscriber/driver/aadhar/' . $r->aadharFrontImage) : null,
-            'aadhar_back_image' => $r->aadharBackImage ? asset('subscriber/driver/aadhar/back/' . $r->aadharBackImage) : null,
-            'driving_licence' => $r->drivingLicence ? asset('subscriber/driver/drivingLicence/' . $r->drivingLicence) : null,
-            'rc_book' => $r->rcbook ? asset('subscriber/driver/rcbook/' . $r->rcbook) : null,
-            'bike_image' => $r->bike ? asset('subscriber/driver/bike/' . $r->bike) : null,
-            'customer_document' => $r->customerdocument ? asset('subscriber/driver/document/' . $r->customerdocument) : null,
+            'profile_image' => $this->resolveRiderDocumentUrl($profileImage, 'subscriber/driver/profile'),
+            'aadhar_front_image' => $this->resolveRiderDocumentUrl($r->aadharFrontImage, 'subscriber/driver/aadhar'),
+            'aadhar_back_image' => $this->resolveRiderDocumentUrl($r->aadharBackImage, 'subscriber/driver/aadhar/back'),
+            'driving_licence' => $this->resolveRiderDocumentUrl($r->drivingLicence, 'subscriber/driver/drivingLicence'),
+            'rc_book' => $this->resolveRiderDocumentUrl($r->rcbook, 'subscriber/driver/rcbook'),
+            'bike_image' => $this->resolveRiderDocumentUrl($r->bike, 'subscriber/driver/bike'),
+            'customer_document' => $this->resolveRiderDocumentUrl($r->customerdocument, 'subscriber/driver/document'),
             'created_at' => $r->created_at ? $r->created_at->toDateTimeString() : null,
         ];
+    }
+
+    /**
+     * Resolve Public Rider Document URL only if the physical file exists.
+     */
+    private function resolveRiderDocumentUrl(?string $filename, string $relativePath): ?string
+    {
+        if (empty($filename)) {
+            return null;
+        }
+
+        $safeFilename = basename($filename);
+
+        if ($safeFilename === '.' || $safeFilename === '..' || empty($safeFilename)) {
+            return null;
+        }
+
+        // Rider document/image values must represent an actual filename.
+        if (!str_contains($safeFilename, '.')) {
+            return null;
+        }
+
+        $cleanRelativePath = trim($relativePath, '/');
+
+        $candidatePath = public_path(
+            $cleanRelativePath . '/' . $safeFilename
+        );
+
+        if (file_exists($candidatePath) && is_file($candidatePath)) {
+            return asset($cleanRelativePath . '/' . $safeFilename);
+        }
+
+        return null;
     }
 }
