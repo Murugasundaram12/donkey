@@ -73,11 +73,10 @@ class SubscriberController extends Controller
         $subscriber = Subscriber::whereIn('created_by', $adminIds)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
         //dd($subscriber);
         $pincode = Pincode::all();
-        $id = $subscriber->getCollection()->pluck('created_by');
+        $id = method_exists($subscriber, 'getCollection') ? $subscriber->getCollection()->pluck('created_by') : $subscriber->pluck('created_by');
         $role = Role::whereIn('id', $id)->get();
 
         $empolyee_id = Admin::whereIn('id', $id)->get();
@@ -106,8 +105,7 @@ class SubscriberController extends Controller
         })
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         $pincode = Pincode::all();
         $roleName = collect();

@@ -152,14 +152,14 @@
                                     </thead>
                                     <tbody>
                                         @php $subscriberPage = $subscriber; @endphp
-                                        <?php $i = $subscriberPage->firstItem() ?? 1; ?>
+                                        <?php $i = method_exists($subscriberPage, 'firstItem') ? ($subscriberPage->firstItem() ?? 1) : 1; ?>
                                         @foreach ($subscriber as $subscriber)
                                             <tr>
 
 
                                                 <td>{{ $i}}</td>
                                                 <td>{{$subscriber->subscriberId}}</td>
-                                                <td>{{ $subscriber->created_by }}</td>
+                                                <td data-search="{{ $subscriber->created_by }} {{ str_replace(' ', '', (string)$subscriber->created_by) }} {{ str_replace(' - ', '-', (string)$subscriber->created_by) }}">{{ $subscriber->created_by }}</td>
                                                 <td>{{$subscriber->name}}</td>
                                                 <td>{{$subscriber->location}}</td>
                                                 <td>
@@ -185,9 +185,9 @@
                                                 </td>
                                                 <td>{{$subscriber->account_type ? $subscriber->account_type : "N/A"}}</td>
                                                 <td>{{$subscriber->mobile}}</td>
-                                                <td>{{ $subscriber->joined_date }}</td>
+                                                <td data-search="{{ $subscriber->joined_date }} {{ $subscriber->created_at?->format('Y-m-d') }} {{ $subscriber->created_at?->format('d/m/Y') }}">{{ $subscriber->joined_date }}</td>
                                                 @can('Status on')
-                                                    <td>
+                                                    <td data-search="{{ $subscriber->blockedstatus == 0 ? 'Blocked' : ($subscriber->activestatus == 1 ? 'Active' : 'Inactive') }}">
                                                         @if($subscriber->blockedstatus == 0)
                                                             <span class="badge badge-danger">Blocked</span>
                                                         @else
@@ -199,7 +199,7 @@
                                                     </td>
                                                 @endcan
 
-                                                <td>
+                                                <td data-search="{{ $subscriber->blockedstatus == 0 ? 'Unblock' : 'Block' }}">
                                                     @if($subscriber->blockedstatus == 0)
 
                                                         <button id="update_user" data-payer_id="{{$subscriber->id}}"
@@ -214,14 +214,14 @@
                                                     @endif
                                                 </td>
 
-                                                <td>
+                                                <td data-search="">
 
                                                     <a href="{{ url('subscriber/show/' . $subscriber->id)}}"><span
                                                             class="fe fe-24 fe-eye text-warning"></span></a>
                                                     @can('subscriber-edit')
 
                                                         <a href="{{ url('subscriber/' . $subscriber->id)}}"><span
-                                                                class="fe fe-24 fe-edit text-success"></span></a>
+                                                            class="fe fe-24 fe-edit text-success"></span></a>
 
                                                     @endcan
 
@@ -442,6 +442,7 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+                                @if($subscriberPage instanceof \Illuminate\Pagination\AbstractPaginator && $subscriberPage->hasPages())
                                 <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
                                     <div class="text-muted mb-2 mb-md-0">
                                         Showing {{ $subscriberPage->firstItem() ?? 0 }} to {{ $subscriberPage->lastItem() ?? 0 }} of {{ $subscriberPage->total() }} entries
@@ -450,6 +451,7 @@
                                         {{ $subscriberPage->links('pagination::bootstrap-4') }}
                                     </div>
                                 </div>
+                                @endif
                             </div>
                         </div>
                     </div> <!-- simple table -->
@@ -494,13 +496,18 @@
     <script src="https://technext.github.io/tinydash/js/jquery.dataTables.min.js"></script>
     <script src='https://technext.github.io/tinydash/js/dataTables.bootstrap4.min.js'></script>
     <script>
+        var initialSearch = {!! json_encode((string) request('search', '')) !!};
         $('#dataTable-1').DataTable({
             autoWidth: true,
-            paging: false,
-            "lengthMenu": [
-                [16, 32, 64, -1],
-                [16, 32, 64, "All"]
-            ]
+            pageLength: 15,
+            search: {
+                search: initialSearch
+            },
+            lengthMenu: [
+                [15, 30, 64, -1],
+                [15, 30, 64, "All"]
+            ],
+            order: []
         });
     </script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
