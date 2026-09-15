@@ -157,7 +157,7 @@
                                     @else
                                         <td class="left">PLat Form Fee</td>
                                     @endif
-                                    <td class="right">{{ count($pincodes) }}</td>
+                                    <td class="right">{{ is_countable($pincodes) ? count($pincodes) : 0 }}</td>
                                     <td class="center">Nos</td>
                                     <td class="right">{{ number_format($total, 2) }}</td>
                                 </tr>
