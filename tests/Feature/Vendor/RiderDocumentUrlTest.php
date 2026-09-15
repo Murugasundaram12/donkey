@@ -330,6 +330,8 @@ class RiderDocumentUrlTest extends TestCase
                             'rc_book',
                             'bike_image',
                             'customer_document',
+                            'insurance',
+                            'rider_agreement',
                             'created_at',
                         ]
                     ]
@@ -340,9 +342,9 @@ class RiderDocumentUrlTest extends TestCase
         $foundRider = collect($items)->firstWhere('id', $rider->id);
         $this->assertNotNull($foundRider);
 
-        // Ensure PAN, insurance, riderAgreement are NOT in the response
+        // Ensure unsupported pan_card is NOT in the response, while confirmed insurance & rider_agreement are present
         $this->assertArrayNotHasKey('pan_card', $foundRider);
-        $this->assertArrayNotHasKey('insurance', $foundRider);
-        $this->assertArrayNotHasKey('riderAgreement', $foundRider);
+        $this->assertArrayHasKey('insurance', $foundRider);
+        $this->assertArrayHasKey('rider_agreement', $foundRider);
     }
 }

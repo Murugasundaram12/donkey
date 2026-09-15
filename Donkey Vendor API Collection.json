@@ -1653,11 +1653,6 @@
             "method": "PUT",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
                 "key": "Accept",
                 "value": "application/json",
                 "type": "text"
@@ -1676,16 +1671,280 @@
                 }
               ]
             },
+            "description": "### Update Rider Details\n\nUpdates an existing rider belonging to the authenticated vendor.\n\n#### 1. Authentication Requirements\n- **Middleware**: `auth:sanctum`, `EnsureVendorAuthenticated`, `vendor.payment` (`EnsureVendorPaymentValid`)\n- **Header**: `Authorization: Bearer {{token}}`\n- **Access Control**: Only authenticated, active, and unblocked vendors (`Subscriber`) with an active (non-expired) subscription can update riders.\n\n#### 2. URL & Path Parameter\n- **Method**: `PUT` or `PATCH` (also supports `POST` with `_method: PUT` when uploading multipart files in PHP/Laravel)\n- **Endpoint**: `{{baseUrl}}/api/vendor/riders/{{riderId}}`\n- **Path Parameter `rider_id` (`{{riderId}}`)**: Primary key integer ID of the rider (`driver.id`). The rider must belong to the authenticated vendor (`subscriberId == vendor.id`).\n\n#### 3. Request Headers\n- `Accept: application/json` (Required)\n- `Authorization: Bearer {{token}}` (Required)\n- `Content-Type: multipart/form-data` (Required when uploading files/documents)\n- `Content-Type: application/json` (When sending raw JSON payload without file uploads)\n\n#### 4. Request Body Fields\nAll fields are optional; partial updates are supported. Omitted fields remain unchanged.\n\n**Text / Scalar Fields:**\n- `name` (string, max:255, optional) - Rider full name. Updates both `driver.name` and linked `users.name`.\n- `mobile` (string, max:15, optional) - Mobile phone number. Must be unique across `driver.mobile` and `users.phone` (ignoring current rider). Updates both `driver.mobile` and linked `users.phone`.\n- `email` (string, email, nullable, optional) - Email address. Must be unique across `driver.email` and `users.email` (ignoring current rider). Updates both `driver.email` and linked `users.email`.\n- `password` (string, min:6, nullable, optional) - New account password. Updates hashed password on both `driver` and linked `users` table, and plaintext on `driver.source`.\n- `location` (string, max:255, nullable, optional) - Operating zone / address. Updates `driver.location`.\n- `pincode` (string or array, optional) - Assigned service pincodes. Must belong to the authenticated vendor's assigned pincodes. Updates `driver.pincode`.\n- `language` (string or array, optional) - Supported languages (e.g. `English,Tamil` or `[\"English\", \"Tamil\"]`). Updates `driver.language`.\n- `gender` (string in: `Male`, `Female`, `Other`, `male`, `female`, `other`, optional) - Gender. Updates `users.gender`.\n- `dob` (date YYYY-MM-DD, nullable, optional) - Date of birth. Updates `users.dob` and `users.dop`.\n- `aadharNo` (numeric, optional) - 12-digit Aadhaar number. Unique in `driver.aadharNo` ignoring current rider ID (`unique:driver,aadharNo,{rider_id}`). Updates `driver.aadharNo`.\n- `description` (string, nullable, optional) - Additional notes, bio, or address. Updates `driver.description`.\n- `bankacno` (string, nullable, optional) - Bank account number. Updates `driver.bankacno`.\n- `ifsccode` (string, nullable, optional) - Bank IFSC code. Updates `driver.ifsccode`.\n- `licenceexpiry` (date YYYY-MM-DD, nullable, optional) - Driving licence expiry date. Updates `driver.licenceexpiry`.\n- `vehicleNo` (string, max:100, optional) - Vehicle registration number (e.g. `TN01AB9999`). Updates `driver.vehicleNo`.\n- `vehicleModelNo` (string, max:100, optional) - Vehicle model / make. Updates `driver.vehicleModelNo`.\n- `type` (string or array, optional) - Service category IDs (e.g. `1,2` or `[\"1\", \"2\"]`). Updates `driver.type`.\n\n**Document / File Upload Fields (Max 10MB each):**\n- `profile` / `profile_image` (file: jpeg,jpg,png,gif,webp,pdf) - Profile picture. Saved to `subscriber/driver/profile/`. Updates `users.profile_image` and `users.image`.\n- `aadharFrontImage` (file: pdf,jpeg,jpg,png) - Aadhaar front image. Saved to `subscriber/driver/aadhar/`. Updates `driver.aadharFrontImage`.\n- `aadharBackImage` (file: pdf,jpeg,jpg,png) - Aadhaar back image. Saved to `subscriber/driver/aadhar/back/`. Updates `driver.aadharBackImage`.\n- `drivingLicence` (file: pdf,jpeg,jpg,png) - Driving licence document. Saved to `subscriber/driver/drivingLicence/`. Updates `driver.drivingLicence`.\n- `rcbook` (file: pdf,jpeg,jpg,png) - RC book document. Saved to `subscriber/driver/rcbook/`. Updates `driver.rcbook`.\n- `bike` (file: pdf,jpeg,jpg,png) - Bike / vehicle photo. Saved to `subscriber/driver/bike/`. Updates `driver.bike`.\n- `customerdocument` (file: pdf) - Additional KYC / customer document. Saved to `subscriber/driver/document/`. Updates `driver.customerdocument`.\n- `insurance` (file: pdf,jpeg,jpg,png) - Vehicle insurance document. Saved to `subscriber/driver/insurance/`. Updates `driver.insurance`.\n- `riderAgreement` (file: pdf,jpeg,jpg,png) - Signed rider agreement document. Saved to `subscriber/driver/riderAgreement/`. Updates `driver.riderAgreement`.\n\n**Immutable Fields:**\n- `status`: Rider approval status is NOT modified via this endpoint. Pending riders (`status = 0`) remain pending approval.\n- `subscriberId`: Ownership cannot be transferred.\n\n#### 5. Duplicate Aadhaar Validation Behavior (HTTP 422)\nThe validation rule `unique:driver,aadharNo,{rider_id}` prevents duplicate Aadhaar registrations across drivers. If `aadharNo` matches another rider in the system, returns HTTP 422 with `\"The aadhar no has already been taken.\"`. Submitting the rider's own existing Aadhaar number succeeds.\n\n#### 6. Vendor Ownership & Isolation Behavior (HTTP 404)\nThe lookup enforces `Driver::where('subscriberId', $vendor->id)->where('id', $id)->first()`. If Vendor A attempts to update a rider belonging to Vendor B, access is rejected with `404 Not Found` and message `\"Rider not found or access denied.\"`. Cross-vendor updates are strictly blocked.\n\n#### 7. Rider Not Found Behavior (HTTP 404)\nIf `rider_id` does not exist in the database, returns `404 Not Found` with message `\"Rider not found or access denied.\"`. Run-ready example responses are documented below.",
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Rider John Updated\",\n  \"vehicleNo\": \"TN01AB9999\",\n  \"location\": \"North Zone\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Rider John Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "mobile",
+                  "value": "9876500001",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "riderjohn@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                },
+                {
+                  "key": "gender",
+                  "value": "Male",
+                  "type": "text"
+                },
+                {
+                  "key": "dob",
+                  "value": "1998-05-15",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "Chennai North",
+                  "type": "text"
+                },
+                {
+                  "key": "pincode",
+                  "value": "600001",
+                  "type": "text"
+                },
+                {
+                  "key": "language",
+                  "value": "English,Tamil",
+                  "type": "text"
+                },
+                {
+                  "key": "aadharNo",
+                  "value": "123456789012",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Updated address and details",
+                  "type": "text"
+                },
+                {
+                  "key": "bankacno",
+                  "value": "9876543210123",
+                  "type": "text"
+                },
+                {
+                  "key": "ifsccode",
+                  "value": "SBIN0001234",
+                  "type": "text"
+                },
+                {
+                  "key": "licenceexpiry",
+                  "value": "2030-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "vehicleNo",
+                  "value": "TN01AB9999",
+                  "type": "text"
+                },
+                {
+                  "key": "vehicleModelNo",
+                  "value": "Honda Activa 6G",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "1,2",
+                  "type": "text"
+                },
+                {
+                  "key": "profile",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "aadharFrontImage",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "aadharBackImage",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "drivingLicence",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "rcbook",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "bike",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "customerdocument",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "insurance",
+                  "value": "{{filePath}}",
+                  "type": "file"
+                },
+                {
+                  "key": "riderAgreement",
+                  "value": "{{filePath}}",
+                  "type": "file"
                 }
-              }
+              ]
             }
-          }
+          },
+          "response": [
+            {
+              "name": "200 Success - Rider Updated",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/vendor/riders/{{riderId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": true,\n  \"message\": \"Rider updated successfully\",\n  \"data\": {\n    \"rider\": {\n      \"id\": 1,\n      \"user_id\": 10,\n      \"subscriber_id\": 2,\n      \"name\": \"Rider John Updated\",\n      \"mobile\": \"9876500001\",\n      \"email\": \"riderjohn@example.com\",\n      \"location\": \"North Zone\",\n      \"pincode\": [\n        600001,\n        600002\n      ],\n      \"language\": \"English,Tamil\",\n      \"vehicle_no\": \"TN01AB9999\",\n      \"vehicle_model_no\": \"Honda Activa 6G\",\n      \"status\": 0,\n      \"status_text\": \"Pending Approval\",\n      \"type\": \"1,2\",\n      \"gender\": \"Male\",\n      \"dob\": \"1998-05-15\",\n      \"description\": \"123 Main Street, Chennai\",\n      \"bankacno\": \"9876543210123\",\n      \"ifsccode\": \"SBIN0001234\",\n      \"licenceexpiry\": \"2030-12-31\",\n      \"aadhar_no\": \"123456789012\",\n      \"profile_image\": \"http://127.0.0.1:8000/donkey/subscriber/driver/profile/sample.jpg\",\n      \"aadhar_front_image\": \"http://127.0.0.1:8000/donkey/subscriber/driver/aadhar/sample.jpg\",\n      \"aadhar_back_image\": \"http://127.0.0.1:8000/donkey/subscriber/driver/aadhar/back/sample.jpg\",\n      \"driving_licence\": \"http://127.0.0.1:8000/donkey/subscriber/driver/drivingLicence/sample.jpg\",\n      \"rc_book\": \"http://127.0.0.1:8000/donkey/subscriber/driver/rcbook/sample.jpg\",\n      \"bike_image\": \"http://127.0.0.1:8000/donkey/subscriber/driver/bike/sample.jpg\",\n      \"customer_document\": \"http://127.0.0.1:8000/donkey/subscriber/driver/document/sample.pdf\",\n      \"insurance\": \"http://127.0.0.1:8000/donkey/subscriber/driver/insurance/sample.pdf\",\n      \"rider_agreement\": \"http://127.0.0.1:8000/donkey/subscriber/driver/riderAgreement/sample.pdf\",\n      \"created_at\": \"2026-09-11 10:00:00\"\n    }\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/vendor/riders/{{riderId}}"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": false,\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"mobile\": [\n      \"The mobile has already been taken.\"\n    ],\n    \"pincode\": [\n      \"Selected pincode(s) do not belong to your vendor account.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Duplicate Aadhaar",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/vendor/riders/{{riderId}}"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": false,\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"aadharNo\": [\n      \"The aadhar no has already been taken.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "404 Not Found or Access Denied",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/vendor/riders/{{riderId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": false,\n  \"message\": \"Rider not found or access denied.\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/vendor/riders/{{riderId}}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"message\": \"Unauthenticated.\"\n}"
+            }
+          ]
         }
       ]
     },

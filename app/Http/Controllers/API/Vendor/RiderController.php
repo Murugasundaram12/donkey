@@ -25,7 +25,82 @@ class RiderController extends Controller
         $query = Driver::where('subscriberId', $vendor->id);
 
         if ($request->has('status') && $request->status !== null && $request->status !== '') {
-            $query->where('status', (int) $request->status);
+            $statusParam = $request->status;
+
+            if (is_numeric($statusParam)) {
+                // Numeric status values: preserve existing behaviour
+                $query->where('status', (int) $statusParam);
+            } else {
+                // Semantic status strings: map explicitly; never cast to int blindly
+                switch (strtolower((string) $statusParam)) {
+                    case 'pending':
+                        // Pending Approval: driver.status = 0
+                        $query->where('status', 0);
+                        break;
+
+                    case 'approved':
+                    case 'active':
+                        // Approved / Active: driver.status = 1
+                        $query->where('status', 1);
+                        break;
+
+                    case 'blocked':
+                    case 'rejected':
+                        // Blocked / Rejected: driver.status = 2
+                        $query->where('status', 2);
+                        break;
+
+                    case 'offline':
+                        // Offline: approved/active riders whose linked user is NOT live
+                        $query->where('status', 1);
+                        $approvedUserIds = (clone $query)->pluck('userid')->filter()->values()->all();
+                        $onlineUserIds = User::whereIn('id', $approvedUserIds)
+                            ->where('is_live', 1)
+                            ->pluck('id')
+                            ->all();
+                        $offlineUserIds = array_diff($approvedUserIds, $onlineUserIds);
+                        $query->whereIn('userid', $offlineUserIds);
+                        break;
+
+                    case 'engaged':
+                        // Engaged (On Trip): approved/active + live + has active booking
+                        $query->where('status', 1);
+                        $approvedRiders = (clone $query)->get(['id', 'userid']);
+                        $identityIds = $approvedRiders->flatMap(fn ($r) => [(string) $r->id, (string) $r->userid])
+                            ->filter()->unique()->values()->all();
+
+                        $engagedIdentities = [];
+                        if (!empty($identityIds)) {
+                            $engagedIdentities = Booking::query()
+                                ->where('status', 1)
+                                ->where(function ($q) use ($vendor) {
+                                    $q->where('assigned_subscriber_id', $vendor->id)
+                                      ->orWhere('provider_accepted_by', $vendor->id);
+                                })
+                                ->where(function ($q) use ($identityIds) {
+                                    $q->whereIn('driver_id', $identityIds)
+                                      ->orWhereIn('accepted', $identityIds);
+                                })
+                                ->get(['driver_id', 'accepted'])
+                                ->flatMap(fn ($b) => [(string) $b->driver_id, (string) $b->accepted])
+                                ->filter()->unique()->values()->all();
+                        }
+
+                        // Keep only riders whose id or userid is in the engaged booking set
+                        $engagedRiderIds = $approvedRiders->filter(
+                            fn ($r) => in_array((string) $r->id, $engagedIdentities, true)
+                                    || in_array((string) $r->userid, $engagedIdentities, true)
+                        )->pluck('id')->all();
+
+                        $query->whereIn('id', $engagedRiderIds);
+                        break;
+
+                    default:
+                        // Unknown semantic string: return empty result set safely
+                        $query->whereRaw('1 = 0');
+                        break;
+                }
+            }
         }
 
         if ($request->filled('search')) {
@@ -57,6 +132,7 @@ class RiderController extends Controller
             ]
         ]);
     }
+
 
     /**
      * Add New Rider Under Vendor
@@ -330,14 +406,46 @@ class RiderController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'nullable|string|max:255',
-            'mobile' => 'nullable|string|max:15|unique:driver,mobile,' . $rider->id . '|unique:users,phone,' . $rider->userid,
-            'email' => 'nullable|email|unique:driver,email,' . $rider->id . '|unique:users,email,' . $rider->userid,
-            'vehicleNo' => 'nullable|string|max:100',
-            'vehicleModelNo' => 'nullable|string|max:100',
-            'location' => 'nullable|string',
-        ]);
+        $rules = [
+            'name' => 'sometimes|required|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:driver,email,' . $rider->id . '|unique:users,email,' . ($rider->userid ?: 'NULL'),
+            'mobile' => ['sometimes', 'required', 'string', 'max:15', 'unique:driver,mobile,' . $rider->id, 'unique:users,phone,' . ($rider->userid ?: 'NULL')],
+            'pincode' => 'sometimes|required',
+            'language' => 'sometimes|required',
+            'password' => 'nullable|string|min:6',
+            'dob' => 'nullable|date',
+            'gender' => 'sometimes|required|string|in:Male,Female,Other,male,female,other',
+            'aadharNo' => 'sometimes|required|numeric|unique:driver,aadharNo,' . $rider->id,
+            'description' => 'nullable|string',
+            'bankacno' => 'nullable|string',
+            'ifsccode' => 'nullable|string',
+            'licenceexpiry' => 'nullable|date',
+            'vehicleNo' => 'sometimes|required|string|max:100',
+            'vehicleModelNo' => 'sometimes|required|string|max:100',
+            'type' => 'sometimes|required',
+        ];
+
+        $fileFields = [
+            'profile' => 'file|mimes:jpeg,jpg,png,gif,webp,pdf|max:10240',
+            'profile_image' => 'file|mimes:jpeg,jpg,png,gif,webp,pdf|max:10240',
+            'aadharFrontImage' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'aadharBackImage' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'drivingLicence' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'rcbook' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'bike' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'customerdocument' => 'file|mimes:pdf|max:10240',
+            'insurance' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+            'riderAgreement' => 'file|mimes:pdf,jpeg,jpg,png|max:10240',
+        ];
+
+        foreach ($fileFields as $field => $rule) {
+            if ($request->hasFile($field)) {
+                $rules[$field] = $rule;
+            }
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -347,33 +455,246 @@ class RiderController extends Controller
             ], 422);
         }
 
-        if ($request->filled('name')) {
-            $rider->name = $request->name;
-        }
-        if ($request->filled('mobile')) {
-            $rider->mobile = $request->mobile;
-        }
-        if ($request->filled('email')) {
-            $rider->email = $request->email;
-        }
-        if ($request->filled('vehicleNo')) {
-            $rider->vehicleNo = $request->vehicleNo;
-        }
-        if ($request->filled('vehicleModelNo')) {
-            $rider->vehicleModelNo = $request->vehicleModelNo;
-        }
-        if ($request->filled('location')) {
-            $rider->location = $request->location;
-        }
-        $rider->save();
+        // Validate pincodes against vendor's assigned pincodes if pincode is being updated
+        $inputPincodes = null;
+        if ($request->has('pincode')) {
+            $vendorPincodes = json_decode((string) $vendor->pincode, true);
+            $vendorPincodes = is_array($vendorPincodes) ? array_map('intval', array_values($vendorPincodes)) : [];
 
-        if ($rider->userid) {
-            User::where('id', $rider->userid)->update(array_filter([
-                'name' => $request->name,
-                'phone' => $request->mobile,
-                'email' => $request->email,
-            ]));
+            $inputPincodes = $request->pincode;
+            if (is_string($inputPincodes)) {
+                $decoded = json_decode($inputPincodes, true);
+                $inputPincodes = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $inputPincodes)));
+            }
+            $inputPincodes = is_array($inputPincodes) ? array_map('intval', array_values($inputPincodes)) : [(int)$inputPincodes];
+
+            if (!empty($vendorPincodes)) {
+                $invalidPincodes = array_diff($inputPincodes, $vendorPincodes);
+                if (!empty($invalidPincodes)) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Validation error',
+                        'errors' => [
+                            'pincode' => ['Selected pincode(s) do not belong to your vendor account.']
+                        ]
+                    ], 422);
+                }
+            }
         }
+
+        $uploadedFiles = [];
+
+        try {
+            DB::transaction(function () use ($rider, $request, $inputPincodes, &$uploadedFiles) {
+                // Profile Image Upload
+                $profileImageName = null;
+                if ($request->hasFile('profile') || $request->hasFile('profile_image')) {
+                    @mkdir(public_path('subscriber/driver/profile'), 0755, true);
+                    $file = $request->file('profile') ?: $request->file('profile_image');
+                    $extension = $file->getClientOriginalExtension();
+                    $profileImageName = uniqid() . '.' . $extension;
+                    $targetPath = public_path('subscriber/driver/profile/' . $profileImageName);
+                    $file->move(public_path('subscriber/driver/profile'), $profileImageName);
+                    $uploadedFiles[] = $targetPath;
+                } elseif ($request->filled('profile') && is_string($request->input('profile'))) {
+                    $profileImageName = $request->input('profile');
+                } elseif ($request->filled('profile_image') && is_string($request->input('profile_image'))) {
+                    $profileImageName = $request->input('profile_image');
+                }
+
+                // Driver Documents Upload
+                if ($request->hasFile('aadharFrontImage')) {
+                    @mkdir(public_path('subscriber/driver/aadhar'), 0755, true);
+                    $aadharFrontImage = time() . '.' . $request->aadharFrontImage->extension();
+                    $targetPath = public_path('subscriber/driver/aadhar/' . $aadharFrontImage);
+                    $request->aadharFrontImage->move(public_path('subscriber/driver/aadhar'), $aadharFrontImage);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->aadharFrontImage = $aadharFrontImage;
+                } elseif ($request->filled('aadharFrontImage') && is_string($request->input('aadharFrontImage'))) {
+                    $rider->aadharFrontImage = $request->input('aadharFrontImage');
+                }
+
+                if ($request->hasFile('aadharBackImage')) {
+                    @mkdir(public_path('subscriber/driver/aadhar/back'), 0755, true);
+                    $aadharBackImage = time() . '.' . $request->aadharBackImage->extension();
+                    $targetPath = public_path('subscriber/driver/aadhar/back/' . $aadharBackImage);
+                    $request->aadharBackImage->move(public_path('subscriber/driver/aadhar/back'), $aadharBackImage);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->aadharBackImage = $aadharBackImage;
+                } elseif ($request->filled('aadharBackImage') && is_string($request->input('aadharBackImage'))) {
+                    $rider->aadharBackImage = $request->input('aadharBackImage');
+                }
+
+                if ($request->hasFile('drivingLicence')) {
+                    @mkdir(public_path('subscriber/driver/drivingLicence'), 0755, true);
+                    $drivingLicence = time() . '.' . $request->drivingLicence->extension();
+                    $targetPath = public_path('subscriber/driver/drivingLicence/' . $drivingLicence);
+                    $request->drivingLicence->move(public_path('subscriber/driver/drivingLicence'), $drivingLicence);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->drivingLicence = $drivingLicence;
+                } elseif ($request->filled('drivingLicence') && is_string($request->input('drivingLicence'))) {
+                    $rider->drivingLicence = $request->input('drivingLicence');
+                }
+
+                if ($request->hasFile('rcbook')) {
+                    @mkdir(public_path('subscriber/driver/rcbook'), 0755, true);
+                    $rcbook = time() . '.' . $request->rcbook->extension();
+                    $targetPath = public_path('subscriber/driver/rcbook/' . $rcbook);
+                    $request->rcbook->move(public_path('subscriber/driver/rcbook'), $rcbook);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->rcbook = $rcbook;
+                } elseif ($request->filled('rcbook') && is_string($request->input('rcbook'))) {
+                    $rider->rcbook = $request->input('rcbook');
+                }
+
+                if ($request->hasFile('bike')) {
+                    @mkdir(public_path('subscriber/driver/bike'), 0755, true);
+                    $bike = time() . '.' . $request->bike->extension();
+                    $targetPath = public_path('subscriber/driver/bike/' . $bike);
+                    $request->bike->move(public_path('subscriber/driver/bike'), $bike);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->bike = $bike;
+                } elseif ($request->filled('bike') && is_string($request->input('bike'))) {
+                    $rider->bike = $request->input('bike');
+                }
+
+                if ($request->hasFile('customerdocument')) {
+                    @mkdir(public_path('subscriber/driver/document'), 0755, true);
+                    $customerdocument = time() . '.' . $request->customerdocument->extension();
+                    $targetPath = public_path('subscriber/driver/document/' . $customerdocument);
+                    $request->customerdocument->move(public_path('subscriber/driver/document'), $customerdocument);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->customerdocument = $customerdocument;
+                } elseif ($request->filled('customerdocument') && is_string($request->input('customerdocument'))) {
+                    $rider->customerdocument = $request->input('customerdocument');
+                }
+
+                if ($request->hasFile('insurance')) {
+                    @mkdir(public_path('subscriber/driver/insurance'), 0755, true);
+                    $insurance = time() . '.' . $request->insurance->extension();
+                    $targetPath = public_path('subscriber/driver/insurance/' . $insurance);
+                    $request->insurance->move(public_path('subscriber/driver/insurance'), $insurance);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->insurance = $insurance;
+                } elseif ($request->filled('insurance') && is_string($request->input('insurance'))) {
+                    $rider->insurance = $request->input('insurance');
+                }
+
+                if ($request->hasFile('riderAgreement')) {
+                    @mkdir(public_path('subscriber/driver/riderAgreement'), 0755, true);
+                    $riderAgreement = time() . '.' . $request->riderAgreement->extension();
+                    $targetPath = public_path('subscriber/driver/riderAgreement/' . $riderAgreement);
+                    $request->riderAgreement->move(public_path('subscriber/driver/riderAgreement'), $riderAgreement);
+                    $uploadedFiles[] = $targetPath;
+                    $rider->riderAgreement = $riderAgreement;
+                } elseif ($request->filled('riderAgreement') && is_string($request->input('riderAgreement'))) {
+                    $rider->riderAgreement = $request->input('riderAgreement');
+                }
+
+                // Update scalar driver fields
+                if ($request->has('name')) {
+                    $rider->name = $request->name;
+                }
+                if ($request->has('location')) {
+                    $rider->location = $request->location;
+                }
+                if ($request->has('email')) {
+                    $rider->email = $request->email;
+                }
+                if ($request->has('mobile')) {
+                    $rider->mobile = $request->mobile;
+                }
+                if ($inputPincodes !== null) {
+                    $rider->pincode = json_encode($inputPincodes);
+                }
+                if ($request->has('language')) {
+                    $languageInput = $request->language;
+                    $rider->language = is_array($languageInput) ? implode(',', $languageInput) : (string)$languageInput;
+                }
+                if ($request->has('type')) {
+                    $typeInput = $request->type;
+                    $rider->type = is_array($typeInput) ? implode(',', $typeInput) : (string)$typeInput;
+                }
+                if ($request->has('aadharNo')) {
+                    $rider->aadharNo = $request->aadharNo;
+                }
+                if ($request->has('description')) {
+                    $rider->description = $request->description;
+                }
+                if ($request->has('bankacno')) {
+                    $rider->bankacno = $request->bankacno;
+                }
+                if ($request->has('ifsccode')) {
+                    $rider->ifsccode = $request->ifsccode;
+                }
+                if ($request->has('licenceexpiry')) {
+                    $rider->licenceexpiry = $request->licenceexpiry;
+                }
+                if ($request->has('vehicleNo')) {
+                    $rider->vehicleNo = $request->vehicleNo;
+                }
+                if ($request->has('vehicleModelNo')) {
+                    $rider->vehicleModelNo = $request->vehicleModelNo;
+                }
+                if ($request->filled('password')) {
+                    $rider->source = $request->password;
+                    $rider->password = Hash::make($request->password);
+                }
+
+                $rider->save();
+
+                // Update related User record
+                if ($rider->userid) {
+                    $userUpdates = [];
+                    if ($request->has('name')) {
+                        $userUpdates['name'] = $request->name;
+                    }
+                    if ($request->has('mobile')) {
+                        $userUpdates['phone'] = $request->mobile;
+                    }
+                    if ($request->has('email')) {
+                        $userUpdates['email'] = $request->email;
+                    }
+                    if ($request->has('gender')) {
+                        $userUpdates['gender'] = $request->gender;
+                    }
+                    if ($request->has('dob')) {
+                        $userUpdates['dob'] = $request->dob;
+                        $userUpdates['dop'] = $request->dob;
+                    }
+                    if ($profileImageName) {
+                        $userUpdates['profile_image'] = $profileImageName;
+                        $userUpdates['image'] = $profileImageName;
+                    }
+                    if ($request->filled('password')) {
+                        $userUpdates['password'] = Hash::make($request->password);
+                    }
+                    if (!empty($userUpdates)) {
+                        User::where('id', $rider->userid)->update($userUpdates);
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            foreach ($uploadedFiles as $filePath) {
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update rider. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        app(VendorNotificationService::class)->create(
+            $vendor,
+            'Riders',
+            'Rider Updated Successfully',
+            $rider->name . ' has been updated successfully.',
+            ['event' => 'rider_updated', 'rider_id' => (int) $rider->id]
+        );
 
         return response()->json([
             'status' => true,
@@ -638,6 +959,8 @@ class RiderController extends Controller
             'rc_book' => $this->resolveRiderDocumentUrl($r->rcbook, 'subscriber/driver/rcbook'),
             'bike_image' => $this->resolveRiderDocumentUrl($r->bike, 'subscriber/driver/bike'),
             'customer_document' => $this->resolveRiderDocumentUrl($r->customerdocument, 'subscriber/driver/document'),
+            'insurance' => $this->resolveRiderDocumentUrl($r->insurance, 'subscriber/driver/insurance'),
+            'rider_agreement' => $this->resolveRiderDocumentUrl($r->riderAgreement, 'subscriber/driver/riderAgreement'),
             'created_at' => $r->created_at ? $r->created_at->toDateTimeString() : null,
         ];
     }

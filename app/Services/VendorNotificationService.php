@@ -88,6 +88,12 @@ class VendorNotificationService
         return $updated;
     }
 
+    public function delete(Pushnotification $notification): bool
+    {
+        DB::table('pushnotification_reads')->where('pushnotification_id', $notification->id)->delete();
+        return (bool) $notification->delete();
+    }
+
     private function typeFor(string $category): int
     {
         return match ($category) {

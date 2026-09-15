@@ -300,4 +300,150 @@ class VendorNotificationTest extends TestCase
             'title' => 'Expired Test Notification',
         ]);
     }
+
+    public function test_authenticated_vendor_deletes_own_notification()
+    {
+        $vendor = $this->createVendor();
+        $service = app(VendorNotificationService::class);
+        $notification = $service->create($vendor, 'Bookings', 'Booking Notice', 'Your booking update');
+        $token = $vendor->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/vendor/notifications/' . $notification->id);
+
+        $response->assertStatus(200)
+            ->assertExactJson([
+                'success' => true,
+                'message' => 'Notification deleted successfully',
+            ]);
+
+        $this->assertDatabaseMissing('pushnotifications', [
+            'id' => $notification->id,
+        ]);
+    }
+
+    public function test_vendor_cannot_delete_another_vendors_notification()
+    {
+        $vendorA = $this->createVendor();
+        $vendorB = $this->createVendor();
+        $service = app(VendorNotificationService::class);
+
+        $notificationB = $service->create($vendorB, 'Bookings', 'Vendor B Notice', 'Notice for vendor B');
+        $tokenA = $vendorA->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $tokenA)
+            ->deleteJson('/api/vendor/notifications/' . $notificationB->id);
+
+        $response->assertStatus(403)
+            ->assertExactJson([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ]);
+
+        $this->assertDatabaseHas('pushnotifications', [
+            'id' => $notificationB->id,
+            'subscriber_id' => $vendorB->id,
+        ]);
+    }
+
+    public function test_vendor_cannot_delete_global_system_notification()
+    {
+        $vendor = $this->createVendor();
+        $service = app(VendorNotificationService::class);
+        $globalNotification = $service->create(null, 'System', 'Global Notice', 'Notice for everyone');
+        $token = $vendor->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/vendor/notifications/' . $globalNotification->id);
+
+        $response->assertStatus(403)
+            ->assertExactJson([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ]);
+
+        $this->assertDatabaseHas('pushnotifications', [
+            'id' => $globalNotification->id,
+        ]);
+    }
+
+    public function test_non_existent_notification_id_returns_404()
+    {
+        $vendor = $this->createVendor();
+        $token = $vendor->createToken('test')->plainTextToken;
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/vendor/notifications/99999999');
+
+        $response->assertStatus(404)
+            ->assertExactJson([
+                'success' => false,
+                'message' => 'Notification not found',
+            ]);
+    }
+
+    public function test_unauthenticated_request_returns_401()
+    {
+        $vendor = $this->createVendor();
+        $service = app(VendorNotificationService::class);
+        $notification = $service->create($vendor, 'Bookings', 'Test', 'Content');
+
+        auth()->forgetGuards();
+        $response = $this->flushHeaders()
+            ->deleteJson('/api/vendor/notifications/' . $notification->id);
+
+        $response->assertStatus(401);
+
+        $this->assertDatabaseHas('pushnotifications', [
+            'id' => $notification->id,
+        ]);
+    }
+
+    public function test_deleted_notification_is_no_longer_returned_in_list_and_other_vendor_untouched()
+    {
+        $vendorA = $this->createVendor();
+        $vendorB = $this->createVendor();
+        $service = app(VendorNotificationService::class);
+
+        $nA1 = $service->create($vendorA, 'Bookings', 'Vendor A Notice 1', 'Content A1');
+        $nA2 = $service->create($vendorA, 'Bookings', 'Vendor A Notice 2', 'Content A2');
+        $nB1 = $service->create($vendorB, 'Bookings', 'Vendor B Notice 1', 'Content B1');
+
+        $tokenA = $vendorA->createToken('test')->plainTextToken;
+        $tokenB = $vendorB->createToken('test')->plainTextToken;
+
+        // Vendor A deletes nA1
+        auth()->forgetGuards();
+        $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $tokenA)
+            ->deleteJson('/api/vendor/notifications/' . $nA1->id)
+            ->assertStatus(200);
+
+        // Verify Vendor A list notifications only contains nA2, not nA1
+        auth()->forgetGuards();
+        $resA = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $tokenA)
+            ->getJson('/api/vendor/notifications');
+        $resA->assertStatus(200);
+        $idsA = collect($resA->json('data.items'))->pluck('id');
+        $this->assertFalse($idsA->contains($nA1->id));
+        $this->assertTrue($idsA->contains($nA2->id));
+
+        // Verify Vendor B notifications are untouched
+        auth()->forgetGuards();
+        $resB = $this->flushHeaders()
+            ->withHeader('Authorization', 'Bearer ' . $tokenB)
+            ->getJson('/api/vendor/notifications');
+        $resB->assertStatus(200);
+        $idsB = collect($resB->json('data.items'))->pluck('id');
+        $this->assertTrue($idsB->contains($nB1->id));
+    }
 }

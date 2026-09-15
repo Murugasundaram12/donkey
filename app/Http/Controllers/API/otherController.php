@@ -34,6 +34,8 @@ use App\Models\site;
 use App\Models\Usedcoupon;
 use App\Models\Pincodebasedcategory;
 use App\Models\Category;
+use App\Models\Pushnotification;
+use App\Services\VendorNotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Kutia\Larafirebase\Facades\Larafirebase;
@@ -99,11 +101,14 @@ class otherController extends BaseController
             ]);
         }
 
+        $distance = round((float) $request->distance);
+        $category = (int) $request->category;
+
         $price = DB::table('price')
-            ->where('category', $request->category)
+            ->where('category', $category)
             ->where('pincode', $request->pincode)
-            ->where('range_from', '<=', $request->distance)
-            ->where('range_to', '>=', $request->distance)
+            ->where('range_from', '<=', $distance)
+            ->where('range_to', '>=', $distance)
             ->first();
 
         if (!$price) {
@@ -120,13 +125,9 @@ class otherController extends BaseController
             4 => $subscriber->auto_price ?? 2,
             5 => $subscriber->cab_price ?? 2
         ];
-        $service_cost = $serviceCostMap[$request->category] ?? 2;
+        $service_cost = $serviceCostMap[$category] ?? 2;
 
-        $distance = (float) $request->distance;
-        $category = (int) $request->category;
-        $billingDistance = ($category === 3 && $distance > 0 && $distance < 1.0) ? 1.0 : $distance;
-
-        $base_price = round($price->amount * $billingDistance, 2);
+        $base_price = round($price->amount * $distance, 2);
         $subtotal = $base_price + $service_cost;
 
         $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
@@ -1235,6 +1236,9 @@ class otherController extends BaseController
             $company_id,
             $source
         ) {
+            $distance = round((float) $d->get('distance'));
+            $category = (int) $d->get('category');
+            $pincode = $d->get('pincode');
 
             DB::table('booking')->insert([
                 "booking_id" => $booking_id,
@@ -1245,10 +1249,10 @@ class otherController extends BaseController
                 "external_phone" => $external_phone,
                 "source" => $source,
                 "status" => 0,
-                "category" => $d->get('category'),
-                "distance" => $d->get('distance'),
+                "category" => $category,
+                "distance" => $distance,
                 "duration" => $d->get('duration'),
-                "pincode" => $d->get('pincode'),
+                "pincode" => $pincode,
                 "otp" => $otp,
                 "title" => $d->get('title'),
                 "content" => $d->get('content')
@@ -1328,10 +1332,6 @@ class otherController extends BaseController
             ]);
 
             // **Calculate Price**
-            $distance = $d->get('distance');
-            $category = $d->get('category');
-            $pincode = $d->get('pincode');
-
             $price = DB::table('price')->where('category', $category)->where('pincode', $pincode)
                 ->where('range_from', '<=', $distance)
                 ->where('range_to', '>=', $distance)
@@ -1350,13 +1350,9 @@ class otherController extends BaseController
                 default => 2
             };
 
-            $distanceVal = (float) $distance;
-            $categoryVal = (int) $category;
-            $billingDistance = ($categoryVal === 3 && $distanceVal > 0 && $distanceVal < 1.0) ? 1.0 : $distanceVal;
-
             $taxRate = isset($price->tax) ? (float) $price->tax : 18.0;
-            $base = round(($price->amount * $billingDistance));
-            $taxableAmount = $service_cost + ($price->amount * $billingDistance);
+            $base = (int) round($price->amount * $distance);
+            $taxableAmount = $service_cost + $base;
 
             if ($taxRate <= 0) {
                 $tax = 0.0;
@@ -1370,7 +1366,7 @@ class otherController extends BaseController
                 $tax_split_2 = round(($taxSplit2Rate / 100) * $taxableAmount, 2);
             }
 
-            $total = round($tax + $service_cost + $base);
+            $total = (int) round($tax + $service_cost + $base);
 
             DB::table('booking_payment')->insert([
                 "type" => $d->get('payment_method'),
@@ -1391,6 +1387,36 @@ class otherController extends BaseController
                 $this->notificationtodriverfirebase($pincode, [$booking_id, $from_location_id, $to_location_id, $d->get('user_id'), $distance, $pincode], $category);
             }
         });
+
+        if ($subscriber && \App\Models\Subscriber::isSubscriberActive($subscriber)) {
+            try {
+                $alreadyNotified = Pushnotification::where('subscriber_id', $subscriber->id)
+                    ->where('data->booking_id', (string) $booking_id)
+                    ->exists();
+
+                if (!$alreadyNotified) {
+                    app(VendorNotificationService::class)->create(
+                        $subscriber,
+                        'Bookings',
+                        'New Booking Received',
+                        "You have received a new booking in pincode {$d->get('pincode')}.",
+                        [
+                            'event' => 'new_booking',
+                            'booking_id' => (string) $booking_id,
+                            'pincode' => (string) $d->get('pincode'),
+                            'category' => (string) $d->get('category'),
+                            'deep_link' => 'booking_details',
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Vendor booking notification failed', [
+                    'booking_id' => $booking_id,
+                    'subscriber_id' => $subscriber->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return $this->sendResponse([
             "otp" => $otp,

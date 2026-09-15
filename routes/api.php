@@ -56,6 +56,7 @@ Route::put('updateProfile/{id}', [otherController::class, 'updateProfile'])->nam
 Route::put('updateMobileNumber/{id}', [otherController::class, 'updateMobileNumber'])->name('updateMobileNumber');
 Route::post('forgotPassword', [otherController::class, 'forgot'])->name('api.forgotPassword');
 Route::post('/register', [App\Http\Controllers\API\RegisterController::class, 'register'])->name('api.register');
+Route::post('/registerValidate', [App\Http\Controllers\API\RegisterController::class, 'registerValidate'])->name('api.registerValidate');
 Route::post('/login', [App\Http\Controllers\API\RegisterController::class, 'login'])->name('api.login');
 Route::post('sendMessage', [MessageControler::class, 'createMessage'])->name('sendMessage');
 Route::get('reciveMessage', [MessageControler::class, 'reciveMessage'])->name('reciveMessage');
@@ -256,6 +257,7 @@ Route::prefix('vendor')->group(function () {
             Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
             Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
             Route::post('notifications/send-test', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'sendTest']);
+            Route::delete('notifications/{notification_id}', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'destroy']);
 
             // Earnings & Reports
             Route::get('earnings-reports', [\App\Http\Controllers\API\Vendor\EarningsReportController::class, 'index']);

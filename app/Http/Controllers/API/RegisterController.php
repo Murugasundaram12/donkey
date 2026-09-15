@@ -17,9 +17,71 @@ use DB;
 // use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\OtpMail;
 
 class RegisterController extends BaseController
 {
+    /**
+     * Pre-registration validation api (validation only, does not persist user)
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function registerValidate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required_without:phone|nullable',
+            'phone' => 'required_without:email|nullable',
+            'password' => 'required',
+            'c_password' => 'required|same:password',
+            'country_code' => ['nullable', 'string', 'regex:/^\+[1-9]\d{0,4}$/'],
+            'address1' => 'nullable',
+            'address2' => 'nullable',
+            'device_token' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors(), 422);
+        }
+
+        if ($request->filled('email')) {
+            $user_data_based_email = User::where('email', $request->email)->exists();
+            if ($user_data_based_email) {
+                return $this->sendError('Email address already registered', [], 409);
+            }
+        }
+
+        if ($request->filled('phone')) {
+            $user_data_based_phone = User::where('phone', $request->phone)->exists();
+            if ($user_data_based_phone) {
+                return $this->sendError('Phone number address already registered', [], 409);
+            }
+        }
+
+        $countryCode = $request->input('country_code');
+        if ($countryCode && $countryCode !== '+91') {
+            if (!$request->filled('email')) {
+                return $this->sendError('Validation Error.', ['email' => ['Email is required for international registration.']], 422);
+            }
+
+            $otp = rand(1000, 9999);
+            try {
+                Mail::to($request->email)->send(new OtpMail($otp, $request->all()));
+            } catch (\Throwable $e) {
+                Log::warning('Registration OTP email delivery failed', [
+                    'email' => $request->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return $this->sendResponse(['otp' => $otp], 'Validation Cleared Successfully');
+        }
+
+        return $this->sendResponse(['otp' => ''], 'Validation Cleared Successfully');
+    }
+
     /**
      * Register api
      *

@@ -140,4 +140,42 @@ class NotificationController extends Controller
             ]
         ], 200);
     }
+
+    /**
+     * Delete Notification
+     */
+    public function destroy(Request $request, $id)
+    {
+        $notification = Pushnotification::find($id);
+
+        if (!$notification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found',
+            ], 404);
+        }
+
+        $vendor = $request->user();
+
+        if (empty($notification->subscriber_id) || (int) $notification->subscriber_id !== (int) $vendor->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        $deleted = app(VendorNotificationService::class)->delete($notification);
+
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete notification',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification deleted successfully',
+        ], 200);
+    }
 }
