@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentDetails;
+use App\Models\Subscriber;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -117,6 +118,50 @@ class PaymentController extends Controller
             'message' => 'Payment details retrieved successfully',
             'data' => [
                 'payment' => $this->formatPayment($payment, $vendor)
+            ]
+        ]);
+    }
+
+    /**
+     * Current Subscription Renewal Payment Details for Authenticated Vendor
+     */
+    public function subscriptionPayment(Request $request)
+    {
+        $vendor = $request->user();
+
+        // 1. Determine base subscription price strictly from subscriber.subscription_price via shared helper
+        $pricing = Subscriber::calculateSubscriptionPricing($vendor);
+
+        // 2. Determine current payment validity / status
+        $paymentStatus = 1;
+        if (isset($vendor->blockedstatus) && (int) $vendor->blockedstatus === 0) {
+            $paymentStatus = 0;
+        } elseif (!empty($vendor->expiryDate)) {
+            try {
+                $paymentStatus = Carbon::parse($vendor->expiryDate)->endOfDay()->isPast() ? 0 : 1;
+            } catch (\Throwable $e) {
+                $paymentStatus = (int) ($vendor->status ?? 1);
+            }
+        } else {
+            $paymentStatus = (int) ($vendor->status ?? 1);
+        }
+
+        return response()->json([
+            'status' => true,
+            'success' => true,
+            'message' => 'Subscription payment details retrieved successfully',
+            'data' => [
+                'payment_type' => 'Subscription',
+                'subscription_price' => $pricing['price'],
+                'gst_percentage' => $pricing['gst_percentage'],
+                'gst_amount' => $pricing['gst_amount'],
+                'total_payable' => $pricing['total_payable'],
+                'total_payable_in_paise' => $pricing['total_payable_in_paise'],
+                'currency' => 'INR',
+                'payment_status' => (int) $paymentStatus,
+                'expiry_date' => $vendor->expiryDate ? Carbon::parse($vendor->expiryDate)->format('Y-m-d') : null,
+                'need_to_pay' => (int) ($vendor->need_to_pay ?? 0),
+                'platform_fee' => (float) ($vendor->platform_fee ?? 0),
             ]
         ]);
     }

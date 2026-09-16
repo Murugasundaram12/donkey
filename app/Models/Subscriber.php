@@ -41,16 +41,16 @@ class Subscriber extends Authenticatable
     }
 
     /**
-     * Backward compatibility accessor/mutator for legacy subscription_price field
+     * Subscription price accessor/mutator strictly bound to subscriber.subscription_price column
      */
     public function getSubscriptionPriceAttribute()
     {
-        return $this->attributes['platform_fee'] ?? $this->getAttributeFromArray('platform_fee') ?? '0';
+        return $this->attributes['subscription_price'] ?? $this->getAttributeFromArray('subscription_price') ?? null;
     }
 
     public function setSubscriptionPriceAttribute($value)
     {
-        $this->attributes['platform_fee'] = $value;
+        $this->attributes['subscription_price'] = $value;
     }
 
     /**
@@ -93,6 +93,28 @@ class Subscriber extends Authenticatable
 
         $status = is_object($subscriber) ? ($subscriber->status ?? $subscriber->activestatus ?? 1) : 1;
         return (int) $status === 1;
+    }
+
+    /**
+     * Calculate standard subscription renewal pricing breakdown.
+     */
+    public static function calculateSubscriptionPricing($subscriber): array
+    {
+        $rawPrice = is_object($subscriber) ? ($subscriber->subscription_price ?? null) : null;
+        $price = is_numeric($rawPrice) && (float) $rawPrice > 0 ? (float) $rawPrice : 2.0;
+
+        $gstPercentage = 18;
+        $gstAmount = round(($price * $gstPercentage) / 100, 2);
+        $totalPayable = round($price + $gstAmount, 2);
+        $totalPayableInPaise = (int) round($totalPayable * 100);
+
+        return [
+            'price' => $price,
+            'gst_percentage' => $gstPercentage,
+            'gst_amount' => $gstAmount,
+            'total_payable' => $totalPayable,
+            'total_payable_in_paise' => $totalPayableInPaise,
+        ];
     }
 
     /**

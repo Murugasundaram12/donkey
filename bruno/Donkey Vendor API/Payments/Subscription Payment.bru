@@ -1,0 +1,24 @@
+meta {
+  name: Subscription Payment
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/subscription-payment
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get current subscription renewal payable amount and status for authenticated vendor.
+  Note: This endpoint is exempt from payment expiration blocking to allow expired vendors to retrieve their renewal quote.
+}

@@ -258,5 +258,6 @@ When a vendor's subscription `expiryDate` has passed:
 To allow expired vendors to recover access:
 - `POST /api/vendor/login` returns token and profile data.
 - `GET /api/vendor/me` allows viewing status.
-- `GET /api/vendor/payments` and `GET /api/vendor/payments/{id}` allow viewing plans and initiating subscription renewal.
+- `GET /api/vendor/payments` and `GET /api/vendor/payments/{id}` allow viewing past payment records.
+- `GET /api/vendor/subscription-payment` returns the current renewal quote (`subscription_price`, 18% GST, and `total_payable`).
 - `POST /api/vendor/logout` allows logging out.

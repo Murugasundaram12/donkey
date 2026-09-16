@@ -197,6 +197,7 @@ Route::prefix('vendor')->group(function () {
         // Payments / Subscription Renewal Routes (accessible when expired to allow renewal)
         Route::get('payments', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'index']);
         Route::get('payments/{id}', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'show']);
+        Route::get('subscription-payment', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'subscriptionPayment']);
 
         // Protected Business Routes (Blocked if vendor subscription payment is expired)
         Route::middleware('vendor.payment')->group(function () {

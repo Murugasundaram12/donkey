@@ -221,7 +221,7 @@ class otherController extends Controller
         // Default price logic:
         // 1) Admin-set subscription_price (if available)
         // 2) Fallback default Rs.2
-        $price = is_numeric($subscriber->subscription_price) && $subscriber->subscription_price > 0
+        $price = is_numeric($subscriber->subscription_price) && (float) $subscriber->subscription_price > 0
             ? (float) $subscriber->subscription_price
             : 2;
         // dd($price);

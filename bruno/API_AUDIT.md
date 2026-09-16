@@ -34,6 +34,7 @@ This report documents the verification of all 43 Vendor API endpoints implemente
 | **Coupons** | GET | `/api/vendor/coupons/active` | `CouponController@active` | Bearer Token | None | VERIFIED |
 | **Payments** | GET | `/api/vendor/payments` | `PaymentController@index` | Bearer Token | Query Params | VERIFIED |
 | **Payments** | GET | `/api/vendor/payments/{id}` | `PaymentController@show` | Bearer Token | Path Param | VERIFIED |
+| **Payments** | GET | `/api/vendor/subscription-payment` | `PaymentController@subscriptionPayment` | Bearer Token | None | VERIFIED |
 | **Bank Details** | GET | `/api/vendor/bank-details` | `BankDetailsController@show` | Bearer Token | None | VERIFIED |
 | **Bank Details** | POST | `/api/vendor/bank-details/update` | `BankDetailsController@update` | Bearer Token | Multipart/Form-Data | VERIFIED |
 | **Documents** | GET | `/api/vendor/documents` | `DocumentController@index` | Bearer Token | None | VERIFIED |
@@ -51,4 +52,4 @@ This report documents the verification of all 43 Vendor API endpoints implemente
 | **Settings** | GET | `/api/vendor/info/about` | `SettingsAndInfoController@about` | None | None | VERIFIED |
 
 ---
-*All 43 endpoints have been cross-referenced and verified against controller implementations in `app/Http/Controllers/API/Vendor/` and middleware `App\Http\Middleware\EnsureVendorAuthenticated`.*
+*All 44 endpoints have been cross-referenced and verified against controller implementations in `app/Http/Controllers/API/Vendor/` and middleware `App\Http\Middleware\EnsureVendorAuthenticated`.*
