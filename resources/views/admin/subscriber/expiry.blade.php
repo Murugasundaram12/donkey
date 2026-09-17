@@ -83,15 +83,23 @@
 
                             <td>{{$subscriber->mobile}}</td>
                                 @php
-                                $exp= $subscriber->expiryDate;
-                                $today=$today;
-                                $diff = abs(strtotime($today) - strtotime($exp));
-                                $years = floor($diff / (365*60*60*24));
-                                $months = floor(($diff - $years * 365*60*60*24) / (30*60*60*24));
-                                $days = floor(($diff - $years * 365*60*60*24 - $months*30*60*60*24)/ (60*60*24));
+                                $expiry = \Carbon\Carbon::parse($subscriber->expiryDate)->startOfDay();
+                                $todayDate = \Carbon\Carbon::parse($today)->startOfDay();
+                                $days = $todayDate->diffInDays($expiry, false);
+                                $dayLabel = abs($days) === 1 ? 'day' : 'days';
                                 @endphp
 
-                             <td>  <span class="badge badge-danger">{{$days}} day before</span></td>
+                             <td>
+                                <span class="badge badge-danger">
+                                    @if ($days > 0)
+                                        {{ $days }} {{ $dayLabel }} before
+                                    @elseif ($days === 0)
+                                        Today expiring
+                                    @else
+                                        {{ abs($days) }} {{ $dayLabel }} ago
+                                    @endif
+                                </span>
+                             </td>
                             {{-- <td>
                                 <input type="checkbox" data-id="{{ $subscriber->id }}" name="status" class="js-switch" {{ $subscriber->status == 1 ? 'checked' : '' }}>
   </td> --}}

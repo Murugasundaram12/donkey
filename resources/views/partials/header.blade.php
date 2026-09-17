@@ -107,7 +107,8 @@
                 <i class="fe fe-sun fe-16"></i>
             </a>
         </li>
-        <!-- <li class="nav-item nav-notif">
+        @unless (request()->routeIs('createSubscriber'))
+        <li class="nav-item nav-notif">
             <a class="nav-link text-muted my-2" href="#" id="navbarDropdownNotification" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span class="fe fe-bell fe-16"></span>
@@ -127,7 +128,8 @@
                     '%bankacno%')->orWhere('pricenotify.datas', 'LIKE', '%ifsccode%');
                     })->count() }}</a>
             </div>
-        </li> -->
+        </li>
+        @endunless
 
         @auth
             <li class="nav-item dropdown">
@@ -434,14 +436,6 @@
                         </li>
                     @endcan
 
-                    <li class="nav-item w-100">
-                        <a class="nav-link" href="{{ route('newsletter') }}">
-                            <i class="fe fe-message-circle fe-16"></i>
-
-                            <span class="ml-3 item-text">News Letters</span>
-
-                        </a>
-                    </li>
                 @endcan
                 @can('site-manage')
                     <li class="nav-item dropdown">

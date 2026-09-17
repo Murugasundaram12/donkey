@@ -420,7 +420,11 @@ class HomeController extends Controller
                 });
             })
             ->with('enduserreason')
-            ->withCount('referrals')
+            ->withCount([
+                'referrals' => function ($query) {
+                    $query->where('is_driver', 0);
+                },
+            ])
             ->latest()
             ->paginate(15)
             ->withQueryString();

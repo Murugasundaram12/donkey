@@ -64,14 +64,6 @@
                                 <form method="post" action="{{ url('subscriberstore') }}" autocomplete="on"
                                     enctype="multipart/form-data">
                                     {{ csrf_field() }}
-                                    <div id="pincodeTopAlert" class="alert alert-warning alert-dismissible fade show"
-                                        style="display:none;">
-                                        📍 Can't find your pincode? WhatsApp 9069067008 with your preferred pincode. We'll
-                                        check and update you.
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
                                     <div id="subscriberClientSuccessMessage"
                                         class="alert alert-success alert-dismissible fade show" role="alert"
                                         style="display:none;">
@@ -1043,11 +1035,23 @@
             let submitInProgress = false;
 
             function setMessage(show) {
-                $('#pincodeTopAlert').toggle(!!show);
-                if (show) {
-                } else {
-                    pincodeModalShown = false;
+                const $modal = $('#pincodeNotListedModal');
+
+                if (!show) {
+                    closePincodeModal();
+                    return;
                 }
+
+                if (pincodeModalShown) return;
+                pincodeModalShown = true;
+
+                if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    $modal.modal('show');
+                    return;
+                }
+
+                $modal.addClass('show').css('display', 'block').attr('aria-hidden', 'false');
+                $('body').addClass('modal-open');
             }
 
             function closePincodeModal() {
@@ -1882,7 +1886,7 @@
 
             function initPincodeSearchDebug() {
                 console.log(pincodeDebugPrefix, 'Init started', {
-                    alertExists: $('#pincodeTopAlert').length > 0,
+                    modalExists: $('#pincodeNotListedModal').length > 0,
                     jqueryLoaded: typeof window.jQuery !== 'undefined',
                     multiselectSearchCount: $('.multiselect-dropdown-search, .multiselect-search').length,
                     pluginDropdownCount: $('.multiselect-dropdown').length,
