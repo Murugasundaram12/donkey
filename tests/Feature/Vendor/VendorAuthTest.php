@@ -192,7 +192,7 @@ class VendorAuthTest extends TestCase
             ]);
     }
 
-    public function test_expired_vendor_cannot_login()
+    public function test_expired_vendor_can_login_for_renewal_access()
     {
         Subscriber::create(array_merge($this->defaultVendorData, [
             'name' => 'Expired Vendor',
@@ -208,13 +208,15 @@ class VendorAuthTest extends TestCase
             'device_token' => 'TEST_TOKEN_123',
         ]);
 
-        $response->assertStatus(403)
+        $response->assertStatus(200)
             ->assertJson([
-                'status' => false,
-                'message' => 'Your subscription has expired. Please renew your subscription to continue.',
+                'status' => true,
+                'message' => 'Login successful',
                 'data' => [
-                    'payment_status' => 0,
-                    'payment_expiry' => '2020-01-01',
+                    'token_type' => 'Bearer',
+                    'vendor' => [
+                        'email' => 'expired@test.com',
+                    ],
                 ]
             ]);
     }

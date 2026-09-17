@@ -65,24 +65,6 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Check subscription expiry
-        if (!empty($vendor->expiryDate)) {
-            try {
-                if (Carbon::parse($vendor->expiryDate)->endOfDay()->isPast()) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => 'Your subscription has expired. Please renew your subscription to continue.',
-                        'data' => [
-                            'payment_status' => 0,
-                            'payment_expiry' => Carbon::parse($vendor->expiryDate)->format('Y-m-d'),
-                        ]
-                    ], 403);
-                }
-            } catch (\Throwable $e) {
-                // Ignore parse errors safely
-            }
-        }
-
         // Update last login and device token (always update without comparing)
         if (Schema::hasColumn('subscriber', 'last_login')) {
             $vendor->last_login = date("Y-m-d H:i:s");
@@ -376,10 +358,10 @@ class AuthController extends Controller
             'need_to_pay' => (float) $vendor->need_to_pay,
             'platform_fee' => (float) $vendor->platform_fee,
             'subscription_price' => $pricing['price'],
-            // 'subscription_gst_percentage' => $pricing['gst_percentage'],
-            // 'subscription_gst_amount' => $pricing['gst_amount'],
-            // 'subscription_total_payable' => $pricing['total_payable'],
-            // 'subscription_total_payable_in_paise' => $pricing['total_payable_in_paise'],
+            'subscription_gst_percentage' => $pricing['gst_percentage'],
+            'subscription_gst_amount' => $pricing['gst_amount'],
+            'subscription_total_payable' => $pricing['total_payable'],
+            'subscription_total_payable_in_paise' => $pricing['total_payable_in_paise'],
             'created_at' => $vendor->created_at ? $vendor->created_at->toDateTimeString() : null,
         ];
     }
