@@ -131,7 +131,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
     /**
      * Test Case 3:
      * Subscriber subscription_price = 2, platform_fee = 149.50
-     * Expected: base = 2, GST = 0.36, total = 2.36
+     * Expected: base = 2, GST = 0.36, rounded payable = 2
      */
     public function test_subscriber_with_2_subscription_price_and_149_50_platform_fee()
     {
@@ -154,7 +154,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
                     'subscription_price' => 2,
                     'gst_percentage' => 18,
                     'gst_amount' => 0.36,
-                    'total_payable' => 2.36,
+                    'total_payable' => 2,
                     'currency' => 'INR',
                     'platform_fee' => 149.50,
                 ]
@@ -163,7 +163,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
         // Verify validId endpoint
         $validIdResponse = $this->get('/validId?subscriberId=' . $vendor->subscriberId);
         $validIdResponse->assertStatus(200);
-        $this->assertEquals(2.36, round((float) $validIdResponse->getContent(), 2));
+        $this->assertEquals(2, (float) $validIdResponse->getContent());
     }
 
     /**
@@ -342,7 +342,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
                 'data' => [
                     'subscription_price' => 2,
                     'gst_amount' => 0.36,
-                    'total_payable' => 2.36,
+                    'total_payable' => 2,
                     'platform_fee' => 850.00,
                 ]
             ]);
@@ -350,9 +350,9 @@ class SubscriptionRenewalPaymentTest extends TestCase
         // Must NOT use platform_fee (850) as subscription price
         $this->assertNotEquals(850, $response->json('data.subscription_price'));
 
-        // validId must also return 2.36, NOT 850 * 1.18 = 1003
+        // validId must also return the rounded default payable amount, NOT 850 * 1.18 = 1003
         $validIdResponse = $this->get('/validId?subscriberId=' . $vendor->subscriberId);
-        $this->assertEquals(2.36, round((float) $validIdResponse->getContent(), 2));
+        $this->assertEquals(2, (float) $validIdResponse->getContent());
     }
 
     /**
@@ -442,7 +442,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
 
     /**
      * Test Case 13:
-     * GET /api/vendor/me with subscription_price=2, platform_fee=149.50 => total payable 2.36
+     * GET /api/vendor/me with subscription_price=2, platform_fee=149.50 => rounded payable 2
      */
     public function test_vendor_me_profile_2_149_50()
     {
@@ -465,8 +465,8 @@ class SubscriptionRenewalPaymentTest extends TestCase
                         'subscription_price' => 2,
                         'subscription_gst_percentage' => 18,
                         'subscription_gst_amount' => 0.36,
-                        'subscription_total_payable' => 2.36,
-                        'subscription_total_payable_in_paise' => 236,
+                        'subscription_total_payable' => 2,
+                        'subscription_total_payable_in_paise' => 200,
                     ]
                 ]
             ]);
@@ -474,7 +474,7 @@ class SubscriptionRenewalPaymentTest extends TestCase
 
     /**
      * Test Case 14:
-     * GET /api/vendor/me with null/invalid subscription_price => fallback 2.36, platform_fee remains separate
+     * GET /api/vendor/me with null/invalid subscription_price => rounded fallback 2, platform_fee remains separate
      */
     public function test_vendor_me_profile_null_fallback()
     {
@@ -493,12 +493,12 @@ class SubscriptionRenewalPaymentTest extends TestCase
                 'status' => true,
                 'data' => [
                     'vendor' => [
-                        'platform_fee' => 450.00,
+                        'platform_fee' => 450,
                         'subscription_price' => 2,
                         'subscription_gst_percentage' => 18,
                         'subscription_gst_amount' => 0.36,
-                        'subscription_total_payable' => 2.36,
-                        'subscription_total_payable_in_paise' => 236,
+                        'subscription_total_payable' => 2,
+                        'subscription_total_payable_in_paise' => 200,
                     ]
                 ]
             ]);
@@ -506,4 +506,3 @@ class SubscriptionRenewalPaymentTest extends TestCase
         $this->assertNotEquals(450, $response->json('data.vendor.subscription_price'));
     }
 }
-

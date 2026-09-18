@@ -30,7 +30,7 @@ class Kernel extends ConsoleKernel
         // Task to run get:subscriber_notify command every hour
         $schedule->command('get:subscriber_notify')->everyMinute();
         $schedule->command('remove:pincode')->dailyAt('02:00');
-        $schedule->command('notifications:payment-reminders')->dailyAt('09:00');
+        $schedule->command('notifications:payment-reminders')->everyMinute();
         $schedule->command('subscriptions:deactivate-expired')->everyMinute();
     }
     /**

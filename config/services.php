@@ -37,6 +37,11 @@ return [
         'vendor_access_token' => env('FCM_VENDOR_ACCESS_TOKEN'),
     ],
 
+    'razorpay' => [
+        'key_id' => env('RAZORPAY_KEY_ID'),
+        'key_secret' => env('RAZORPAY_KEY_SECRET'),
+    ],
+
     'whatsapp' => [
         'onboarding_otp_enabled' => env('WHATSAPP_ONBOARDING_OTP_ENABLED', false),
         'onboarding_message_enabled' => env('WHATSAPP_ONBOARDING_MESSAGE_ENABLED', false),

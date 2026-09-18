@@ -105,13 +105,15 @@ class Subscriber extends Authenticatable
 
         $gstPercentage = 18;
         $gstAmount = round(($price * $gstPercentage) / 100, 2);
-        $totalPayable = round($price + $gstAmount, 2);
+        $exactTotalPayable = round($price + $gstAmount, 2);
+        $totalPayable = round($exactTotalPayable, 0, PHP_ROUND_HALF_UP);
         $totalPayableInPaise = (int) round($totalPayable * 100);
 
         return [
             'price' => $price,
             'gst_percentage' => $gstPercentage,
             'gst_amount' => $gstAmount,
+            'exact_total_payable' => $exactTotalPayable,
             'total_payable' => $totalPayable,
             'total_payable_in_paise' => $totalPayableInPaise,
         ];

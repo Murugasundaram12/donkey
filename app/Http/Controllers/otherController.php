@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\statusnotify;
 use App\Models\Subscriber;
 use App\Models\PaymentDetails;
+use App\Services\SubscriptionRenewalService;
 use App\Models\voucher as Voucher;
 use App\Models\banner;
 use Carbon\Carbon;
@@ -215,51 +216,22 @@ class otherController extends Controller
         if (!$subscriber) {
             return response()->json(0);
         }
-        $today = now()->startOfDay(); // Normalize to the start of the day
-        $expiryDate = Carbon::parse($subscriber->expiryDate)->startOfDay();
-        $diffinDays = $expiryDate->diffInDays($today, false);
-        // Default price logic:
-        // 1) Admin-set subscription_price (if available)
-        // 2) Fallback default Rs.2
-        $price = is_numeric($subscriber->subscription_price) && (float) $subscriber->subscription_price > 0
-            ? (float) $subscriber->subscription_price
-            : 2;
-        // dd($price);
-        $gstPrice = $price * 18 / 100;
-        $subscription_price = $price + $gstPrice;
-        // dd($subscription_price);
-        //if ($diffinDays > 2) {
-        //    $addDays = $expiryDate->addDays(2)->startOfDay();
-            // dd($addDays);
-        //    $penalityDays = $addDays->diffInDays($today, false);
-            // dd("penality", $penalityDays);
-        //    $penalityAmount = $penalityDays * 50;
-        //    $gstForPenality = $penalityAmount * 18 / 100;
-        //    $subscription_price = $price + $gstPrice + $penalityAmount + $gstForPenality;
-        //}
-        //$subscription_price = 1; 
-        // dd($subscription_price);
-        return response()->json($subscription_price);
+        $quote = app(SubscriptionRenewalService::class)->quote($subscriber);
+        return response()->json($quote['total_payable']);
     }
     public function successfullypayment($id, Request $d)
     {
         // dd($id);
         $subscriber = Subscriber::where('subscriberId', $id)->first();
-        $exipredDate = Carbon::parse($subscriber->expiryDate)->startOfDay();
-        $today = now()->startOfDay();
-        $diffDays = $exipredDate->diffInDays($today, false);
-        // dd($diffDays);
-        $date = date_create(date("Y-m-d"));
-        date_add($date, date_interval_create_from_date_string("28 days"));
-        $expiry_date = date_format($date, "Y-m-d");
-        // dd($expiry_date);
-        if (isset($subscriber) && $diffDays < 2) {
-            $date = date_create(date("Y-m-d"));
-            date_add($date, date_interval_create_from_date_string("30 days"));
-            $expiry_date = date_format($date, "Y-m-d");
-            // dd($expiry_date);
+        abort_unless($subscriber, 404);
+        $renewalService = app(SubscriptionRenewalService::class);
+        $quote = $renewalService->quote($subscriber);
+        if ((int) $d->get('amount') !== $quote['total_payable_in_paise']) {
+            return response()->json(['payment_id' => '', 'message' => 'Payment amount does not match the current renewal quote.'], 422);
         }
-        // dd($expiry_date);
+        $date = date_create(date("Y-m-d"));
+        date_add($date, date_interval_create_from_date_string($quote['renewal_days'] . " days"));
+        $expiry_date = date_format($date, "Y-m-d");
         Subscriber::where('subscriberId', $id)->update(['subscriptionDate' => date("Y-m-d"), 'expiryDate' => $expiry_date, 'status' => 1, 'activestatus' => 1, 'notify' => 0, 'need_to_pay' => 0]);
         //  $input = $d->all();
         //dd($d->response);

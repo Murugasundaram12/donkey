@@ -5,8 +5,11 @@ namespace App\Http\Controllers\API\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentDetails;
 use App\Models\Subscriber;
+use App\Services\SubscriptionRenewalService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 class PaymentController extends Controller
 {
@@ -125,12 +128,11 @@ class PaymentController extends Controller
     /**
      * Current Subscription Renewal Payment Details for Authenticated Vendor
      */
-    public function subscriptionPayment(Request $request)
+    public function subscriptionPayment(Request $request, SubscriptionRenewalService $renewals)
     {
         $vendor = $request->user();
 
-        // 1. Determine base subscription price strictly from subscriber.subscription_price via shared helper
-        $pricing = Subscriber::calculateSubscriptionPricing($vendor);
+        $quote = $renewals->quote($vendor);
 
         // 2. Determine current payment validity / status
         $paymentStatus = 1;
@@ -152,11 +154,19 @@ class PaymentController extends Controller
             'message' => 'Subscription payment details retrieved successfully',
             'data' => [
                 'payment_type' => 'Subscription',
-                'subscription_price' => $pricing['price'],
-                'gst_percentage' => $pricing['gst_percentage'],
-                'gst_amount' => $pricing['gst_amount'],
-                'total_payable' => $pricing['total_payable'],
-                'total_payable_in_paise' => $pricing['total_payable_in_paise'],
+                'subscription_price' => $quote['subscription_price'],
+                'gst_percentage' => $quote['subscription_gst_percentage'],
+                'gst_amount' => $quote['subscription_gst'],
+                'penalty_day' => $quote['penalty_day'],
+                'penalty_principal' => $quote['penalty_principal'],
+                'penalty_gst_percentage' => $quote['penalty_gst_percentage'],
+                'penalty_gst' => $quote['penalty_gst'],
+                'exact_total_payable' => $quote['exact_total_payable'],
+                'total_payable' => $quote['total_payable'],
+                'total_payable_in_paise' => $quote['total_payable_in_paise'],
+                'due_date' => $quote['due_date'],
+                'renewal_days' => $quote['renewal_days'],
+                'bonus_days' => $quote['bonus_days'],
                 'currency' => 'INR',
                 'payment_status' => (int) $paymentStatus,
                 'expiry_date' => $vendor->expiryDate ? Carbon::parse($vendor->expiryDate)->format('Y-m-d') : null,
@@ -164,6 +174,55 @@ class PaymentController extends Controller
                 'platform_fee' => (float) ($vendor->platform_fee ?? 0),
             ]
         ]);
+    }
+
+    public function createRenewalOrder(Request $request, SubscriptionRenewalService $renewals)
+    {
+        $validator = Validator::make($request->all(), [
+            'idempotency_key' => ['nullable', 'string', 'max:191'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $result = $renewals->createOrder($request->user(), $request->input('idempotency_key') ?: (string) \Illuminate\Support\Str::uuid());
+            $quote = $result['quote'];
+            return response()->json([
+                'status' => true,
+                'message' => $result['already_paid'] ? 'Renewal already paid.' : 'Renewal order created.',
+                'data' => ['renewal_id' => $result['renewal']->id, 'razorpay_order_id' => $result['renewal']->razorpay_order_id, 'quote' => $quote],
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['status' => false, 'message' => 'Renewal order could not be created.'], 503);
+        }
+    }
+
+    public function verifyRenewalPayment(Request $request, SubscriptionRenewalService $renewals)
+    {
+        $validator = Validator::make($request->all(), [
+            'renewal_id' => ['required', 'integer'],
+            'razorpay_payment_id' => ['required', 'string'],
+            'razorpay_signature' => ['required', 'string'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);
+        }
+
+        $renewal = \App\Models\SubscriptionRenewal::whereKey($request->integer('renewal_id'))
+            ->where('subscriber_id', $request->user()->id)->first();
+        if (!$renewal) {
+            return response()->json(['status' => false, 'message' => 'Renewal not found.'], 404);
+        }
+
+        try {
+            $result = $renewals->settle($request->user(), $renewal, $request->string('razorpay_payment_id')->toString(), $request->string('razorpay_signature')->toString());
+            return response()->json(['status' => true, 'message' => $result['already_paid'] ? 'Payment already processed.' : 'Subscription renewed successfully.', 'data' => ['renewal_id' => $result['renewal']->id, 'already_paid' => $result['already_paid']]]);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['status' => false, 'message' => 'Payment verification failed.'], 422);
+        }
     }
 
     private function formatPayment(PaymentDetails $p, $vendor = null): array
