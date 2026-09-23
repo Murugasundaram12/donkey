@@ -201,6 +201,12 @@ Route::prefix('vendor')->group(function () {
         Route::post('subscription-payment/order', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'createRenewalOrder']);
         Route::post('subscription-payment/verify', [\App\Http\Controllers\API\Vendor\PaymentController::class, 'verifyRenewalPayment']);
 
+        // Notification history / acknowledgement remains accessible after expiry.
+        Route::get('notifications', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'unreadCount']);
+        Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
+        Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
+
         // Protected Business Routes (Blocked if vendor subscription payment is expired)
         Route::middleware('vendor.payment')->group(function () {
             // Dashboard
@@ -255,10 +261,6 @@ Route::prefix('vendor')->group(function () {
             Route::delete('documents/{type}', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'destroy']);
 
             // Notifications
-            Route::get('notifications', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'index']);
-            Route::get('notifications/unread-count', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'unreadCount']);
-            Route::post('notifications/{id}/read', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markRead']);
-            Route::post('notifications/read-all', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'markAllRead']);
             Route::post('notifications/send-test', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'sendTest']);
             Route::delete('notifications/{notification_id}', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'destroy']);
 

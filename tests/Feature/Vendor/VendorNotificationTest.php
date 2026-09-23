@@ -301,6 +301,54 @@ class VendorNotificationTest extends TestCase
         ]);
     }
 
+    public function test_expired_vendor_can_view_and_acknowledge_notifications_but_not_business_apis()
+    {
+        $expiredVendor = $this->createVendor([
+            'expiryDate' => '2020-01-01 23:59:59',
+        ]);
+        $service = app(VendorNotificationService::class);
+        $notification = $service->create($expiredVendor, 'Payments', 'Renewal Required', 'Please renew your subscription.');
+        $secondNotification = $service->create($expiredVendor, 'Payments', 'Payment Due', 'Your payment is due.');
+        $token = $expiredVendor->createToken('test')->plainTextToken;
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/notifications')
+            ->assertStatus(200)
+            ->assertJsonPath('data.total', 2);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/notifications/unread-count')
+            ->assertStatus(200)
+            ->assertJsonPath('data.unread_count', 2);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/vendor/notifications/' . $notification->id . '/read')
+            ->assertStatus(200)
+            ->assertJsonPath('data.read', true);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/vendor/notifications/read-all')
+            ->assertStatus(200)
+            ->assertJsonPath('data.updated', 1);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/vendor/notifications/' . $secondNotification->id)
+            ->assertStatus(403);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/dashboard')
+            ->assertStatus(403)
+            ->assertJson([
+                'status' => false,
+                'message' => 'Your subscription/payment has expired. Please renew your payment.',
+            ]);
+
+        $this->flushHeaders()->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/subscription-payment')
+            ->assertStatus(200)
+            ->assertJson(['status' => true, 'success' => true]);
+    }
+
     public function test_authenticated_vendor_deletes_own_notification()
     {
         $vendor = $this->createVendor();

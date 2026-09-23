@@ -210,7 +210,7 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);
         }
 
-        $renewal = \App\Models\SubscriptionRenewal::whereKey($request->integer('renewal_id'))
+        $renewal = \App\Models\SubscriptionRenewal::whereKey((int) $request->input('renewal_id'))
             ->where('subscriber_id', $request->user()->id)->first();
         if (!$renewal) {
             return response()->json(['status' => false, 'message' => 'Renewal not found.'], 404);

@@ -32,6 +32,13 @@ class CreateVendorPaymentReminders extends Command
                     app(VendorNotificationService::class)->create($vendor, 'Payments', 'Subscription Payment Due Today', 'Today is your subscription payment due date. Please complete the payment to continue your subscription.', ['event' => 'subscription_due_today', 'cycle_key' => $renewal->cycle_key]);
                     $created++;
                 }
+
+                // The expiry date is valid through the end of that day. Notify once
+                // the subscription has actually expired, while renewal is still allowed.
+                if ($days < 0 && is_null($renewal->expired_notified_at) && $renewal->newQuery()->whereKey($renewal->id)->whereNull('expired_notified_at')->update(['expired_notified_at' => now()])) {
+                    app(VendorNotificationService::class)->create($vendor, 'Payments', 'Subscription Expired', 'Your subscription has expired. Please renew your subscription to continue using the service.', ['event' => 'subscription_expired', 'cycle_key' => $renewal->cycle_key]);
+                    $created++;
+                }
             }
         });
 

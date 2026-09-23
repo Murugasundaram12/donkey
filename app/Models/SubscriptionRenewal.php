@@ -21,6 +21,7 @@ class SubscriptionRenewal extends Model
         'paid_at' => 'datetime',
         'before_due_notified_at' => 'datetime',
         'due_notified_at' => 'datetime',
+        'expired_notified_at' => 'datetime',
         'deactivated_notified_at' => 'datetime',
     ];
 
