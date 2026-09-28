@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "Donkey Chatbot Public API",
+    "_postman_id": "donkey-chatbot-public-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Public chatbot API for finding the active service provider for a pincode and category. Import this collection into Bruno or Postman."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Active Service Provider",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/public/service-provider?pincode=626125&category=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "public",
+            "service-provider"
+          ],
+          "query": [
+            {
+              "key": "pincode",
+              "value": "626125"
+            },
+            {
+              "key": "category",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Provider found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/service-provider?pincode=626125&category=5"
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"Active service provider found.\",\n  \"data\": {\n    \"provider_active\": true,\n    \"provider\": {\n      \"id\": 12,\n      \"name\": \"ABC Services\",\n      \"contact\": \"9876543210\"\n    }\n  }\n}"
+        },
+        {
+          "name": "No provider",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/service-provider?pincode=626125&category=5"
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": true,\n  \"message\": \"No active service provider found for this pincode and category.\",\n  \"data\": {\n    \"provider_active\": false,\n    \"provider\": null\n  }\n}"
+        }
+      ]
+    }
+  ]
+}

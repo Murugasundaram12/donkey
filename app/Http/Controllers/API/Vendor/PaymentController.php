@@ -204,7 +204,6 @@ class PaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'renewal_id' => ['required', 'integer'],
             'razorpay_payment_id' => ['required', 'string'],
-            'razorpay_signature' => ['required', 'string'],
         ]);
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);

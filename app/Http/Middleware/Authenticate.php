@@ -14,8 +14,17 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
-            return route('login');
+        // API clients must receive Laravel's unauthenticated response instead
+        // of being redirected to a browser login page. This also covers API
+        // clients that do not send an Accept: application/json header.
+        if ($request->expectsJson() || $request->is('api/*') || $request->routeIs('api.*')) {
+            return null;
         }
+
+        // Keep the web redirect working even during deployments where the
+        // cached route collection does not contain the named login route.
+        return \Illuminate\Support\Facades\Route::has('login')
+            ? route('login')
+            : url('/login');
     }
 }

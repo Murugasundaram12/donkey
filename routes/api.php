@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\otherController;
 use App\Http\Controllers\API\User\DriverLocationController;
+use App\Http\Controllers\API\Public\ServiceProviderController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -70,6 +71,7 @@ Route::apiResource('companies', \App\Http\Controllers\API\CompanyController::cla
 Route::post('/profile/update', [App\Http\Controllers\API\RegisterController::class, 'profileUpdate'])->name('profileUpdate');
 Route::post('/user/filter/{action}', [App\Http\Controllers\API\RegisterController::class, 'userFilter'])->name('userFilter');
 Route::get('/category/list', [App\Http\Controllers\API\Category::class, 'categoryList'])->name('categoryList');
+Route::get('/service_provider', [ServiceProviderController::class, 'show'])->name('public.service-provider');
 // Route::get('/logout', [App\Http\Controllers\API\RegisterController::class, 'logout'])->name('logout');
 //});
 Route::post('/driverlogin', [App\Http\Controllers\API\RegisterController::class, 'driverlogin'])->name('driverlogin');
