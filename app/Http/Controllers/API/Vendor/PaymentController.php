@@ -191,7 +191,12 @@ class PaymentController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => $result['already_paid'] ? 'Renewal already paid.' : 'Renewal order created.',
-                'data' => ['renewal_id' => $result['renewal']->id, 'razorpay_order_id' => $result['renewal']->razorpay_order_id, 'quote' => $quote],
+                'data' => [
+                    'renewal_id' => $result['renewal']->id,
+                    'razorpay_order_id' => $result['renewal']->razorpay_order_id,
+                    'razorpay_key_id' => config('services.razorpay.key_id'),
+                    'quote' => $quote,
+                ],
             ]);
         } catch (Throwable $e) {
             report($e);
@@ -204,6 +209,7 @@ class PaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'renewal_id' => ['required', 'integer'],
             'razorpay_payment_id' => ['required', 'string'],
+            'razorpay_signature' => ['required', 'string', 'size:64', 'regex:/\A[a-f0-9]{64}\z/i'],
         ]);
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);
@@ -216,7 +222,12 @@ class PaymentController extends Controller
         }
 
         try {
-            $result = $renewals->settle($request->user(), $renewal, $request->string('razorpay_payment_id')->toString(), $request->string('razorpay_signature')->toString());
+            $result = $renewals->settle(
+                $request->user(),
+                $renewal,
+                (string) $request->input('razorpay_payment_id'),
+                (string) $request->input('razorpay_signature')
+            );
             return response()->json(['status' => true, 'message' => $result['already_paid'] ? 'Payment already processed.' : 'Subscription renewed successfully.', 'data' => ['renewal_id' => $result['renewal']->id, 'already_paid' => $result['already_paid']]]);
         } catch (Throwable $e) {
             report($e);

@@ -94,7 +94,34 @@ class SubscriptionRenewalService
             return ['renewal' => $renewal, 'quote' => $quote, 'already_paid' => true];
         }
 
-        if ($renewal->razorpay_order_id) {
+        $quoteAttributes = [
+            'due_date' => $quote['due_date'],
+            'subscription_price' => $quote['subscription_price'],
+            'subscription_gst' => $quote['subscription_gst'],
+            'penalty_day' => $quote['penalty_day'],
+            'penalty_principal' => $quote['penalty_principal'],
+            'penalty_gst' => $quote['penalty_gst'],
+            'renewal_days' => $quote['renewal_days'],
+            'bonus_days' => $quote['bonus_days'],
+            'total_payable' => $quote['total_payable'],
+        ];
+        $quoteIsUnchanged = true;
+        foreach ($quoteAttributes as $attribute => $value) {
+            $storedValue = $renewal->{$attribute};
+            if ($attribute === 'due_date' && $storedValue) {
+                $matches = Carbon::parse($storedValue)->toDateString() === $value;
+            } elseif (is_numeric($value) && is_numeric($storedValue)) {
+                $matches = round((float) $storedValue, 2) === round((float) $value, 2);
+            } else {
+                $matches = (string) $storedValue === (string) $value;
+            }
+            if (!$matches) {
+                $quoteIsUnchanged = false;
+                break;
+            }
+        }
+
+        if ($renewal->razorpay_order_id && $renewal->status === 'order_created' && $quoteIsUnchanged) {
             return ['renewal' => $renewal, 'quote' => $quote, 'already_paid' => false];
         }
 
@@ -112,11 +139,11 @@ class SubscriptionRenewalService
             'notes' => ['renewal_id' => (string) $renewal->id, 'idempotency_key' => $idempotencyKey],
         ]);
 
-        $renewal->update([
+        $renewal->update(array_merge($quoteAttributes, [
             'idempotency_key' => $idempotencyKey,
             'razorpay_order_id' => $order->id,
             'status' => 'order_created',
-        ]);
+        ]));
 
         return ['renewal' => $renewal->fresh(), 'quote' => $quote, 'already_paid' => false];
     }

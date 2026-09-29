@@ -393,8 +393,9 @@ class BookingController extends Controller
      */
     private function formatPaginatedBookings($paginator)
     {
-        $items = collect($paginator->items())->map(function ($booking) {
-            return $this->formatBookingDetail($booking);
+        $routeData = $this->bookingRouteData($paginator->items());
+        $items = collect($paginator->items())->map(function ($booking) use ($routeData) {
+            return $this->formatBookingDetail($booking, $routeData[$booking->booking_id] ?? []);
         });
 
         return [
@@ -409,10 +410,11 @@ class BookingController extends Controller
     /**
      * Format Single Booking Record
      */
-    private function formatBookingDetail($booking): array
+    private function formatBookingDetail($booking, ?array $route = null): array
     {
         $payment = $booking->bookingPayment->first();
         $customer = $booking->user;
+        $route = $route ?? ($this->bookingRouteData([$booking])[$booking->booking_id] ?? []);
 
         $statusText = match ((int) $booking->status) {
             0 => 'Pending',
@@ -427,6 +429,8 @@ class BookingController extends Controller
             'booking_id' => (string) $booking->booking_id,
             'title' => (string) ($booking->title ?? 'Delivery Service'),
             'content' => (string) ($booking->content ?? ''),
+            'from_locations' => $route['from_locations'] ?? [],
+            'to_locations' => $route['to_locations'] ?? [],
             'status' => (int) $booking->status,
             'status_text' => $statusText,
             'category' => (int) $booking->category,
@@ -459,5 +463,45 @@ class BookingController extends Controller
                 'type' => (string) $payment->type,
             ] : null,
         ];
+    }
+
+    private function bookingRouteData(array $bookings): array
+    {
+        $bookingIds = collect($bookings)->pluck('booking_id')->filter()->unique()->values();
+        if ($bookingIds->isEmpty()) {
+            return [];
+        }
+
+        $mappings = DB::table('booking_location_mapping')
+            ->whereIn('booking_id', $bookingIds)
+            ->get(['booking_id', 'start_location_id', 'end_location_id']);
+        if ($mappings->isEmpty()) {
+            return [];
+        }
+
+        $locationIds = $mappings->flatMap(function ($mapping) {
+            return [$mapping->start_location_id, $mapping->end_location_id];
+        })->filter()->unique()->values();
+        $locations = DB::table('booking_locations')
+            ->whereIn('booking_id', $bookingIds)
+            ->whereIn('location_id', $locationIds)
+            ->get([
+                'booking_id', 'location_id', 'address1', 'address2', 'address3',
+                'city', 'state', 'country', 'postal_code', 'lat', 'long', 'landmark',
+            ])
+            ->groupBy('booking_id');
+
+        $result = [];
+        foreach ($mappings as $mapping) {
+            $bookingLocations = $locations->get($mapping->booking_id, collect());
+            $from = $bookingLocations->first(fn ($location) => (string) $location->location_id === (string) $mapping->start_location_id);
+            $to = $bookingLocations->first(fn ($location) => (string) $location->location_id === (string) $mapping->end_location_id);
+            $result[$mapping->booking_id] = [
+                'from_locations' => $from ?: [],
+                'to_locations' => $to ? [$to] : [],
+            ];
+        }
+
+        return $result;
     }
 }

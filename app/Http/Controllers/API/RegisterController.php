@@ -413,7 +413,7 @@ class RegisterController extends BaseController
             'country_code' => 'nullable',
             'phone' => 'required',
             'password' => $loginType === '1' ? 'nullable' : 'required',
-            'device_token' => 'required',
+            'device_token' => 'nullable',
         ]);
 
         if ($validator->fails()) {

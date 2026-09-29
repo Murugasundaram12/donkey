@@ -393,4 +393,47 @@ class BookingVendorNotificationTest extends TestCase
         $this->assertEquals(0, $booking->source);
         $this->assertEquals('600009', $booking->pincode);
     }
+
+    public function test_vendor_booking_response_includes_pickup_and_dropoff_locations()
+    {
+        [$vendor] = $this->setupBookingEnvironment([], '600010');
+        $bookingId = 'route-test-' . time() . '-' . mt_rand(100, 999);
+
+        DB::table('booking')->insert([
+            'booking_id' => $bookingId,
+            'status' => 0,
+            'category' => 1,
+            'pincode' => '600010',
+            'assigned_subscriber_id' => $vendor->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('booking_location_mapping')->insert([
+            'booking_id' => $bookingId,
+            'start_location_id' => 'route-start-' . $bookingId,
+            'end_location_id' => 'route-end-' . $bookingId,
+        ]);
+        DB::table('booking_locations')->insert([
+            [
+                'booking_id' => $bookingId,
+                'location_id' => 'route-start-' . $bookingId,
+                'address1' => 'Pickup address',
+                'city' => 'Chennai',
+            ],
+            [
+                'booking_id' => $bookingId,
+                'location_id' => 'route-end-' . $bookingId,
+                'address1' => 'Dropoff address',
+                'city' => 'Madurai',
+            ],
+        ]);
+
+        $token = $vendor->createToken('vendor_booking_route_test')->plainTextToken;
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/bookings');
+
+        $response->assertOk()
+            ->assertJsonPath('data.items.0.from_locations.address1', 'Pickup address')
+            ->assertJsonPath('data.items.0.to_locations.0.address1', 'Dropoff address');
+    }
 }
