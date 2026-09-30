@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
+use App\Models\Pincode;
 use App\Models\User;
 use App\Models\Booking;
 use App\Services\VendorNotificationService;
@@ -926,6 +927,12 @@ class RiderController extends Controller
 
         $pincodes = json_decode((string) $r->pincode, true);
         $pincodes = is_array($pincodes) ? array_values($pincodes) : [];
+        $pincodeValues = Pincode::whereIn('id', $pincodes)->pluck('pincode', 'id');
+        $pincodes = array_map(function ($pincode) use ($pincodeValues) {
+            // Existing requests continue to use pincode IDs. Keep a raw value
+            // as a safe fallback for legacy rows that already contain values.
+            return (string) ($pincodeValues[(int) $pincode] ?? $pincode);
+        }, $pincodes);
 
         $user = $r->userid ? User::find($r->userid) : null;
         $profileImage = $user?->image ?: $user?->profile_image;

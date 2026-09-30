@@ -131,7 +131,7 @@ class SubscriptionRenewalService
             throw new RuntimeException('Razorpay is not configured.');
         }
 
-        $api = new Api($key, $secret);
+        $api = $this->makeRazorpayApi($key, $secret);
         $order = $api->order->create([
             'receipt' => 'renewal-' . $renewal->id,
             'amount' => $quote['total_payable_in_paise'],
@@ -156,7 +156,7 @@ class SubscriptionRenewalService
             throw new RuntimeException('Renewal payment cannot be verified.');
         }
 
-        $api = new Api($key, $secret);
+        $api = $this->makeRazorpayApi($key, $secret);
         $api->utility->verifyPaymentSignature([
             'razorpay_order_id' => $renewal->razorpay_order_id,
             'razorpay_payment_id' => $paymentId,
@@ -164,17 +164,23 @@ class SubscriptionRenewalService
         ]);
         $payment = $api->payment->fetch($paymentId);
         if ((string) ($payment->order_id ?? '') !== (string) $renewal->razorpay_order_id
-            || (int) ($payment->amount ?? 0) !== (int) round((float) $renewal->total_payable * 100)
             || (string) ($payment->status ?? '') !== 'captured') {
             throw new RuntimeException('Razorpay payment does not match the renewal order.');
         }
 
-        return DB::transaction(function () use ($subscriber, $renewal, $paymentId, $signature) {
+        $paymentDate = $this->businessDate();
+
+        return DB::transaction(function () use ($subscriber, $renewal, $paymentId, $signature, $payment, $paymentDate) {
             $lockedRenewal = SubscriptionRenewal::whereKey($renewal->id)->lockForUpdate()->firstOrFail();
             $lockedSubscriber = Subscriber::whereKey($subscriber->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedRenewal->status === 'paid') {
                 return ['renewal' => $lockedRenewal, 'already_paid' => true];
+            }
+
+            $settlementQuote = $this->quote($lockedSubscriber, $paymentDate);
+            if ((int) ($payment->amount ?? 0) !== $settlementQuote['total_payable_in_paise']) {
+                throw new RuntimeException('Razorpay payment does not match the current settlement quote.');
             }
 
             $existingPayment = PaymentDetails::where('payment_id', $paymentId)->first();
@@ -186,13 +192,12 @@ class SubscriptionRenewalService
                 'subscriberId' => $lockedSubscriber->subscriberId,
                 'payment_id' => $paymentId,
                 'status_code' => '200',
-                'amount' => (string) ($lockedRenewal->total_payable * 100),
+                'amount' => (string) $settlementQuote['total_payable_in_paise'],
                 'signature' => $signature,
                 'type' => 1,
             ]);
 
-            $paymentDate = $this->businessDate();
-            $expiry = $paymentDate->copy()->addDays((int) $lockedRenewal->renewal_days)->toDateString();
+            $expiry = $paymentDate->copy()->addDays((int) $settlementQuote['renewal_days'])->toDateString();
             $lockedSubscriber->update([
                 'subscriptionDate' => $paymentDate->toDateString(),
                 'expiryDate' => $expiry,
@@ -203,6 +208,15 @@ class SubscriptionRenewalService
             ]);
 
             $lockedRenewal->update([
+                'due_date' => $settlementQuote['due_date'],
+                'subscription_price' => $settlementQuote['subscription_price'],
+                'subscription_gst' => $settlementQuote['subscription_gst'],
+                'penalty_day' => $settlementQuote['penalty_day'],
+                'penalty_principal' => $settlementQuote['penalty_principal'],
+                'penalty_gst' => $settlementQuote['penalty_gst'],
+                'renewal_days' => $settlementQuote['renewal_days'],
+                'bonus_days' => $settlementQuote['bonus_days'],
+                'total_payable' => $settlementQuote['total_payable'],
                 'payment_id' => $paymentId,
                 'payment_details_id' => $payment->id,
                 'payment_date' => $paymentDate->toDateString(),
@@ -219,6 +233,11 @@ class SubscriptionRenewalService
         return is_numeric($subscriber->subscription_price) && (float) $subscriber->subscription_price > 0
             ? (float) $subscriber->subscription_price
             : 2.0;
+    }
+
+    protected function makeRazorpayApi(string $key, string $secret)
+    {
+        return new Api($key, $secret);
     }
 
     private function money(float|int $amount): float

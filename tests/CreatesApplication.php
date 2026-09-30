@@ -17,6 +17,10 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
+        $testUrl = $_SERVER['APP_URL'] ?? 'http://localhost';
+        config(['app.url' => $testUrl]);
+        $app['url']->forceRootUrl($testUrl);
+
         return $app;
     }
 }

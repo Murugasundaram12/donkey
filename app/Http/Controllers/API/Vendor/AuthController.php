@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
+use App\Services\SubscriptionRenewalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -57,11 +58,10 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Check blocked status
-        if (isset($vendor->blockedstatus) && (int)$vendor->blockedstatus === 0) {
+        if ($message = $this->loginBlockedMessage($vendor)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Your account has been blocked. Please contact admin.'
+                'message' => $message
             ], 403);
         }
 
@@ -120,6 +120,13 @@ class AuthController extends Controller
                 'status' => false,
                 'message' => 'Invalid OTP.'
             ], 400);
+        }
+
+        if ($message = $this->loginBlockedMessage($vendor)) {
+            return response()->json([
+                'status' => false,
+                'message' => $message
+            ], 403);
         }
 
         $token = $vendor->createToken('vendor_app_token')->plainTextToken;
@@ -364,5 +371,32 @@ class AuthController extends Controller
             'subscription_total_payable_in_paise' => $pricing['total_payable_in_paise'],
             'created_at' => $vendor->created_at ? $vendor->created_at->toDateTimeString() : null,
         ];
+    }
+
+    private function loginBlockedMessage(Subscriber $vendor): ?string
+    {
+        if ((int) ($vendor->blockedstatus ?? 1) === 0) {
+            return 'Your account has been blocked. Please contact admin.';
+        }
+
+        if ((int) ($vendor->status ?? 1) === 0 || (int) ($vendor->activestatus ?? 1) === 0) {
+            return 'Your account is inactive. Please contact admin.';
+        }
+
+        if (!empty($vendor->expiryDate)) {
+            try {
+                $expired = Carbon::parse($vendor->expiryDate, SubscriptionRenewalService::TIMEZONE)
+                    ->setTimezone(SubscriptionRenewalService::TIMEZONE)
+                    ->endOfDay()
+                    ->isPast();
+                if ($expired) {
+                    return 'Your subscription/payment has expired. Please renew your payment.';
+                }
+            } catch (\Throwable $e) {
+                return 'Your subscription/payment status could not be verified.';
+            }
+        }
+
+        return null;
     }
 }

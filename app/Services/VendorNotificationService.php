@@ -7,12 +7,22 @@ use App\Models\Subscriber;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class VendorNotificationService
 {
     public const CATEGORIES = ['Payments', 'Riders', 'Bookings', 'System'];
 
     public function create(Subscriber|int|null $vendor, string $category, string $title, string $content, array $data = []): Pushnotification
+    {
+        return $this->createWithDelivery($vendor, $category, $title, $content, $data)['notification'];
+    }
+
+    /**
+     * Create the notification record and report the push-delivery outcome separately.
+     * Existing callers should continue using create(), which still returns the model.
+     */
+    public function createWithDelivery(Subscriber|int|null $vendor, string $category, string $title, string $content, array $data = []): array
     {
         $vendorId = null;
         if ($vendor instanceof Subscriber) {
@@ -30,11 +40,18 @@ class VendorNotificationService
             'data' => $data ?: null,
         ]);
 
+        $deliveryStatus = 'database_created';
         if ($vendorId) {
-            $this->sendPush($vendor instanceof Subscriber ? $vendor : Subscriber::find($vendorId), $notification);
+            $deliveryStatus = $this->sendPush(
+                $vendor instanceof Subscriber ? $vendor : Subscriber::find($vendorId),
+                $notification
+            );
         }
 
-        return $notification;
+        return [
+            'notification' => $notification,
+            'delivery_status' => $deliveryStatus,
+        ];
     }
 
     public function forVendor(Subscriber $vendor)
@@ -104,17 +121,27 @@ class VendorNotificationService
         };
     }
 
-    private function sendPush(?Subscriber $vendor, Pushnotification $notification): void
+    private function sendPush(?Subscriber $vendor, Pushnotification $notification): string
     {
         $token = $vendor?->device_token;
         $projectId = config('services.firebase.vendor_project_id');
-        $accessToken = config('services.firebase.vendor_access_token');
-        if (!$token || !$projectId || !$accessToken) {
-            return;
+        if (!$token) {
+            Log::warning('Vendor notification push skipped: device token is missing.', [
+                'notification_id' => $notification->id,
+            ]);
+            return 'missing_device_token';
+        }
+
+        if (!$projectId || !config('services.firebase.vendor_credentials')) {
+            Log::warning('Vendor notification push skipped: Firebase configuration is missing.', [
+                'notification_id' => $notification->id,
+            ]);
+            return 'missing_configuration';
         }
 
         try {
-            Http::withToken($accessToken)->timeout(5)->post(
+            $accessToken = app(FirebaseAccessTokenService::class)->getVendorAccessToken();
+            $response = Http::withToken($accessToken)->timeout(5)->post(
                 "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send",
                 ['message' => [
                     'token' => $token,
@@ -124,9 +151,68 @@ class VendorNotificationService
                         'category' => (string) $notification->category,
                     ],
                 ]]
-            )->throw();
-        } catch (\Throwable $e) {
-            Log::warning('Vendor notification FCM delivery failed', ['notification_id' => $notification->id, 'error' => $e->getMessage()]);
+            );
+
+            if ($response->failed()) {
+                $fcmError = $response->json('error');
+                Log::warning('Vendor notification FCM delivery failed.', [
+                    'notification_id' => $notification->id,
+                    'http_status' => $response->status(),
+                    'fcm_error_status' => is_array($fcmError) ? ($fcmError['status'] ?? null) : null,
+                    'fcm_error_code' => is_array($fcmError) ? ($fcmError['code'] ?? null) : null,
+                    'fcm_error_message' => is_array($fcmError) ? ($fcmError['message'] ?? null) : null,
+                    'fcm_error_details' => $this->sanitizedFcmErrorDetails(
+                        is_array($fcmError) ? ($fcmError['details'] ?? []) : []
+                    ),
+                ]);
+                return 'push_failed';
+            }
+
+            return 'push_sent';
+        } catch (Throwable $e) {
+            Log::warning('Vendor notification FCM delivery failed.', [
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+            ]);
+            return 'push_failed';
         }
+    }
+
+    private function sanitizedFcmErrorDetails(mixed $details): array
+    {
+        if (!is_array($details)) {
+            return [];
+        }
+
+        return collect($details)
+            ->filter(fn ($detail) => is_array($detail))
+            ->map(function (array $detail): array {
+                return array_filter([
+                    'type' => is_string($detail['@type'] ?? null) ? $detail['@type'] : null,
+                    'error_code' => is_string($detail['errorCode'] ?? null) ? $detail['errorCode'] : null,
+                    'reason' => is_string($detail['reason'] ?? null) ? $detail['reason'] : null,
+                    'domain' => is_string($detail['domain'] ?? null) ? $detail['domain'] : null,
+                    'field_violations' => $this->sanitizedFieldViolations($detail['fieldViolations'] ?? []),
+                ], fn ($value) => $value !== null && $value !== []);
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function sanitizedFieldViolations(mixed $violations): array
+    {
+        if (!is_array($violations)) {
+            return [];
+        }
+
+        return collect($violations)
+            ->filter(fn ($violation) => is_array($violation))
+            ->map(fn (array $violation): array => array_filter([
+                    'field' => is_string($violation['field'] ?? null) ? $violation['field'] : null,
+                ], fn ($value) => $value !== null))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

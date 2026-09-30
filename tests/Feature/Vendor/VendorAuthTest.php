@@ -192,7 +192,7 @@ class VendorAuthTest extends TestCase
             ]);
     }
 
-    public function test_expired_vendor_can_login_for_renewal_access()
+    public function test_expired_vendor_cannot_login()
     {
         Subscriber::create(array_merge($this->defaultVendorData, [
             'name' => 'Expired Vendor',
@@ -208,17 +208,53 @@ class VendorAuthTest extends TestCase
             'device_token' => 'TEST_TOKEN_123',
         ]);
 
-        $response->assertStatus(200)
+        $response->assertStatus(403)
             ->assertJson([
-                'status' => true,
-                'message' => 'Login successful',
-                'data' => [
-                    'token_type' => 'Bearer',
-                    'vendor' => [
-                        'email' => 'expired@test.com',
-                    ],
-                ]
+                'status' => false,
+                'message' => 'Your subscription/payment has expired. Please renew your payment.',
             ]);
+    }
+
+    public function test_login_rejects_inactive_status_fields()
+    {
+        foreach (['status' => ['email' => 'status-inactive@test.com', 'mobile' => '9876543295'], 'activestatus' => ['email' => 'active-status-inactive@test.com', 'mobile' => '9876543296']] as $field => $identity) {
+            Subscriber::create(array_merge($this->defaultVendorData, [
+                'name' => 'Inactive Vendor',
+                'email' => $identity['email'],
+                'mobile' => $identity['mobile'],
+                'password' => Hash::make('password123'),
+                $field => 0,
+            ]));
+
+            $this->postJson('/api/vendor/login', [
+                'login' => $identity['email'],
+                'password' => 'password123',
+                'device_token' => 'TEST_TOKEN_123',
+            ])->assertStatus(403);
+        }
+    }
+
+    public function test_otp_login_rejects_blocked_inactive_and_expired_vendors()
+    {
+        $cases = [
+            ['email' => 'otp-blocked@test.com', 'mobile' => '9876543294', 'blockedstatus' => 0],
+            ['email' => 'otp-status@test.com', 'mobile' => '9876543293', 'status' => 0],
+            ['email' => 'otp-active-status@test.com', 'mobile' => '9876543292', 'activestatus' => 0],
+            ['email' => 'otp-expired@test.com', 'mobile' => '9876543291', 'expiryDate' => '2020-01-01 23:59:59'],
+        ];
+
+        foreach ($cases as $case) {
+            Subscriber::create(array_merge($this->defaultVendorData, [
+                'name' => 'OTP Vendor',
+                'password' => Hash::make('password123'),
+                'notify' => '1234',
+            ], $case));
+
+            $this->postJson('/api/vendor/otp/verify', [
+                'mobile' => $case['mobile'],
+                'otp' => '1234',
+            ])->assertStatus(403);
+        }
     }
 
     public function test_vendor_expiring_today_can_login()

@@ -28,12 +28,21 @@ class SubscriptionRenewalServiceTest extends TestCase
         $this->assertSame(1770.0, $quote['total_payable']);
     }
 
-    /** @dataProvider penaltyDays */
-    public function test_penalty_days_are_cumulative(int $day, int $principal, float $gst): void
+    public function test_day_before_due_date_gets_bonus_days_without_penalty(): void
     {
-        $quote = app(SubscriptionRenewalService::class)->quote($this->vendor(), Carbon::create(2026, 10, 15, 12, 0, 0, 'Asia/Kolkata')->addDays($day));
+        $quote = app(SubscriptionRenewalService::class)->quote($this->vendor(), Carbon::create(2026, 10, 14, 12, 0, 0, 'Asia/Kolkata'));
 
-        $this->assertSame($day, $quote['penalty_day']);
+        $this->assertSame(0, $quote['penalty_day']);
+        $this->assertSame(2, $quote['bonus_days']);
+        $this->assertSame(30, $quote['renewal_days']);
+    }
+
+    /** @dataProvider penaltyDays */
+    public function test_penalty_days_are_cumulative(int $daysAfterDue, int $penaltyDay, int $principal, float $gst): void
+    {
+        $quote = app(SubscriptionRenewalService::class)->quote($this->vendor(), Carbon::create(2026, 10, 15, 12, 0, 0, 'Asia/Kolkata')->addDays($daysAfterDue));
+
+        $this->assertSame($penaltyDay, $quote['penalty_day']);
         $this->assertSame((float) $principal, $quote['penalty_principal']);
         $this->assertSame($gst, $quote['penalty_gst']);
         $this->assertSame(28, $quote['renewal_days']);
@@ -42,7 +51,7 @@ class SubscriptionRenewalServiceTest extends TestCase
 
     public static function penaltyDays(): array
     {
-        return [[1, 15, 2.70], [2, 30, 5.40], [3, 45, 8.10], [4, 60, 10.80], [5, 75, 13.50], [6, 90, 16.20], [7, 105, 18.90]];
+        return [[1, 1, 15, 2.70], [2, 2, 30, 5.40], [3, 3, 45, 8.10], [4, 4, 60, 10.80], [5, 5, 75, 13.50], [6, 6, 90, 16.20], [7, 7, 105, 18.90], [8, 7, 105, 18.90]];
     }
 
     public function test_default_price_and_rounded_payment_amount_are_preserved(): void

@@ -215,6 +215,8 @@ Route::prefix('vendor')->group(function () {
             Route::get('dashboard', [\App\Http\Controllers\API\Vendor\DashboardController::class, 'index']);
 
             // Business Profile & Pricing
+            Route::get('pricing', [\App\Http\Controllers\API\Vendor\PricingController::class, 'show']);
+            Route::put('pricing', [\App\Http\Controllers\API\Vendor\PricingController::class, 'update']);
             Route::get('business', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getBusiness']);
             Route::post('business/update', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'updateBusiness']);
             Route::get('work-description', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getWorkDescription']);
@@ -249,8 +251,13 @@ Route::prefix('vendor')->group(function () {
             Route::put('pincodes/{pincode_id}/status', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'updateStatus']);
 
             // Coupons
+            Route::get('coupons', [\App\Http\Controllers\API\Vendor\CouponController::class, 'index']);
             Route::get('coupons/active', [\App\Http\Controllers\API\Vendor\CouponController::class, 'active']);
             Route::get('coupons/summary', [\App\Http\Controllers\API\Vendor\CouponController::class, 'summary']);
+            Route::post('coupons', [\App\Http\Controllers\API\Vendor\CouponController::class, 'store']);
+            Route::get('coupons/{id}', [\App\Http\Controllers\API\Vendor\CouponController::class, 'show'])->whereNumber('id');
+            Route::put('coupons/{id}', [\App\Http\Controllers\API\Vendor\CouponController::class, 'update'])->whereNumber('id');
+            Route::delete('coupons/{id}', [\App\Http\Controllers\API\Vendor\CouponController::class, 'destroy'])->whereNumber('id');
 
             // Bank Details
             Route::get('bank-details', [\App\Http\Controllers\API\Vendor\BankDetailsController::class, 'show']);
@@ -263,7 +270,7 @@ Route::prefix('vendor')->group(function () {
             Route::delete('documents/{type}', [\App\Http\Controllers\API\Vendor\DocumentController::class, 'destroy']);
 
             // Notifications
-            Route::post('notifications/send-test', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'sendTest']);
+            Route::post('notifications/send-test', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'sendTest'])->middleware('throttle:10,1');
             Route::delete('notifications/{notification_id}', [\App\Http\Controllers\API\Vendor\NotificationController::class, 'destroy']);
 
             // Earnings & Reports

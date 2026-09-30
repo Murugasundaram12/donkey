@@ -155,9 +155,51 @@ class BookingController extends Controller
             'status' => true,
             'message' => 'Booking details retrieved successfully',
             'data' => [
-                'booking' => $this->formatBookingDetail($booking)
+                'booking' => array_merge(
+                    $this->formatBookingDetail($booking),
+                    ['riders' => $this->ridersForBooking($booking, $vendor)]
+                ),
             ]
         ]);
+    }
+
+    /**
+     * Get this vendor's riders assigned to the booking's pincode.
+     * Rider pincode values are stored as JSON pincode IDs; legacy rows may
+     * contain the pincode value itself, so both representations are matched.
+     */
+    private function ridersForBooking(Booking $booking, $vendor): array
+    {
+        $bookingPincode = trim((string) $booking->pincode);
+        if ($bookingPincode === '') {
+            return [];
+        }
+
+        $pincodeIds = Pincode::where('pincode', $bookingPincode)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $matchingValues = array_flip(array_unique(array_merge([$bookingPincode], $pincodeIds)));
+
+        return Driver::query()
+            ->where('subscriberId', $vendor->id)
+            ->get(['name', 'mobile', 'pincode', 'status'])
+            ->filter(function (Driver $rider) use ($matchingValues): bool {
+                $storedPincodes = json_decode((string) $rider->pincode, true);
+                $storedPincodes = is_array($storedPincodes) ? $storedPincodes : [(string) $rider->pincode];
+
+                return collect($storedPincodes)
+                    ->map(fn ($value) => (string) $value)
+                    ->contains(fn ($value) => isset($matchingValues[$value]));
+            })
+            ->values()
+            ->map(fn (Driver $rider): array => [
+                'name' => (string) $rider->name,
+                'phone' => (string) $rider->mobile,
+                'pincode' => $bookingPincode,
+                'status' => (int) $rider->status,
+            ])
+            ->all();
     }
 
     /**

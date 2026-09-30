@@ -118,13 +118,14 @@ class NotificationController extends Controller
         $content = $request->input('content');
         $data = $request->input('data', []);
 
-        $notification = app(VendorNotificationService::class)->create(
+        $result = app(VendorNotificationService::class)->createWithDelivery(
             $vendor,
             $category,
             $title,
             $content,
             $data
         );
+        $notification = $result['notification'];
 
         return response()->json([
             'status' => true,
@@ -136,6 +137,7 @@ class NotificationController extends Controller
                 'category' => (string) $notification->category,
                 'is_read' => false,
                 'data' => $notification->data,
+                'delivery_status' => $result['delivery_status'],
                 'created_at' => $notification->created_at ? $notification->created_at->toDateTimeString() : null,
             ]
         ], 200);

@@ -4,6 +4,9 @@ namespace Tests\Feature\Vendor;
 
 use App\Models\PaymentDetails;
 use App\Models\Subscriber;
+use App\Models\SubscriptionRenewal;
+use App\Services\SubscriptionRenewalService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -504,5 +507,85 @@ class SubscriptionRenewalPaymentTest extends TestCase
             ]);
 
         $this->assertNotEquals(450, $response->json('data.vendor.subscription_price'));
+    }
+
+    public function test_settlement_recalculates_terms_from_actual_payment_date()
+    {
+        config([
+            'services.razorpay.key_id' => 'test-key',
+            'services.razorpay.key_secret' => 'test-secret',
+        ]);
+
+        Carbon::setTestNow(Carbon::create(2026, 10, 16, 12, 0, 0, 'Asia/Kolkata'));
+        $vendor = $this->createVendor([
+            'subscription_price' => '1500',
+            'expiryDate' => '2026-10-15 23:59:59',
+        ]);
+
+        $renewal = SubscriptionRenewal::create([
+            'subscriber_id' => $vendor->id,
+            'cycle_key' => $vendor->id . ':2026-10-15',
+            'due_date' => '2026-10-15',
+            'status' => 'order_created',
+            'subscription_price' => 1500,
+            'subscription_gst' => 270,
+            'penalty_day' => 0,
+            'penalty_principal' => 0,
+            'penalty_gst' => 0,
+            'renewal_days' => 30,
+            'bonus_days' => 2,
+            'total_payable' => 1770,
+            'razorpay_order_id' => 'order_test_actual_date',
+        ]);
+
+        $utility = new class {
+            public function verifyPaymentSignature(array $attributes): void
+            {
+            }
+        };
+        $paymentApi = new class {
+            public function fetch(string $paymentId): object
+            {
+                return (object) [
+                    'order_id' => 'order_test_actual_date',
+                    'amount' => 178800,
+                    'status' => 'captured',
+                ];
+            }
+        };
+        $api = new class($utility, $paymentApi) {
+            public function __construct(public object $utility, public object $payment)
+            {
+            }
+        };
+        $service = new class($api) extends \App\Services\SubscriptionRenewalService {
+            public function __construct(private object $api)
+            {
+            }
+
+            protected function makeRazorpayApi(string $key, string $secret): object
+            {
+                return $this->api;
+            }
+        };
+
+        $result = $service->settle(
+            $vendor,
+            $renewal,
+            'pay_test_actual_date',
+            'signature'
+        );
+
+        $this->assertFalse($result['already_paid']);
+        $renewal->refresh();
+        $vendor->refresh();
+        $this->assertSame(1, (int) $renewal->penalty_day);
+        $this->assertSame(15.0, (float) $renewal->penalty_principal);
+        $this->assertSame(0, (int) $renewal->bonus_days);
+        $this->assertSame(28, (int) $renewal->renewal_days);
+        $this->assertSame(1788.0, (float) $renewal->total_payable);
+        $this->assertSame('2026-11-13', $vendor->expiryDate->toDateString());
+
+        Carbon::setTestNow();
     }
 }

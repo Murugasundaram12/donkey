@@ -67,6 +67,11 @@
       "type": "string"
     },
     {
+      "key": "couponId",
+      "value": "1",
+      "type": "string"
+    },
+    {
       "key": "documentType",
       "value": "aadhar_front",
       "type": "string"
@@ -863,6 +868,84 @@
                 }
               ]
             }
+          }
+        },
+        {
+          "name": "List Vendor Coupons",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/coupons?per_page=15"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "description": "Returns only coupons created by the authenticated vendor. Success item: {\"status\":true,\"data\":{\"items\":[{\"id\":1,\"title\":\"WELCOME\",\"code\":\"WELCOME10\"}]}}. Requires Bearer token."
+          }
+        },
+        {
+          "name": "Get Vendor Coupon",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/coupons/{{couponId}}"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "description": "Success returns data.coupon. A coupon owned by another vendor returns 404: {\"status\":false,\"message\":\"Coupon not found or access denied.\"}."
+          }
+        },
+        {
+          "name": "Create Vendor Coupon",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/coupons"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"WELCOME\",\n  \"type\": 2,\n  \"pincode_id\": {{pincodeId}},\n  \"code\": \"WELCOME10\",\n  \"limit\": 100,\n  \"is_multiple\": 0,\n  \"start_date\": \"2026-01-01\",\n  \"expiry_date\": \"2026-12-31\",\n  \"discount_type\": 1,\n  \"amount\": 10,\n  \"percentage\": null,\n  \"status\": 1\n}", "options": {"raw": {"language": "json"}}},
+            "description": "Use a pincode_id assigned to this vendor. Validation error example (422): {\"status\":false,\"message\":\"Validation error\",\"errors\":{\"code\":[\"The code has already been taken.\"]}}."
+          }
+        },
+        {
+          "name": "Update Vendor Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/coupons/{{couponId}}"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"WELCOME UPDATED\",\n  \"limit\": 150,\n  \"expiry_date\": \"2026-12-31\"\n}", "options": {"raw": {"language": "json"}}},
+            "description": "Updates only the authenticated vendor's coupon. Cross-vendor access returns 404."
+          }
+        },
+        {
+          "name": "Delete Vendor Coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/coupons/{{couponId}}"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "description": "Deletes only the authenticated vendor's coupon. Do not use against production data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pricing",
+      "item": [
+        {
+          "name": "Get Vendor Pricing",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/pricing"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "description": "Returns the complete pricing configuration for the authenticated vendor. No comments field is returned because the existing subscriber table has no comments column."
+          }
+        },
+        {
+          "name": "Update Vendor Pricing",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{baseUrl}}/api/vendor/pricing"},
+            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
+            "body": {"mode": "raw", "raw": "{\n  \"bike_taxi_service_fare\": 55,\n  \"pickup_and_drop_service_fare\": 55,\n  \"buy_and_delivery_service_fare\": 55,\n  \"auto_service_fare\": 55,\n  \"cab_service_fare\": 55,\n  \"bike_taxi_1_to_5_km\": 55,\n  \"bike_taxi_5_to_8_km\": 55,\n  \"bike_taxi_8_to_10_km\": 55,\n  \"bike_taxi_above_10_km\": 55,\n  \"pickup_drop_1_to_5_km\": 55,\n  \"pickup_drop_5_to_8_km\": 55,\n  \"pickup_drop_8_to_10_km\": 55,\n  \"pickup_drop_above_10_km\": 55,\n  \"buy_delivery_1_to_5_km\": 55,\n  \"buy_delivery_5_to_8_km\": 55,\n  \"buy_delivery_8_to_10_km\": 55,\n  \"buy_delivery_above_10_km\": 55,\n  \"auto_1_to_5_km\": 55,\n  \"auto_5_to_8_km\": 55,\n  \"auto_8_to_10_km\": 55,\n  \"auto_above_10_km\": 55,\n  \"cab_1_to_5_km\": 55,\n  \"cab_5_to_8_km\": 55,\n  \"cab_8_to_10_km\": 55,\n  \"cab_above_10_km\": 55\n}", "options": {"raw": {"language": "json"}}},
+            "description": "All fields are numeric and non-negative. Validation error example (422): {\"status\":false,\"message\":\"Validation error\",\"errors\":{\"bike_taxi_service_fare\":[\"The bike taxi service fare must be a number.\"]}}."
           }
         }
       ]
