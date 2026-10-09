@@ -1,7 +1,7 @@
 meta {
   name: Active Coupons
   type: http
-  seq: 1
+  seq: 6
 }
 
 get {
@@ -19,5 +19,7 @@ headers {
 }
 
 docs {
-  Get list of active discount coupons available to vendor.
+  Get active coupons visible to the authenticated vendor.
+  Results include the vendor's own coupons, eligible admin global coupons,
+  and eligible admin pincode coupons.
 }

@@ -1,0 +1,28 @@
+meta {
+  name: Delete Coupon
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/vendor/coupons/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Delete a coupon created by the authenticated vendor from the shared coupons table.
+  Admin-created coupons and other vendors' coupons cannot be deleted.
+}

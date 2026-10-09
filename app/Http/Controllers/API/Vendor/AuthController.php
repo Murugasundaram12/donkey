@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
 use App\Services\SubscriptionRenewalService;
+use App\Services\VendorNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -203,7 +204,6 @@ class AuthController extends Controller
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'current_password' => 'required|string',
             'new_password' => 'required|string|min:6|confirmed',
         ]);
 
@@ -216,14 +216,6 @@ class AuthController extends Controller
         }
 
         $vendor = $request->user();
-
-        $passwordMatches = Hash::check($request->current_password, $vendor->password) || ($vendor->password === $request->current_password);
-        if (!$passwordMatches) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Current password does not match.'
-            ], 400);
-        }
 
         $vendor->password = Hash::make($request->new_password);
         $vendor->save();
@@ -271,6 +263,17 @@ class AuthController extends Controller
         $otp = (string) rand(1000, 9999);
         $vendor->notify = $otp;
         $vendor->save();
+
+        app(VendorNotificationService::class)->create(
+            $vendor,
+            'System',
+            'Password Reset OTP',
+            "Your password reset OTP is {$otp}.",
+            [
+                'action' => 'password_reset',
+                'otp' => $otp,
+            ]
+        );
 
         return response()->json([
             'status' => true,

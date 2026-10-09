@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
-use App\Models\Pincode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -14,7 +13,7 @@ class CouponController extends Controller
 {
     public function index(Request $request)
     {
-        $coupons = Coupon::where('created_by', $request->user()->id)
+        $coupons = $this->visibleCoupons($request)
             ->latest()->paginate((int) $request->get('per_page', 15));
 
         return response()->json(['status' => true, 'message' => 'Coupons retrieved successfully', 'data' => [
@@ -26,7 +25,7 @@ class CouponController extends Controller
 
     public function show(Request $request, $id)
     {
-        $coupon = $this->ownedCoupon($request, $id);
+        $coupon = $this->visibleCoupons($request)->whereKey($id)->first();
         if (!$coupon) return $this->notFound();
         return response()->json(['status' => true, 'message' => 'Coupon retrieved successfully', 'data' => ['coupon' => $this->serialize($coupon)]]);
     }
@@ -46,12 +45,29 @@ class CouponController extends Controller
 
     public function update(Request $request, $id)
     {
-        $coupon = $this->ownedCoupon($request, $id);
+        $coupon = $this->editableCoupon($request, $id);
         if (!$coupon) return $this->notFound();
         $validator = Validator::make($request->all(), $this->rules($request, $coupon));
         if ($validator->fails()) return $this->validationError($validator);
-        if ($error = $this->pincodeOwnershipError($request, $validator->validated())) return $error;
-        $coupon->update($validator->validated());
+        $data = $validator->validated();
+        if ($error = $this->pincodeOwnershipError($request, $data)) return $error;
+
+        // A vendor may edit an admin coupon only within the pincode scope
+        // that made the coupon visible to that vendor.
+        if ($coupon->role !== 'SUBSCRIBER') {
+            if (array_key_exists('type', $data) && (int) $data['type'] !== 2) {
+                return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => [
+                    'type' => ['Admin pincode coupon type cannot be changed.'],
+                ]], 422);
+            }
+            if (array_key_exists('pincode_id', $data)
+                && (int) $data['pincode_id'] !== (int) $coupon->pincode_id) {
+                return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => [
+                    'pincode_id' => ['Coupon pincode cannot be changed.'],
+                ]], 422);
+            }
+        }
+        $coupon->update($data);
         return response()->json(['status' => true, 'message' => 'Coupon updated successfully', 'data' => ['coupon' => $this->serialize($coupon->fresh())]]);
     }
 
@@ -65,7 +81,74 @@ class CouponController extends Controller
 
     private function ownedCoupon(Request $request, $id): ?Coupon
     {
-        return Coupon::where('id', $id)->where('created_by', $request->user()->id)->first();
+        return Coupon::whereKey($id)
+            ->where('created_by', $request->user()->id)
+            ->where('role', 'SUBSCRIBER')
+            ->first();
+    }
+
+    private function editableCoupon(Request $request, $id): ?Coupon
+    {
+        $coupon = $this->ownedCoupon($request, $id);
+        if ($coupon) return $coupon;
+
+        $pincodeIds = $this->vendorPincodeIds($request->user());
+        if (empty($pincodeIds)) return null;
+
+        return Coupon::whereKey($id)
+            ->where(function ($creator) {
+                $creator->whereNull('role')
+                    ->orWhere('role', '!=', 'SUBSCRIBER');
+            })
+            ->where('type', 2)
+            ->whereIn('pincode_id', $pincodeIds)
+            ->first();
+    }
+
+    /**
+     * Coupons visible to a vendor:
+     * - coupons created by the authenticated vendor;
+     * - admin-created global coupons;
+     * - admin-created pincode coupons for the vendor's assigned pincodes.
+     *
+     * Admin-created global coupons are read-only; admin-created pincode
+     * coupons are editable when their pincode belongs to the vendor.
+     */
+    private function visibleCoupons(Request $request)
+    {
+        $vendor = $request->user();
+        $pincodeIds = $this->vendorPincodeIds($vendor);
+
+        return Coupon::where(function ($query) use ($vendor, $pincodeIds) {
+            $query->where(function ($own) use ($vendor) {
+                $own->where('created_by', $vendor->id)
+                    ->where('role', 'SUBSCRIBER');
+            });
+
+            $query->orWhere(function ($admin) use ($pincodeIds) {
+                $admin->where(function ($creator) {
+                    $creator->whereNull('role')
+                        ->orWhere('role', '!=', 'SUBSCRIBER');
+                })->where(function ($scope) use ($pincodeIds) {
+                    $scope->where('type', 1);
+                    if (!empty($pincodeIds)) {
+                        $scope->orWhere(function ($pincode) use ($pincodeIds) {
+                            $pincode->where('type', 2)
+                                ->whereIn('pincode_id', $pincodeIds);
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+    private function vendorPincodeIds($vendor): array
+    {
+        $pincodeIds = json_decode((string) $vendor->pincode, true);
+
+        return is_array($pincodeIds)
+            ? array_values(array_filter(array_map('intval', $pincodeIds)))
+            : [];
     }
 
     private function rules(Request $request, ?Coupon $coupon = null): array
@@ -107,8 +190,7 @@ class CouponController extends Controller
             return null;
         }
 
-        $vendorPincodes = json_decode((string) $request->user()->pincode, true);
-        $vendorPincodes = is_array($vendorPincodes) ? array_map('intval', $vendorPincodes) : [];
+        $vendorPincodes = $this->vendorPincodeIds($request->user());
         if (!in_array((int) $data['pincode_id'], $vendorPincodes, true)) {
             return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => [
                 'pincode_id' => ['Selected pincode does not belong to your vendor account.'],
@@ -126,21 +208,8 @@ class CouponController extends Controller
      */
     public function active(Request $request)
     {
-        $vendor = $request->user();
-
-        $subscribersPin = json_decode((string) $vendor->pincode, true);
-        $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
-        $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
-
-        $coupons = Coupon::where('status', 1)
-            ->where(function ($q) use ($vendor, $pincodes) {
-                $q->where('created_by', $vendor->id);
-                if (!empty($pincodes)) {
-                    $q->orWhere(function ($legacy) use ($pincodes) {
-                        $legacy->whereNull('created_by')->whereIn('pincode_id', $pincodes);
-                    });
-                }
-            })
+        $coupons = $this->visibleCoupons($request)
+            ->where('status', 1)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($c) {
@@ -172,20 +241,7 @@ class CouponController extends Controller
      */
     public function summary(Request $request)
     {
-        $vendor = $request->user();
-
-        $subscribersPin = json_decode((string) $vendor->pincode, true);
-        $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
-        $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
-
-        $query = Coupon::where(function ($q) use ($vendor, $pincodes) {
-            $q->where('created_by', $vendor->id);
-            if (!empty($pincodes)) {
-                $q->orWhere(function ($legacy) use ($pincodes) {
-                    $legacy->whereNull('created_by')->whereIn('pincode_id', $pincodes);
-                });
-            }
-        });
+        $query = $this->visibleCoupons($request);
 
         $activeCount = (clone $query)->where('status', 1)->count();
         $inactiveCount = (clone $query)->where('status', '!=', 1)->count();

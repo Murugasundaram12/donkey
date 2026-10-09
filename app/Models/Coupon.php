@@ -49,38 +49,6 @@ class Coupon extends Model
         return filled($value) ? Carbon::parse($value) : null;
     }
 
-    public function getTitleAttribute($value)
-    {
-        return $value ?? $this->attributes['name'] ?? null;
-    }
-
-    public function setTitleAttribute($value): void
-    {
-        $this->attributes['title'] = $value;
-        $this->attributes['name'] = $value;
-    }
-
-    public function getLimitAttribute($value)
-    {
-        return $value ?? $this->attributes['user_limit'] ?? 0;
-    }
-
-    public function setLimitAttribute($value): void
-    {
-        $this->attributes['limit'] = $value;
-        $this->attributes['user_limit'] = $value;
-    }
-
-    public function getStartDateRawAttribute()
-    {
-        return $this->attributes['start_date'] ?? $this->attributes['valid_from'] ?? null;
-    }
-
-    public function getExpiryDateRawAttribute()
-    {
-        return $this->attributes['expiry_date'] ?? $this->attributes['valid_to'] ?? null;
-    }
-
     public function pincode(): BelongsTo
     {
         return $this->belongsTo(Pincode::class);

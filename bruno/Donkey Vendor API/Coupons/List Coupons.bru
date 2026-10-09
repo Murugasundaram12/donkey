@@ -1,0 +1,30 @@
+meta {
+  name: List Coupons
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/coupons
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+query {
+  per_page: 15
+}
+
+docs {
+  List coupons visible to the authenticated vendor.
+  Includes the vendor's own coupons, eligible admin global coupons,
+  and eligible admin pincode coupons.
+  Admin-created coupons are read-only for vendors.
+}

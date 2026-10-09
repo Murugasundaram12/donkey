@@ -23,7 +23,7 @@
     }
 
     var options = {
-        "key": "rzp_live_kplCTSQUdMA2Gw",
+        "key": "{{ config('services.razorpay.key_id') }}",
         "amount": "<?php echo $amount * 100; ?>",
         "currency": "INR",
         "name": "{{ $subscriber[0]->name }}",

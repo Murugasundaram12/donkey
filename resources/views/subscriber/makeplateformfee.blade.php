@@ -27,7 +27,7 @@
     // {{ $subscriber->platform_fee = 2 }}
 
     var options = {
-        "key": "rzp_live_kplCTSQUdMA2Gw",
+        "key": "{{ config('services.razorpay.key_id') }}",
         "amount": "<?php echo $subscriber->platform_fee * 100; ?>",
         "currency": "INR",
         "name": "{{ $subscriber->name }}",

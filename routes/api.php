@@ -216,7 +216,7 @@ Route::prefix('vendor')->group(function () {
 
             // Business Profile & Pricing
             Route::get('pricing', [\App\Http\Controllers\API\Vendor\PricingController::class, 'show']);
-            Route::put('pricing', [\App\Http\Controllers\API\Vendor\PricingController::class, 'update']);
+            Route::put('update_pricing', [\App\Http\Controllers\API\Vendor\PricingController::class, 'update']);
             Route::get('business', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getBusiness']);
             Route::post('business/update', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'updateBusiness']);
             Route::get('work-description', [\App\Http\Controllers\API\Vendor\BusinessController::class, 'getWorkDescription']);

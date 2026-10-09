@@ -1,0 +1,38 @@
+meta {
+  name: Update Coupon
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/vendor/coupons/:id
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "title": "Updated Vendor Delivery Offer",
+  "limit": 8,
+  "expiry_date": "2026-12-31"
+}
+}
+
+docs {
+  Update only a coupon created by the authenticated vendor.
+  Admin-created coupons and other vendors' coupons are read-only/inaccessible.
+  If type 2 or pincode_id is supplied, the pincode must be assigned to the vendor.
+}

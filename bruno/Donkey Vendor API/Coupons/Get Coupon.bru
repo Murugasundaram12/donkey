@@ -1,0 +1,28 @@
+meta {
+  name: Get Coupon
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vendor/coupons/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Get one coupon visible to the authenticated vendor.
+  Cross-vendor coupons and non-eligible admin pincode coupons return 404.
+}

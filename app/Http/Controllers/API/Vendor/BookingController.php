@@ -171,6 +171,8 @@ class BookingController extends Controller
     private function ridersForBooking(Booking $booking, $vendor): array
     {
         $bookingPincode = trim((string) $booking->pincode);
+        $bookingCategory = (string) $booking->category;
+
         if ($bookingPincode === '') {
             return [];
         }
@@ -183,6 +185,16 @@ class BookingController extends Controller
 
         return Driver::query()
             ->where('subscriberId', $vendor->id)
+            // Show only approved riders for the booking category.
+            // driver.type may contain one value ("1") or CSV values ("1,2").
+            ->where('status', 1)
+            ->where(function ($query) use ($bookingCategory) {
+                $query->where('type', $bookingCategory)
+                    ->orWhereRaw(
+                        "FIND_IN_SET(?, REPLACE(type, ' ', '')) > 0",
+                        [$bookingCategory]
+                    );
+            })
             ->get(['name', 'mobile', 'pincode', 'status'])
             ->filter(function (Driver $rider) use ($matchingValues): bool {
                 $storedPincodes = json_decode((string) $rider->pincode, true);

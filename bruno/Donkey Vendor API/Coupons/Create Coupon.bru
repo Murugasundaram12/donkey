@@ -1,0 +1,43 @@
+meta {
+  name: Create Coupon
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/vendor/coupons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+{
+  "title": "Vendor Delivery Offer",
+  "image": null,
+  "type": 2,
+  "pincode_id": 1,
+  "code": "VENDOR10",
+  "limit": 10,
+  "is_multiple": 0,
+  "start_date": "2026-10-01",
+  "expiry_date": "2026-12-31",
+  "discount_type": 1,
+  "amount": 10,
+  "percentage": null
+}
+}
+
+docs {
+  Create a coupon in the shared coupons table.
+  The API sets created_by to the authenticated vendor ID and role to SUBSCRIBER.
+  For type 2, pincode_id must belong to the vendor's assigned pincodes.
+}
