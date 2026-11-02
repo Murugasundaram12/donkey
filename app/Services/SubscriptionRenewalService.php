@@ -38,11 +38,12 @@ class SubscriptionRenewalService
         $subscriptionGst = $this->money($price * self::GST_PERCENT / 100);
         $penaltyGst = $this->money($penaltyPrincipal * self::GST_PERCENT / 100);
         $exactTotal = $this->money($price + $subscriptionGst + $penaltyPrincipal + $penaltyGst);
-        $payable = (int) round($exactTotal, 0, PHP_ROUND_HALF_UP);
+        $totalPayableInPaise = (int) round($exactTotal * 100);
         $renewalDays = $overdueDays === 0 ? self::SUBSCRIPTION_DAYS + self::BONUS_DAYS : self::SUBSCRIPTION_DAYS;
+        $cycleKey = $this->resolveCycleKey($subscriber, $dueDate->toDateString(), $overdueDays);
 
         return [
-            'cycle_key' => $subscriber->id . ':' . $dueDate->toDateString(),
+            'cycle_key' => $cycleKey,
             'due_date' => $dueDate->toDateString(),
             'business_date' => $today->toDateString(),
             'overdue_days' => $overdueDays,
@@ -57,32 +58,101 @@ class SubscriptionRenewalService
             'penalty_gst_percentage' => self::GST_PERCENT,
             'penalty_gst' => $penaltyGst,
             'exact_total_payable' => $exactTotal,
-            'total_payable' => $this->money($payable),
-            'total_payable_in_paise' => $payable * 100,
+            'total_payable' => $exactTotal,
+            'total_payable_in_paise' => $totalPayableInPaise,
             'currency' => 'INR',
         ];
     }
 
+    public function resolveCycleKey(Subscriber $subscriber, string $dueDate, int $overdueDays = 0): string
+    {
+        $baseKey = ($subscriber->id ?: '0') . ':' . $dueDate;
+        if (!$subscriber->exists) {
+            return $baseKey;
+        }
+
+        $existing = SubscriptionRenewal::where('cycle_key', $baseKey)->first();
+
+        // If no record exists yet, or the existing base record is not paid, use baseKey
+        if (!$existing || $existing->status !== 'paid') {
+            return $baseKey;
+        }
+
+        // If baseKey is paid, but subscriber is NOT expired (active in advance),
+        // baseKey represents the current paid cycle
+        if ($overdueDays === 0 && !empty($subscriber->expiryDate)) {
+            try {
+                $expiry = Carbon::parse($subscriber->expiryDate, self::TIMEZONE)->setTimezone(self::TIMEZONE)->endOfDay();
+                if (!$expiry->isPast()) {
+                    return $baseKey;
+                }
+            } catch (\Throwable $e) {
+                // fall through to overdue handling
+            }
+        }
+
+        // The base record is paid, but the subscriber is expired and needs a new renewal for this due date.
+        // Check if an unpaid renewal already exists for this subscriber and due_date
+        $unpaid = SubscriptionRenewal::where('subscriber_id', $subscriber->id)
+            ->where('due_date', $dueDate)
+            ->whereIn('status', ['quoted', 'order_created', 'failed'])
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($unpaid) {
+            return $unpaid->cycle_key;
+        }
+
+        // Otherwise generate next deterministic key based on existing renewals count for this due_date
+        $count = SubscriptionRenewal::where('subscriber_id', $subscriber->id)
+            ->where('due_date', $dueDate)
+            ->count();
+
+        return $baseKey . ':' . ($count + 1);
+    }
+
     public function renewalFor(Subscriber $subscriber, array $quote): SubscriptionRenewal
     {
-        $renewal = SubscriptionRenewal::firstOrNew(['cycle_key' => $quote['cycle_key']]);
-        if (!$renewal->exists || in_array($renewal->status, ['quoted', 'failed'], true)) {
-            $renewal->fill([
-                'subscriber_id' => $subscriber->id,
-                'due_date' => $quote['due_date'],
-                'status' => 'quoted',
-                'subscription_price' => $quote['subscription_price'],
-                'subscription_gst' => $quote['subscription_gst'],
-                'penalty_day' => $quote['penalty_day'],
-                'penalty_principal' => $quote['penalty_principal'],
-                'penalty_gst' => $quote['penalty_gst'],
-                'renewal_days' => $quote['renewal_days'],
-                'bonus_days' => $quote['bonus_days'],
-                'total_payable' => $quote['total_payable'],
-            ]);
-            $renewal->save();
-        }
-        return $renewal;
+        return DB::transaction(function () use ($subscriber, $quote) {
+            $cycleKey = $quote['cycle_key'] ?? $this->resolveCycleKey(
+                $subscriber,
+                $quote['due_date'],
+                (int) ($quote['overdue_days'] ?? 0)
+            );
+
+            $renewal = SubscriptionRenewal::where('cycle_key', $cycleKey)->lockForUpdate()->first();
+            if (!$renewal) {
+                $renewal = SubscriptionRenewal::create([
+                    'subscriber_id' => $subscriber->id,
+                    'cycle_key' => $cycleKey,
+                    'due_date' => $quote['due_date'],
+                    'status' => 'quoted',
+                    'subscription_price' => $quote['subscription_price'],
+                    'subscription_gst' => $quote['subscription_gst'],
+                    'penalty_day' => $quote['penalty_day'],
+                    'penalty_principal' => $quote['penalty_principal'],
+                    'penalty_gst' => $quote['penalty_gst'],
+                    'renewal_days' => $quote['renewal_days'],
+                    'bonus_days' => $quote['bonus_days'],
+                    'total_payable' => $quote['total_payable'],
+                ]);
+            } elseif (in_array($renewal->status, ['quoted', 'failed'], true)) {
+                $renewal->update([
+                    'due_date' => $quote['due_date'],
+                    'status' => 'quoted',
+                    'subscription_price' => $quote['subscription_price'],
+                    'subscription_gst' => $quote['subscription_gst'],
+                    'penalty_day' => $quote['penalty_day'],
+                    'penalty_principal' => $quote['penalty_principal'],
+                    'penalty_gst' => $quote['penalty_gst'],
+                    'renewal_days' => $quote['renewal_days'],
+                    'bonus_days' => $quote['bonus_days'],
+                    'total_payable' => $quote['total_payable'],
+                ]);
+            }
+
+            return $renewal;
+        });
     }
 
     public function createOrder(Subscriber $subscriber, string $idempotencyKey): array
@@ -90,7 +160,7 @@ class SubscriptionRenewalService
         $quote = $this->quote($subscriber);
         $renewal = $this->renewalFor($subscriber, $quote);
 
-        if ($renewal->status === 'paid') {
+        if ($renewal->status === 'paid' && $quote['overdue_days'] === 0) {
             return ['renewal' => $renewal, 'quote' => $quote, 'already_paid' => true];
         }
 
@@ -105,47 +175,56 @@ class SubscriptionRenewalService
             'bonus_days' => $quote['bonus_days'],
             'total_payable' => $quote['total_payable'],
         ];
-        $quoteIsUnchanged = true;
-        foreach ($quoteAttributes as $attribute => $value) {
-            $storedValue = $renewal->{$attribute};
-            if ($attribute === 'due_date' && $storedValue) {
-                $matches = Carbon::parse($storedValue)->toDateString() === $value;
-            } elseif (is_numeric($value) && is_numeric($storedValue)) {
-                $matches = round((float) $storedValue, 2) === round((float) $value, 2);
-            } else {
-                $matches = (string) $storedValue === (string) $value;
+
+        return DB::transaction(function () use ($subscriber, $renewal, $quote, $quoteAttributes, $idempotencyKey) {
+            $lockedRenewal = SubscriptionRenewal::whereKey($renewal->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedRenewal->status === 'paid' && $quote['overdue_days'] === 0) {
+                return ['renewal' => $lockedRenewal, 'quote' => $quote, 'already_paid' => true];
             }
-            if (!$matches) {
-                $quoteIsUnchanged = false;
-                break;
+
+            $quoteIsUnchanged = true;
+            foreach ($quoteAttributes as $attribute => $value) {
+                $storedValue = $lockedRenewal->{$attribute};
+                if ($attribute === 'due_date' && $storedValue) {
+                    $matches = Carbon::parse($storedValue)->toDateString() === $value;
+                } elseif (is_numeric($value) && is_numeric($storedValue)) {
+                    $matches = round((float) $storedValue, 2) === round((float) $value, 2);
+                } else {
+                    $matches = (string) $storedValue === (string) $value;
+                }
+                if (!$matches) {
+                    $quoteIsUnchanged = false;
+                    break;
+                }
             }
-        }
 
-        if ($renewal->razorpay_order_id && $renewal->status === 'order_created' && $quoteIsUnchanged) {
-            return ['renewal' => $renewal, 'quote' => $quote, 'already_paid' => false];
-        }
+            if ($lockedRenewal->razorpay_order_id && $lockedRenewal->status === 'order_created' && $quoteIsUnchanged) {
+                return ['renewal' => $lockedRenewal, 'quote' => $quote, 'already_paid' => false];
+            }
 
-        $key = config('services.razorpay.key_id');
-        $secret = config('services.razorpay.key_secret');
-        if (!$key || !$secret) {
-            throw new RuntimeException('Razorpay is not configured.');
-        }
+            $key = config('services.razorpay.key_id');
+            $secret = config('services.razorpay.key_secret');
+            if (!$key || !$secret) {
+                throw new RuntimeException('Razorpay is not configured.');
+            }
 
-        $api = $this->makeRazorpayApi($key, $secret);
-        $order = $api->order->create([
-            'receipt' => 'renewal-' . $renewal->id,
-            'amount' => $quote['total_payable_in_paise'],
-            'currency' => 'INR',
-            'notes' => ['renewal_id' => (string) $renewal->id, 'idempotency_key' => $idempotencyKey],
-        ]);
+            $api = $this->makeRazorpayApi($key, $secret);
+            $order = $api->order->create([
+                'receipt' => 'renewal-' . $lockedRenewal->id,
+                'amount' => $quote['total_payable_in_paise'],
+                'currency' => 'INR',
+                'notes' => ['renewal_id' => (string) $lockedRenewal->id, 'idempotency_key' => $idempotencyKey],
+            ]);
 
-        $renewal->update(array_merge($quoteAttributes, [
-            'idempotency_key' => $idempotencyKey,
-            'razorpay_order_id' => $order->id,
-            'status' => 'order_created',
-        ]));
+            $lockedRenewal->update(array_merge($quoteAttributes, [
+                'idempotency_key' => $idempotencyKey,
+                'razorpay_order_id' => $order->id,
+                'status' => 'order_created',
+            ]));
 
-        return ['renewal' => $renewal->fresh(), 'quote' => $quote, 'already_paid' => false];
+            return ['renewal' => $lockedRenewal->fresh(), 'quote' => $quote, 'already_paid' => false];
+        });
     }
 
     public function settle(Subscriber $subscriber, SubscriptionRenewal $renewal, string $paymentId, string $signature): array
@@ -178,9 +257,12 @@ class SubscriptionRenewalService
                 return ['renewal' => $lockedRenewal, 'already_paid' => true];
             }
 
-            $settlementQuote = $this->quote($lockedSubscriber, $paymentDate);
-            if ((int) ($payment->amount ?? 0) !== $settlementQuote['total_payable_in_paise']) {
-                throw new RuntimeException('Razorpay payment does not match the current settlement quote.');
+            $expectedOrderPaise = (int) round(((float) $lockedRenewal->total_payable) * 100);
+            $paidAmount = (int) ($payment->amount ?? 0);
+
+            // Verify payment amount strictly against original locked renewal order amount
+            if ($paidAmount !== $expectedOrderPaise) {
+                throw new RuntimeException('Razorpay payment does not match the renewal order amount.');
             }
 
             $existingPayment = PaymentDetails::where('payment_id', $paymentId)->first();
@@ -188,16 +270,17 @@ class SubscriptionRenewalService
                 throw new RuntimeException('Payment has already been processed.');
             }
 
-            $payment = PaymentDetails::create([
+            $paymentRecord = PaymentDetails::create([
                 'subscriberId' => $lockedSubscriber->subscriberId,
                 'payment_id' => $paymentId,
                 'status_code' => '200',
-                'amount' => (string) $settlementQuote['total_payable_in_paise'],
+                'amount' => (string) $paidAmount,
                 'signature' => $signature,
                 'type' => 1,
             ]);
 
-            $expiry = $paymentDate->copy()->addDays((int) $settlementQuote['renewal_days'])->toDateString();
+            $renewalDays = (int) ($lockedRenewal->renewal_days ?: 28);
+            $expiry = $paymentDate->copy()->addDays($renewalDays)->toDateString();
             $lockedSubscriber->update([
                 'subscriptionDate' => $paymentDate->toDateString(),
                 'expiryDate' => $expiry,
@@ -207,22 +290,15 @@ class SubscriptionRenewalService
                 'need_to_pay' => 0,
             ]);
 
-            $lockedRenewal->update([
-                'due_date' => $settlementQuote['due_date'],
-                'subscription_price' => $settlementQuote['subscription_price'],
-                'subscription_gst' => $settlementQuote['subscription_gst'],
-                'penalty_day' => $settlementQuote['penalty_day'],
-                'penalty_principal' => $settlementQuote['penalty_principal'],
-                'penalty_gst' => $settlementQuote['penalty_gst'],
-                'renewal_days' => $settlementQuote['renewal_days'],
-                'bonus_days' => $settlementQuote['bonus_days'],
-                'total_payable' => $settlementQuote['total_payable'],
+            $renewalUpdate = [
                 'payment_id' => $paymentId,
-                'payment_details_id' => $payment->id,
+                'payment_details_id' => $paymentRecord->id,
                 'payment_date' => $paymentDate->toDateString(),
                 'paid_at' => now(),
                 'status' => 'paid',
-            ]);
+            ];
+
+            $lockedRenewal->update($renewalUpdate);
 
             return ['renewal' => $lockedRenewal->fresh(), 'already_paid' => false];
         });

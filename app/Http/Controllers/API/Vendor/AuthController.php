@@ -20,9 +20,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'login' => 'required_without_all:email,mobile',
+            'login' => 'required_without_all:email,mobile,phone,username,subscriberId,subscriber_id',
             'email' => 'nullable|string',
             'mobile' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'username' => 'nullable|string',
+            'subscriberId' => 'nullable|string',
+            'subscriber_id' => 'nullable|string',
             'password' => 'required|string',
             'device_token' => 'required|string',
         ]);
@@ -35,13 +39,30 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $loginInput = $request->input('login') ?: ($request->input('email') ?: $request->input('mobile'));
-        $password = $request->input('password');
+        $rawIdentifier = $request->input('login');
+        if ($rawIdentifier === null || trim((string) $rawIdentifier) === '') {
+            $rawIdentifier = $request->input('email')
+                ?? $request->input('mobile')
+                ?? $request->input('phone')
+                ?? $request->input('username')
+                ?? $request->input('subscriberId')
+                ?? $request->input('subscriber_id');
+        }
 
-        $vendor = Subscriber::where('email', $loginInput)
-            ->orWhere('mobile', $loginInput)
-            ->orWhere('subscriberId', $loginInput)
-            ->first();
+        $identifier = trim((string) $rawIdentifier);
+        $password = (string) $request->input('password');
+
+        $normalizedMobile = $this->normalizeMobile($identifier);
+
+        $vendor = Subscriber::where(function ($query) use ($identifier, $normalizedMobile) {
+            $query->where('email', $identifier)
+                ->orWhere('mobile', $identifier)
+                ->orWhere('subscriberId', $identifier);
+
+            if (!empty($normalizedMobile)) {
+                $query->orWhere('mobile', $normalizedMobile);
+            }
+        })->first();
 
         if (!$vendor) {
             return response()->json([
@@ -50,8 +71,12 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Verify password (support both Hash and legacy plain text check)
-        $passwordMatches = Hash::check($password, $vendor->password) || ($vendor->password === $password);
+        // Verify password (support both Hash and legacy plain text check, with trimmed fallback)
+        $trimmedPassword = trim($password);
+        $passwordMatches = Hash::check($password, $vendor->password)
+            || ($vendor->password === $password)
+            || ($trimmedPassword !== $password && (Hash::check($trimmedPassword, $vendor->password) || $vendor->password === $trimmedPassword));
+
         if (!$passwordMatches) {
             return response()->json([
                 'status' => false,
@@ -105,7 +130,14 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $vendor = Subscriber::where('mobile', $request->mobile)->first();
+        $rawMobile = trim((string) $request->input('mobile'));
+        $normalizedMobile = $this->normalizeMobile($rawMobile);
+
+        $vendor = Subscriber::where('mobile', $rawMobile)
+            ->when($normalizedMobile, function ($query, $norm) {
+                return $query->orWhere('mobile', $norm);
+            })
+            ->first();
 
         if (!$vendor) {
             return response()->json([
@@ -160,7 +192,14 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $vendor = Subscriber::where('mobile', $request->mobile)->first();
+        $rawMobile = trim((string) $request->input('mobile'));
+        $normalizedMobile = $this->normalizeMobile($rawMobile);
+
+        $vendor = Subscriber::where('mobile', $rawMobile)
+            ->when($normalizedMobile, function ($query, $norm) {
+                return $query->orWhere('mobile', $norm);
+            })
+            ->first();
 
         if (!$vendor) {
             return response()->json([
@@ -246,9 +285,16 @@ class AuthController extends Controller
 
         $query = Subscriber::query();
         if ($request->filled('email')) {
-            $query->where('email', $request->email);
+            $query->where('email', trim((string) $request->email));
         } else {
-            $query->where('mobile', $request->mobile);
+            $rawMobile = trim((string) $request->mobile);
+            $normalizedMobile = $this->normalizeMobile($rawMobile);
+            $query->where(function ($q) use ($rawMobile, $normalizedMobile) {
+                $q->where('mobile', $rawMobile);
+                if ($normalizedMobile) {
+                    $q->orWhere('mobile', $normalizedMobile);
+                }
+            });
         }
 
         $vendor = $query->first();
@@ -341,7 +387,10 @@ class AuthController extends Controller
             $paymentStatus = 0;
         } elseif (!empty($vendor->expiryDate)) {
             try {
-                $paymentStatus = Carbon::parse($vendor->expiryDate)->endOfDay()->isPast() ? 0 : 1;
+                $paymentStatus = Carbon::parse($vendor->expiryDate, SubscriptionRenewalService::TIMEZONE)
+                    ->setTimezone(SubscriptionRenewalService::TIMEZONE)
+                    ->endOfDay()
+                    ->isPast() ? 0 : 1;
             } catch (\Throwable $e) {
                 $paymentStatus = (int) ($vendor->status ?? 1);
             }
@@ -376,6 +425,27 @@ class AuthController extends Controller
         ];
     }
 
+    /**
+     * Normalize an input phone number to 10-digit mobile string.
+     */
+    private function normalizeMobile(?string $mobile): ?string
+    {
+        if ($mobile === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $mobile);
+        if (strlen($digits) === 10) {
+            return $digits;
+        }
+
+        if (strlen($digits) > 10) {
+            return substr($digits, -10);
+        }
+
+        return null;
+    }
+
     private function loginBlockedMessage(Subscriber $vendor): ?string
     {
         if ((int) ($vendor->blockedstatus ?? 1) === 0) {
@@ -384,20 +454,6 @@ class AuthController extends Controller
 
         if ((int) ($vendor->status ?? 1) === 0 || (int) ($vendor->activestatus ?? 1) === 0) {
             return 'Your account is inactive. Please contact admin.';
-        }
-
-        if (!empty($vendor->expiryDate)) {
-            try {
-                $expired = Carbon::parse($vendor->expiryDate, SubscriptionRenewalService::TIMEZONE)
-                    ->setTimezone(SubscriptionRenewalService::TIMEZONE)
-                    ->endOfDay()
-                    ->isPast();
-                if ($expired) {
-                    return 'Your subscription/payment has expired. Please renew your payment.';
-                }
-            } catch (\Throwable $e) {
-                return 'Your subscription/payment status could not be verified.';
-            }
         }
 
         return null;

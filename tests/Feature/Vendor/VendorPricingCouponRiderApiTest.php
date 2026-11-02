@@ -72,7 +72,7 @@ class VendorPricingCouponRiderApiTest extends TestCase
         $this->withToken($tokenA)->deleteJson('/api/vendor/coupons/' . $coupon->id)->assertOk();
     }
 
-    private function withToken(string $token)
+    public function withToken($token, $type = 'Bearer')
     {
         return $this->withHeader('Authorization', 'Bearer ' . $token);
     }

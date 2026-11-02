@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 use App\Models\Subscriber;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 use App\Models\statusnotify;
 use Spatie\Permission\Models\Role;
-
+use Carbon\Carbon;
+use App\Services\SubscriptionRenewalService;
 use Validator;
 
 
@@ -39,168 +41,96 @@ class SubscriberModelController extends Controller
         $this->validate($request, [
             'email' => 'required',
             'password' => 'required',
-
         ]);
-        $email = $request->email;
-        $password = $request->password;
 
-        $subscriber = Subscriber::where(['email' => $email, 'password' => $password])?->get();
+        $email = trim((string) $request->input('email'));
+        $password = (string) $request->input('password');
 
-        $employee = Employee::where(['email' => $email, 'password' => $password])->first();
+        $subscriber = Subscriber::where('email', $email)->first();
+        $employee = Employee::where('email', $email)->first();
 
-        $subscriberCount = $subscriber->count();
-        if ($subscriberCount > 0) {
-            $sub = $subscriber;
-            $count = count($subscriber);
-            if ($count > 0) {
-                foreach ($subscriber as $subscriber) {
-                    $subscriberstatus = $subscriber->activestatus;
-                    $subscriberblockedstatus = $subscriber->blockedstatus;
-                }
+        $subscriberPasswordMatches = $subscriber && (
+            Hash::check($password, $subscriber->password)
+            || $subscriber->password === $password
+        );
 
-                if ($count == 1) {
-                    if ($subscriberblockedstatus == 1) {
-                        if ($subscriberstatus == 1) {
-                            $date1 = date_create($sub[0]->expiryDate);
-                            $date2 = date_create(date('d-m-Y'));
-                            $diff = date_diff($date2, $date1);
-                            $rr = $diff->format("%R");
-
-                            if ($rr == "-") {
-                                $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                                Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
-
-                                $block = new statusnotify();
-                                $block->datas = "Payment due";
-                                $block->modifiedId = $idd[0]->id;
-                                $block->modifiedBy = 'Payment Due';
-                                $block->message = 'Payment due';
-                                $block->save();
-
-                                return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
-                            } else {
-                                Session::put('subscribers', $subscriber);
-                                $subscriber = Subscriber::where('email', $email)->first();
-
-                                if ($subscriber && $subscriber->password == $password) {
-                                    $this->ensureSubscriberAdminSetup($subscriber);
-                                    $remember = $request->boolean('remember');
-                                    Auth::guard('subscriber')->login($subscriber, $remember);
-                                    Session::put('subscribers', $subscriber->fresh());
-                                    return redirect()->route('subscribers.dashboard');
-                                }
-                            }
-                        } else {
-                            $date1 = date_create($sub[0]->expiryDate);
-                            $date2 = date_create(date('d-m-Y'));
-                            $diff = date_diff($date2, $date1);
-                            $rr = $diff->format("%R");
-
-                            if ($rr == "-") {
-                                $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                                Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
-
-                                $block = new statusnotify();
-                                $block->datas = "Payment due";
-                                $block->modifiedId = $idd[0]->id;
-                                $block->modifiedBy = 'Payment Due';
-                                $block->message = 'Payment due';
-                                $block->save();
-
-                                return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
-                            } else {
-                                Session::put('subscribers', $subscriber);
-                                $subscriber = Subscriber::where('email', $email)->first();
-
-                                if ($subscriber && $subscriber->password == $password) {
-                                    $this->ensureSubscriberAdminSetup($subscriber);
-                                    $remember = $request->boolean('remember');
-                                    Auth::guard('subscriber')->login($subscriber, $remember);
-                                    Session::put('subscribers', $subscriber->fresh());
-                                    return redirect()->route('subscribers.dashboard');
-                                }
-                            }
-                        }
-                    } else {
-                        return back()->with('error', 'You have been  blocked.Please Contact admin!');
-                    }
-                } else {
-                    return back()->with('error', 'Wrong Credentials');
-                }
-            } else {
-                return back()->with('error', 'Wrong Credentials');
-            }
-        } elseif (isset($employee)) {
-            $employee = Employee::where(['email' => $email, 'password' => $password])->first();
-            $subscriber = Subscriber::where('id', $employee->subscriber_id)->get();
-            $sub = $subscriber;
-            $count = count($subscriber);
-            foreach ($subscriber as $subscriber) {
-                $subscriberstatus = $subscriber->activestatus;
-                $subscriberblockedstatus = $subscriber->blockedstatus;
+        if ($subscriber && $subscriberPasswordMatches) {
+            if ((int) ($subscriber->blockedstatus ?? 1) === 0) {
+                return back()->with('error', 'You have been  blocked.Please Contact admin!');
             }
 
-            if ($count == 1) {
-                if ($subscriberblockedstatus == 1) {
-                    if ($subscriberstatus == 1) {
-                        $date1 = date_create($sub[0]->expiryDate);
-                        $date2 = date_create(date('d-m-Y'));
-                        $diff = date_diff($date2, $date1);
-                        $rr = $diff->format("%R");
-
-                        if ($rr == "-") {
-                            $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                            Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
-
-                            $block = new statusnotify();
-                            $block->datas = "Payment due";
-                            $block->modifiedId = $idd[0]->id;
-                            $block->modifiedBy = 'Payment Due';
-                            $block->message = 'Payment due';
-                            $block->save();
-
-                            return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
-                        } else {
-                            Session::put('subscribers', $employee);
-                            $subscriber = Employee::where('email', $email)->first();
-
-                            if ($subscriber && $subscriber->password == $password) {
-                                $remember = $request->boolean('remember');
-                                Auth::guard('employee')->login($subscriber, $remember);
-                                return redirect()->route('subscribers.dashboard');
-                            }
-                        }
-                    } else {
-                        $date1 = date_create($sub[0]->expiryDate);
-                        $date2 = date_create(date('d-m-Y'));
-                        $diff = date_diff($date2, $date1);
-                        $rr = $diff->format("%R");
-
-                        if ($rr == "-") {
-                            $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                            Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
-
-                            $block = new statusnotify();
-                            $block->datas = "Payment due";
-                            $block->modifiedId = $idd[0]->id;
-                            $block->modifiedBy = 'Payment Due';
-                            $block->message = 'Payment due';
-                            $block->save();
-
-                            return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
-                        } else {
-                            return back()->with('error', 'Your Subscriber Admin not activated.Please Contact your admin!');
-                        }
-                    }
-                } else {
-                    return back()->with('error', 'You have been  blocked.Please Contact admin!');
-                }
-            } else {
-                return back()->with('error', 'Wrong Credentials');
+            if ((int) ($subscriber->status ?? 1) === 0 || (int) ($subscriber->activestatus ?? 1) === 0) {
+                return back()->with('error', 'Your Subscriber Admin not activated.Please Contact your admin!');
             }
-        } else {
-            return back()->with('error', 'Wrong Credentials');
+
+            $isExpired = false;
+            if (!empty($subscriber->expiryDate)) {
+                try {
+                    $isExpired = Carbon::parse($subscriber->expiryDate, SubscriptionRenewalService::TIMEZONE)
+                        ->setTimezone(SubscriptionRenewalService::TIMEZONE)
+                        ->endOfDay()
+                        ->isPast();
+                } catch (\Throwable $e) {
+                    $isExpired = false;
+                }
+            }
+
+            $request->session()->regenerate();
+            $this->ensureSubscriberAdminSetup($subscriber);
+            $remember = $request->boolean('remember');
+            Auth::guard('subscriber')->login($subscriber, $remember);
+            Session::put('subscribers', $subscriber->fresh());
+
+            if ($isExpired) {
+                return redirect()->route('makePlatFormFee', ['Id' => $subscriber->id]);
+            }
+
+            return redirect()->route('subscribers.dashboard');
         }
+
+        $employeePasswordMatches = $employee && (
+            Hash::check($password, $employee->password)
+            || $employee->password === $password
+        );
+
+        if ($employee && $employeePasswordMatches) {
+            $parentSubscriber = Subscriber::where('id', $employee->subscriber_id)->first();
+            if (!$parentSubscriber) {
+                return back()->with('error', 'Wrong Credentials');
+            }
+
+            if ((int) ($parentSubscriber->blockedstatus ?? 1) === 0) {
+                return back()->with('error', 'You have been  blocked.Please Contact admin!');
+            }
+
+            if ((int) ($parentSubscriber->status ?? 1) === 0 || (int) ($parentSubscriber->activestatus ?? 1) === 0) {
+                return back()->with('error', 'Your Subscriber Admin not activated.Please Contact your admin!');
+            }
+
+            $isParentExpired = false;
+            if (!empty($parentSubscriber->expiryDate)) {
+                try {
+                    $isParentExpired = Carbon::parse($parentSubscriber->expiryDate, SubscriptionRenewalService::TIMEZONE)
+                        ->setTimezone(SubscriptionRenewalService::TIMEZONE)
+                        ->endOfDay()
+                        ->isPast();
+                } catch (\Throwable $e) {
+                    $isParentExpired = false;
+                }
+            }
+
+            if ($isParentExpired) {
+                return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
+            }
+
+            $request->session()->regenerate();
+            Session::put('subscribers', $employee);
+            $remember = $request->boolean('remember');
+            Auth::guard('employee')->login($employee, $remember);
+            return redirect()->route('subscribers.dashboard');
+        }
+
+        return back()->with('error', 'Wrong Credentials');
     }
 
     private function ensureSubscriberAdminSetup(Subscriber $subscriber): void

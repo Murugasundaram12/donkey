@@ -140,7 +140,10 @@ class PaymentController extends Controller
             $paymentStatus = 0;
         } elseif (!empty($vendor->expiryDate)) {
             try {
-                $paymentStatus = Carbon::parse($vendor->expiryDate)->endOfDay()->isPast() ? 0 : 1;
+                $paymentStatus = Carbon::parse($vendor->expiryDate, SubscriptionRenewalService::TIMEZONE)
+                    ->setTimezone(SubscriptionRenewalService::TIMEZONE)
+                    ->endOfDay()
+                    ->isPast() ? 0 : 1;
             } catch (\Throwable $e) {
                 $paymentStatus = (int) ($vendor->status ?? 1);
             }
@@ -192,7 +195,9 @@ class PaymentController extends Controller
                 'status' => true,
                 'message' => $result['already_paid'] ? 'Renewal already paid.' : 'Renewal order created.',
                 'data' => [
+                    'already_paid' => (bool) $result['already_paid'],
                     'renewal_id' => $result['renewal']->id,
+                    'status' => (string) $result['renewal']->status,
                     'razorpay_order_id' => $result['renewal']->razorpay_order_id,
                     'razorpay_key_id' => config('services.razorpay.key_id'),
                     'quote' => $quote,

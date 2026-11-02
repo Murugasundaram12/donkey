@@ -109,28 +109,17 @@
             // dd($user);
         @endphp
 
-        @if (isset($user->subscriberId))
-            @if ($user->platform_fee != 0 && $user->need_to_pay == 1)
-                <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
-                    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
-                    </script>
-                <script>
-                    $(function () {
-                        //$('.error-msg').text("{{ session('error') }}");
-                        $('#platformfeemodal').modal('show');
-                        $('#payCloseButton').click(function () {
-                            $('#platformfeemodal').modal('hide'); // Manually close the modal
-                        });
-                    });
-                </script>
-            @endif
-        @endif
+        @php
+            // Read payment flags from the current database row, not a stale session object.
+            $subscriberForPayment = null;
+            if ($user instanceof App\Models\Subscriber) {
+                $subscriberForPayment = $user->fresh();
+            } elseif (isset($user) && !empty($user?->subscriber_id)) {
+                $subscriberForPayment = App\Models\Subscriber::find($user->subscriber_id);
+            }
+        @endphp
 
-        @if (isset($user) && $user?->subscriber_id != '')
-            @php
-                $subscriber = App\Models\Subscriber::where('id', $user?->subscriber_id)?->first();
-            @endphp
-            @if ($subscriber->platform_fee != 0 && $subscriber->need_to_pay == 1)
+        @if ($subscriberForPayment && (float) $subscriberForPayment->platform_fee != 0 && (int) $subscriberForPayment->need_to_pay === 1)
                 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
                     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
                     </script>
@@ -143,7 +132,6 @@
                         });
                     });
                 </script>
-            @endif
         @endif
 
         @php

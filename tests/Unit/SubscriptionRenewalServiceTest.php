@@ -63,7 +63,7 @@ class SubscriptionRenewalServiceTest extends TestCase
         $this->assertSame(2.0, $quote['subscription_price']);
         $this->assertSame(0.36, $quote['subscription_gst']);
         $this->assertSame(2.36, $quote['exact_total_payable']);
-        $this->assertSame(2.0, $quote['total_payable']);
-        $this->assertSame(200, $quote['total_payable_in_paise']);
+        $this->assertSame(2.36, $quote['total_payable']);
+        $this->assertSame(236, $quote['total_payable_in_paise']);
     }
 }

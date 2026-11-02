@@ -100,14 +100,26 @@ class Subscriber extends Authenticatable
      */
     public static function calculateSubscriptionPricing($subscriber): array
     {
+        if ($subscriber instanceof self) {
+            $quote = app(\App\Services\SubscriptionRenewalService::class)->quote($subscriber);
+            return [
+                'price' => $quote['subscription_price'],
+                'gst_percentage' => $quote['subscription_gst_percentage'],
+                'gst_amount' => $quote['subscription_gst'],
+                'exact_total_payable' => $quote['exact_total_payable'],
+                'total_payable' => $quote['total_payable'],
+                'total_payable_in_paise' => $quote['total_payable_in_paise'],
+            ];
+        }
+
         $rawPrice = is_object($subscriber) ? ($subscriber->subscription_price ?? null) : null;
         $price = is_numeric($rawPrice) && (float) $rawPrice > 0 ? (float) $rawPrice : 2.0;
 
         $gstPercentage = 18;
         $gstAmount = round(($price * $gstPercentage) / 100, 2);
         $exactTotalPayable = round($price + $gstAmount, 2);
-        $totalPayable = round($exactTotalPayable, 0, PHP_ROUND_HALF_UP);
-        $totalPayableInPaise = (int) round($totalPayable * 100);
+        $totalPayable = $exactTotalPayable;
+        $totalPayableInPaise = (int) round($exactTotalPayable * 100);
 
         return [
             'price' => $price,
