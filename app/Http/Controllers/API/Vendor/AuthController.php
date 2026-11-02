@@ -49,8 +49,10 @@ class AuthController extends Controller
         }
 
         // Verify password (support both Hash and legacy plain text check)
-        $passwordMatches = Hash::check($password, $vendor->password) || ($vendor->password === $password);
-        if (!$passwordMatches) {
+        $isBcrypt = Hash::check($password, $vendor->password);
+        $isPlaintext = !$isBcrypt && ((string) $vendor->password === (string) $password);
+
+        if (!$isBcrypt && !$isPlaintext) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid credentials.'
@@ -63,6 +65,13 @@ class AuthController extends Controller
                 'status' => false,
                 'message' => 'Your account has been blocked. Please contact admin.'
             ], 403);
+        }
+
+        if ($isPlaintext) {
+            $newPassword = Hash::make($password);
+            Subscriber::where('id', $vendor->id)->update(['password' => $newPassword]);
+            $vendor->password = $newPassword;
+            $vendor->syncOriginalAttribute('password');
         }
 
         // Update last login and device token (always update without comparing)

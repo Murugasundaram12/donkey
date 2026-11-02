@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\site;
 use Illuminate\Http\Request;
 use App\Models\Subscriber;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Models\statusnotify;
@@ -44,19 +45,21 @@ class SubscriberModelController extends Controller
         $email = $request->email;
         $password = $request->password;
 
-        $subscriber = Subscriber::where(['email' => $email, 'password' => $password])?->get();
+        $subscribers = Subscriber::where('email', $email)->get();
+        $matchedSubscribers = $subscribers->filter(function ($item) use ($password) {
+            return Hash::check($password, $item->password) || ((string) $item->password === (string) $password);
+        })->values();
 
         $employee = Employee::where(['email' => $email, 'password' => $password])->first();
 
-        $subscriberCount = $subscriber->count();
+        $subscriberCount = $matchedSubscribers->count();
         if ($subscriberCount > 0) {
-            $sub = $subscriber;
-            $count = count($subscriber);
+            $sub = $matchedSubscribers;
+            $count = count($matchedSubscribers);
             if ($count > 0) {
-                foreach ($subscriber as $subscriber) {
-                    $subscriberstatus = $subscriber->activestatus;
-                    $subscriberblockedstatus = $subscriber->blockedstatus;
-                }
+                $subscriber = $matchedSubscribers[0];
+                $subscriberstatus = $subscriber->activestatus;
+                $subscriberblockedstatus = $subscriber->blockedstatus;
 
                 if ($count == 1) {
                     if ($subscriberblockedstatus == 1) {
@@ -67,26 +70,34 @@ class SubscriberModelController extends Controller
                             $rr = $diff->format("%R");
 
                             if ($rr == "-") {
-                                $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                                Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
+                                Subscriber::where('id', $sub[0]->id)->update(['status' => 0]);
 
                                 $block = new statusnotify();
                                 $block->datas = "Payment due";
-                                $block->modifiedId = $idd[0]->id;
+                                $block->modifiedId = $sub[0]->id;
                                 $block->modifiedBy = 'Payment Due';
                                 $block->message = 'Payment due';
                                 $block->save();
 
                                 return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
                             } else {
-                                Session::put('subscribers', $subscriber);
-                                $subscriber = Subscriber::where('email', $email)->first();
+                                // Migrate plaintext to Bcrypt only after all eligibility checks pass
+                                $isBcrypt = Hash::check($password, $subscriber->password);
+                                if (!$isBcrypt && ((string) $subscriber->password === (string) $password)) {
+                                    $newPassword = Hash::make($password);
+                                    Subscriber::where('id', $subscriber->id)->update(['password' => $newPassword]);
+                                    $subscriber->password = $newPassword;
+                                    $subscriber->syncOriginalAttribute('password');
+                                }
 
-                                if ($subscriber && $subscriber->password == $password) {
-                                    $this->ensureSubscriberAdminSetup($subscriber);
+                                Session::put('subscribers', $subscriber);
+                                $subscriberModel = Subscriber::where('id', $sub[0]->id)->first();
+
+                                if ($subscriberModel && (Hash::check($password, $subscriberModel->password) || (string) $subscriberModel->password === (string) $password)) {
+                                    $this->ensureSubscriberAdminSetup($subscriberModel);
                                     $remember = $request->boolean('remember');
-                                    Auth::guard('subscriber')->login($subscriber, $remember);
-                                    Session::put('subscribers', $subscriber->fresh());
+                                    Auth::guard('subscriber')->login($subscriberModel, $remember);
+                                    Session::put('subscribers', $subscriberModel->fresh());
                                     return redirect()->route('subscribers.dashboard');
                                 }
                             }
@@ -97,26 +108,34 @@ class SubscriberModelController extends Controller
                             $rr = $diff->format("%R");
 
                             if ($rr == "-") {
-                                $idd = Subscriber::where(['email' => $email, 'password' => $password])->get();
-                                Subscriber::where(['email' => $email, 'password' => $password])->update(['status' => 0]);
+                                Subscriber::where('id', $sub[0]->id)->update(['status' => 0]);
 
                                 $block = new statusnotify();
                                 $block->datas = "Payment due";
-                                $block->modifiedId = $idd[0]->id;
+                                $block->modifiedId = $sub[0]->id;
                                 $block->modifiedBy = 'Payment Due';
                                 $block->message = 'Payment due';
                                 $block->save();
 
                                 return back()->with('error', 'Your not activated (Your Account Expiried ).Please Contact admin!');
                             } else {
-                                Session::put('subscribers', $subscriber);
-                                $subscriber = Subscriber::where('email', $email)->first();
+                                // Migrate plaintext to Bcrypt only after all eligibility checks pass
+                                $isBcrypt = Hash::check($password, $subscriber->password);
+                                if (!$isBcrypt && ((string) $subscriber->password === (string) $password)) {
+                                    $newPassword = Hash::make($password);
+                                    Subscriber::where('id', $subscriber->id)->update(['password' => $newPassword]);
+                                    $subscriber->password = $newPassword;
+                                    $subscriber->syncOriginalAttribute('password');
+                                }
 
-                                if ($subscriber && $subscriber->password == $password) {
-                                    $this->ensureSubscriberAdminSetup($subscriber);
+                                Session::put('subscribers', $subscriber);
+                                $subscriberModel = Subscriber::where('id', $sub[0]->id)->first();
+
+                                if ($subscriberModel && (Hash::check($password, $subscriberModel->password) || (string) $subscriberModel->password === (string) $password)) {
+                                    $this->ensureSubscriberAdminSetup($subscriberModel);
                                     $remember = $request->boolean('remember');
-                                    Auth::guard('subscriber')->login($subscriber, $remember);
-                                    Session::put('subscribers', $subscriber->fresh());
+                                    Auth::guard('subscriber')->login($subscriberModel, $remember);
+                                    Session::put('subscribers', $subscriberModel->fresh());
                                     return redirect()->route('subscribers.dashboard');
                                 }
                             }
