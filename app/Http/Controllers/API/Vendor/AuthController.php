@@ -73,11 +73,25 @@ class AuthController extends Controller
 
         // Verify password (support both Hash and legacy plain text check, with trimmed fallback)
         $trimmedPassword = trim($password);
-        $passwordMatches = Hash::check($password, $vendor->password)
-            || ($vendor->password === $password)
-            || ($trimmedPassword !== $password && (Hash::check($trimmedPassword, $vendor->password) || $vendor->password === $trimmedPassword));
+        $storedPassword = (string) $vendor->password;
 
-        if (!$passwordMatches) {
+        $isBcrypt = false;
+        $isPlaintext = false;
+        $matchedCandidate = null;
+
+        if (Hash::check($password, $storedPassword)) {
+            $isBcrypt = true;
+        } elseif ($storedPassword === $password) {
+            $isPlaintext = true;
+            $matchedCandidate = $password;
+        } elseif ($trimmedPassword !== $password && Hash::check($trimmedPassword, $storedPassword)) {
+            $isBcrypt = true;
+        } elseif ($trimmedPassword !== $password && $storedPassword === $trimmedPassword) {
+            $isPlaintext = true;
+            $matchedCandidate = $trimmedPassword;
+        }
+
+        if (!$isBcrypt && !$isPlaintext) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid credentials.'
@@ -89,6 +103,39 @@ class AuthController extends Controller
                 'status' => false,
                 'message' => $message
             ], 403);
+        }
+
+        // Migrate legacy plaintext password to Bcrypt only after credentials and eligibility checks pass
+        if ($isPlaintext && $matchedCandidate !== null) {
+            try {
+                $newPassword = Hash::make($matchedCandidate);
+                $affected = Subscriber::where('id', $vendor->id)
+                    ->where('password', $storedPassword)
+                    ->update(['password' => $newPassword]);
+
+                if ($affected === 1) {
+                    $vendor->password = $newPassword;
+                    $vendor->syncOriginalAttribute('password');
+                } else {
+                    $reloadedSubscriber = Subscriber::where('id', $vendor->id)->first();
+                    if (!$reloadedSubscriber || !Hash::check($matchedCandidate, (string) $reloadedSubscriber->password)) {
+                        \Illuminate\Support\Facades\Log::warning("Vendor password migration reload verification failed for Subscriber ID {$vendor->id}: Operation=reload_verify");
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Authentication service temporarily unavailable. Please try again.'
+                        ], 401);
+                    }
+
+                    $vendor->password = $reloadedSubscriber->password;
+                    $vendor->syncOriginalAttribute('password');
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Vendor password migration failed for Subscriber ID {$vendor->id}: Operation=hash_and_update, Exception=" . get_class($e));
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Authentication service temporarily unavailable. Please try again.'
+                ], 500);
+            }
         }
 
         // Update last login and device token (always update without comparing)

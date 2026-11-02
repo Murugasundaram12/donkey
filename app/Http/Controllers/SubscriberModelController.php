@@ -49,10 +49,10 @@ class SubscriberModelController extends Controller
         $subscriber = Subscriber::where('email', $email)->first();
         $employee = Employee::where('email', $email)->first();
 
-        $subscriberPasswordMatches = $subscriber && (
-            Hash::check($password, $subscriber->password)
-            || $subscriber->password === $password
-        );
+        $storedSubscriberPassword = $subscriber ? (string) $subscriber->password : '';
+        $isSubscriberBcrypt = $subscriber && Hash::check($password, $storedSubscriberPassword);
+        $isSubscriberPlaintext = $subscriber && !$isSubscriberBcrypt && ($storedSubscriberPassword === $password);
+        $subscriberPasswordMatches = $isSubscriberBcrypt || $isSubscriberPlaintext;
 
         if ($subscriber && $subscriberPasswordMatches) {
             if ((int) ($subscriber->blockedstatus ?? 1) === 0) {
@@ -61,6 +61,32 @@ class SubscriberModelController extends Controller
 
             if ((int) ($subscriber->status ?? 1) === 0 || (int) ($subscriber->activestatus ?? 1) === 0) {
                 return back()->with('error', 'Your Subscriber Admin not activated.Please Contact your admin!');
+            }
+
+            if ($isSubscriberPlaintext) {
+                try {
+                    $newPassword = Hash::make($password);
+                    $affected = Subscriber::where('id', $subscriber->id)
+                        ->where('password', $storedSubscriberPassword)
+                        ->update(['password' => $newPassword]);
+
+                    if ($affected === 1) {
+                        $subscriber->password = $newPassword;
+                        $subscriber->syncOriginalAttribute('password');
+                    } else {
+                        $reloadedSubscriber = Subscriber::where('id', $subscriber->id)->first();
+                        if (!$reloadedSubscriber || !Hash::check($password, (string) $reloadedSubscriber->password)) {
+                            \Illuminate\Support\Facades\Log::warning("Subscriber web password migration reload verification failed for Subscriber ID {$subscriber->id}: Operation=reload_verify");
+                            return back()->with('error', 'Authentication service temporarily unavailable. Please try again.');
+                        }
+
+                        $subscriber->password = $reloadedSubscriber->password;
+                        $subscriber->syncOriginalAttribute('password');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Subscriber web password migration failed for Subscriber ID {$subscriber->id}: Operation=hash_and_update, Exception=" . get_class($e));
+                    return back()->with('error', 'Authentication service temporarily unavailable. Please try again.');
+                }
             }
 
             $isExpired = false;
