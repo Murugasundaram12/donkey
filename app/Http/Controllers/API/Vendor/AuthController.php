@@ -379,6 +379,128 @@ class AuthController extends Controller
     }
 
     /**
+     * Guest Forgot Password Request (No login required, no backend OTP)
+     */
+    public function guestForgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $rawMobile = trim((string) $request->input('mobile'));
+        $normalizedMobile = $this->normalizeMobile($rawMobile);
+
+        if (!$normalizedMobile) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please provide a valid 10-digit mobile number.'
+            ], 422);
+        }
+
+        $vendor = Subscriber::where('mobile', $rawMobile)
+            ->when($normalizedMobile, function ($query, $norm) {
+                return $query->orWhere('mobile', $norm);
+            })
+            ->first();
+
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor account not found with this mobile number.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Vendor account verified successfully.',
+            'data' => [
+                'mobile' => $vendor->mobile
+            ]
+        ], 200);
+    }
+
+    /**
+     * Guest Change Password (No login required, no backend OTP)
+     */
+    public function guestChangePassword(Request $request)
+    {
+        // Support confirm_password, confirmation_password, or password_confirmation
+        $confirmField = 'confirm_password';
+        if ($request->has('confirmation_password')) {
+            $confirmField = 'confirmation_password';
+        } elseif ($request->has('password_confirmation')) {
+            $confirmField = 'password_confirmation';
+        }
+
+        $confirmPassword = $request->input('confirm_password')
+            ?? $request->input('confirmation_password')
+            ?? $request->input('new_password_confirmation')
+            ?? $request->input('password_confirmation');
+
+        $payload = array_merge($request->all(), [
+            'confirm_password' => $confirmPassword,
+            'confirmation_password' => $confirmPassword,
+            'password_confirmation' => $confirmPassword,
+        ]);
+
+        $validator = Validator::make($payload, [
+            'mobile' => 'required|string',
+            'new_password' => 'required|string|min:6',
+            $confirmField => 'required|string|same:new_password',
+        ], [
+            "{$confirmField}.required" => 'The confirmation password is required.',
+            "{$confirmField}.same" => 'The confirmation password and new password must match.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $rawMobile = trim((string) $request->input('mobile'));
+        $normalizedMobile = $this->normalizeMobile($rawMobile);
+
+        if (!$normalizedMobile) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please provide a valid 10-digit mobile number.'
+            ], 422);
+        }
+
+        $vendor = Subscriber::where('mobile', $rawMobile)
+            ->when($normalizedMobile, function ($query, $norm) {
+                return $query->orWhere('mobile', $norm);
+            })
+            ->first();
+
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor account not found with this mobile number.'
+            ], 404);
+        }
+
+        $vendor->password = Hash::make($request->input('new_password'));
+        $vendor->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password updated successfully'
+        ], 200);
+    }
+
+    /**
      * Logout
      */
     public function logout(Request $request)

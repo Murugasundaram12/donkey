@@ -29,6 +29,7 @@ scratch/
 .system_generated/
 
 # User uploads and sensitive documents
+/public/subscriber/bank/*
 /public/subscriber/driver/*
 /public/userprofile/*
 /public/admin/*

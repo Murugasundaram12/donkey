@@ -70,9 +70,12 @@ class EarningsReportController extends Controller
         // 3. Apply Period & Specific Filters to Detailed Query
         $filteredQuery = clone $baseVendorQuery;
 
-        $period = $request->get('period', 'this_month');
+        $period = $request->get('period');
+        if (empty($period)) {
+            $period = ($request->filled('start_date') || $request->filled('end_date')) ? 'custom' : 'this_month';
+        }
         $startDate = null;
-        $endDate = Carbon::now();
+        $endDate = Carbon::now()->endOfDay();
 
         switch ($period) {
             case 'today':
@@ -101,6 +104,7 @@ class EarningsReportController extends Controller
                 break;
             case 'all':
                 $startDate = null;
+                $endDate = null;
                 break;
             default:
                 $startDate = Carbon::now()->startOfMonth();
@@ -108,8 +112,12 @@ class EarningsReportController extends Controller
                 break;
         }
 
-        if ($startDate) {
+        if ($startDate && $endDate) {
             $filteredQuery->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $filteredQuery->where('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $filteredQuery->where('created_at', '<=', $endDate);
         }
 
         // Filter by booking status
@@ -168,8 +176,33 @@ class EarningsReportController extends Controller
                 return ['date' => $date, 'amount' => round($amount, 2)];
             })->sortKeys()->values();
 
-        // No booking commission rule exists in this codebase. platform_fee is
+        // No booking commission rule exists in this codebase by default. platform_fee is
         // subscription accounting, not a per-booking commission.
+        $commissionRule = config('services.vendor.commission_rule')
+            ?? config('services.commission.rule')
+            ?? config('donkey.commission_rule')
+            ?? config('services.vendor.commission')
+            ?? config('donkey.commission')
+            ?? ($vendor->commission_rule ?? null)
+            ?? ($vendor->commission ?? null);
+
+        $hasCommissionRule = !empty($commissionRule);
+        $commissionAvailable = $hasCommissionRule;
+        $commissionNote = null;
+
+        if ($hasCommissionRule) {
+            $noteCandidate = config('services.vendor.commission_note')
+                ?? config('services.commission.note')
+                ?? config('donkey.commission_note')
+                ?? ($vendor->commission_note ?? null);
+
+            if (is_string($noteCandidate) && trim($noteCandidate) !== '') {
+                $commissionNote = trim($noteCandidate);
+            } elseif (is_string($commissionRule) && trim($commissionRule) !== '' && !is_numeric($commissionRule)) {
+                $commissionNote = trim($commissionRule);
+            }
+        }
+
         $commission = null;
         $netEarnings = null;
         $avgOrderValue = $selectedCompletedCount > 0 ? $selectedPeriodEarnings / $selectedCompletedCount : 0.0;
@@ -248,15 +281,19 @@ class EarningsReportController extends Controller
             'message' => 'Earnings and reports retrieved successfully',
             'data' => [
                 'summary' => [
-                    'total_earnings' => round($totalEarningsAll, 2),
+                    'total_earnings' => round($selectedPeriodEarnings, 2),
+                    'overall_total_earnings' => round($totalEarningsAll, 2),
                     'today_earnings' => round($todayEarnings, 2),
                     'week_earnings' => round($weekEarnings, 2),
                     'month_earnings' => round($monthEarnings, 2),
                     'selected_range_earnings' => round($selectedPeriodEarnings, 2),
-                    'total_bookings' => $totalBookingsCount,
-                    'completed_bookings' => $completedBookingsCount,
-                    'in_progress_bookings' => $inProgressBookingsCount,
-                    'cancelled_bookings' => $cancelledBookingsCount,
+                    'total_bookings' => $selectedTotalBookings,
+                    'overall_total_bookings' => $totalBookingsCount,
+                    'completed_bookings' => $selectedCompletedCount,
+                    'overall_completed_bookings' => $completedBookingsCount,
+                    'in_progress_bookings' => $selectedIncompleteCount,
+                    'cancelled_bookings' => $selectedCancelledCount,
+                    'overall_cancelled_bookings' => $cancelledBookingsCount,
                     'selected_total_bookings' => $selectedTotalBookings,
                     'selected_completed_bookings' => $selectedCompletedCount,
                     'selected_incomplete_bookings' => $selectedIncompleteCount,
@@ -264,8 +301,8 @@ class EarningsReportController extends Controller
                     'avg_order_value' => round($avgOrderValue, 2),
                     'commission' => $commission,
                     'net_earnings' => $netEarnings,
-                    'commission_available' => false,
-                    'commission_note' => 'No per-booking commission rule is configured; net earnings cannot be calculated from existing business rules.',
+                    'commission_available' => $commissionAvailable,
+                    'commission_note' => ($commissionNote !== null && $commissionNote !== '') ? $commissionNote : '0',
                 ],
                 'earnings_chart' => $chartData,
                 'top_services' => $topServices,

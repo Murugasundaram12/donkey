@@ -944,6 +944,7 @@ class RiderController extends Controller
             'name' => (string) $r->name,
             'mobile' => (string) $r->mobile,
             'email' => (string) ($r->email ?? ''),
+            // 'password' => (string) ($r->password ?? ''),
             'location' => (string) ($r->location ?? ''),
             'pincode' => $pincodes,
             'language' => (string) ($r->language ?? ''),

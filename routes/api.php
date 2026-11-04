@@ -181,6 +181,9 @@ Route::prefix('vendor')->group(function () {
     Route::post('otp/verify', [\App\Http\Controllers\API\Vendor\AuthController::class, 'otpVerify']);
     Route::post('otp/resend', [\App\Http\Controllers\API\Vendor\AuthController::class, 'otpResend']);
     Route::post('password/forgot', [\App\Http\Controllers\API\Vendor\AuthController::class, 'forgotPassword']);
+    Route::post('forgot-password', [\App\Http\Controllers\API\Vendor\AuthController::class, 'guestForgotPassword']);
+    Route::post('forget-password', [\App\Http\Controllers\API\Vendor\AuthController::class, 'guestForgotPassword']);
+    Route::post('change-password', [\App\Http\Controllers\API\Vendor\AuthController::class, 'guestChangePassword']);
 
     // Public Info Routes
     Route::get('info/support', [\App\Http\Controllers\API\Vendor\SettingsAndInfoController::class, 'support']);
