@@ -23,8 +23,15 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
+                if ($guard === 'subscriber' || $guard === 'employee') {
+                    return redirect()->route('subscribers.dashboard');
+                }
                 return redirect(RouteServiceProvider::HOME);
             }
+        }
+
+        if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
+            return redirect()->route('subscribers.dashboard');
         }
 
         return $next($request);

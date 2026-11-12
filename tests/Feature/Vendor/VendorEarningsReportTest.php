@@ -233,5 +233,140 @@ class VendorEarningsReportTest extends TestCase
                 ],
             ]);
     }
+
+    /**
+     * Dynamic percentages: Calculates comparisons between current and previous periods safely.
+     */
+    public function test_dynamic_percentage_calculations_for_bookings_and_earnings(): void
+    {
+        $vendor = $this->createVendor();
+        $token = $vendor->createToken('test_token')->plainTextToken;
+
+        $startDate = '2026-11-05';
+        $endDate = '2026-11-07'; // 3 days: 5, 6, 7. Previous period: Nov 2, 3, 4.
+
+        // Seed 1 completed booking in previous period (Nov 3) with amount 100
+        $prevBooking = \App\Models\Booking::create([
+            'booking_id' => 'PREV-' . uniqid(),
+            'assigned_subscriber_id' => $vendor->id,
+            'status' => 2,
+            'category' => 1,
+            'created_at' => '2026-11-03 10:00:00',
+        ]);
+        \Illuminate\Support\Facades\DB::table('booking_payment')->insert([
+            'booking_id' => $prevBooking->booking_id,
+            'total' => 100.0,
+            'type' => 'Cash',
+            'created_at' => '2026-11-03 10:00:00',
+        ]);
+
+        // Seed 2 completed bookings in current period (Nov 6) with total amount 300
+        for ($i = 0; $i < 2; $i++) {
+            $currBooking = \App\Models\Booking::create([
+                'booking_id' => 'CURR-' . uniqid(),
+                'assigned_subscriber_id' => $vendor->id,
+                'status' => 2,
+                'category' => 1,
+                'created_at' => '2026-11-06 10:00:00',
+            ]);
+            \Illuminate\Support\Facades\DB::table('booking_payment')->insert([
+                'booking_id' => $currBooking->booking_id,
+                'total' => 150.0,
+                'type' => 'Cash',
+                'created_at' => '2026-11-06 10:00:00',
+            ]);
+        }
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson("/api/vendor/earnings-reports?period=custom&start_date={$startDate}&end_date={$endDate}");
+
+        $response->assertOk();
+        $summary = $response->json('data.summary');
+        $comparison = $response->json('data.comparison');
+
+        // Total Bookings: current 2 vs prev 1 -> +100% change, trend 'up'
+        $this->assertEquals(2, $summary['total_bookings']);
+        $this->assertEquals(100.0, $summary['total_bookings_percentage']);
+        $this->assertSame('up', $summary['total_bookings_trend']);
+
+        // Total Earnings: current 300 vs prev 100 -> +200% change, trend 'up'
+        $this->assertEquals(300.0, $summary['total_earnings']);
+        $this->assertEquals(200.0, $summary['total_earnings_percentage']);
+        $this->assertSame('up', $summary['total_earnings_trend']);
+
+        // Verify comparison block is populated
+        $this->assertTrue($comparison['available']);
+        $this->assertEquals(1, $comparison['previous_period']['total_bookings']);
+        $this->assertEquals(100.0, $comparison['previous_period']['total_earnings']);
+
+        // Assert that static hardcoded percentages are NOT present
+        $this->assertNotEquals(14.5, $summary['total_bookings_percentage']);
+        $this->assertNotEquals(18.2, $summary['total_earnings_percentage']);
+    }
+
+    /**
+     * Division by zero safety: Handles zero previous period data gracefully without crashing.
+     */
+    public function test_safe_division_by_zero_when_previous_period_has_zero_data(): void
+    {
+        $vendor = $this->createVendor();
+        $token = $vendor->createToken('test_token')->plainTextToken;
+
+        // Custom range with no bookings in previous period
+        $startDate = '2026-10-10';
+        $endDate = '2026-10-12';
+
+        $currBooking = \App\Models\Booking::create([
+            'booking_id' => 'CURR-ZERO-' . uniqid(),
+            'assigned_subscriber_id' => $vendor->id,
+            'status' => 2,
+            'category' => 1,
+            'created_at' => '2026-10-11 12:00:00',
+        ]);
+        \Illuminate\Support\Facades\DB::table('booking_payment')->insert([
+            'booking_id' => $currBooking->booking_id,
+            'total' => 250.0,
+            'type' => 'Cash',
+            'created_at' => '2026-10-11 12:00:00',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson("/api/vendor/earnings-reports?period=custom&start_date={$startDate}&end_date={$endDate}");
+
+        $response->assertOk();
+        $summary = $response->json('data.summary');
+
+        // When prev is 0 and current is 1: change is 100.0% and trend is 'up'
+        $this->assertEquals(100.0, $summary['total_bookings_percentage']);
+        $this->assertSame('up', $summary['total_bookings_trend']);
+
+        // Cancelled bookings: current 0 and prev 0: change is 0.0% and trend is 'neutral'
+        $this->assertEquals(0.0, $summary['cancelled_bookings_percentage']);
+        $this->assertSame('neutral', $summary['cancelled_bookings_trend']);
+    }
+
+    /**
+     * Uncomparable data (period='all'): returns null percentage and trend without misleading metrics.
+     */
+    public function test_uncomparable_period_all_returns_null_percentages_and_trends(): void
+    {
+        $vendor = $this->createVendor();
+        $token = $vendor->createToken('test_token')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/vendor/earnings-reports?period=all');
+
+        $response->assertOk();
+        $summary = $response->json('data.summary');
+        $comparison = $response->json('data.comparison');
+
+        $this->assertFalse($summary['comparison_available']);
+        $this->assertNull($summary['total_bookings_percentage']);
+        $this->assertNull($summary['total_bookings_trend']);
+        $this->assertNull($summary['total_earnings_percentage']);
+        $this->assertNull($summary['total_earnings_trend']);
+        $this->assertFalse($comparison['available']);
+        $this->assertNull($comparison['previous_period']['start_date']);
+    }
 }
 

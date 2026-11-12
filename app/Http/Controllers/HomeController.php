@@ -49,6 +49,12 @@ class HomeController extends Controller
      */
     public function __construct()
     {
+        $this->middleware(function ($request, $next) {
+            if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
+                return redirect()->route('subscribers.dashboard');
+            }
+            return $next($request);
+        });
         $this->middleware('auth');
         $this->middleware('permission:driver-list|driver-create|driver-edit|driver-destroy', ['only' => ['driver', 'show']]);
         $this->middleware('permission:driver-create', ['only' => ['createdriver', 'driverstore']]);
@@ -269,6 +275,15 @@ class HomeController extends Controller
 
     public function dashboard()
     {
+        if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
+            return redirect()->route('subscribers.dashboard');
+        }
+
+        $currentUser = Auth::user();
+        if ($currentUser && method_exists($currentUser, 'hasAnyRole') && $currentUser->hasAnyRole(['Subscriber Admin', 'Sub Employee'])) {
+            return redirect()->route('subscribers.dashboard');
+        }
+
         $subscriptionAmount = Subscriber::selectRaw('SUM(CAST(platform_fee AS DECIMAL(10,2))) as total')->value('total') ?? 0;
         $subscriberCount = Subscriber::count();
         $enduser = \Illuminate\Support\Facades\Schema::hasColumn('users', 'is_driver') ? Enduser::where('is_driver', 0)->count() : Enduser::count();

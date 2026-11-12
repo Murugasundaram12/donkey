@@ -76,39 +76,80 @@ class EarningsReportController extends Controller
         }
         $startDate = null;
         $endDate = Carbon::now()->endOfDay();
+        $prevStartDate = null;
+        $prevEndDate = null;
+        $comparisonAvailable = false;
 
         switch ($period) {
             case 'today':
-                $startDate = Carbon::today();
+                $startDate = Carbon::today()->startOfDay();
                 $endDate = Carbon::today()->endOfDay();
+                $prevStartDate = Carbon::yesterday()->startOfDay();
+                $prevEndDate = Carbon::yesterday()->endOfDay();
+                $comparisonAvailable = true;
                 break;
             case 'yesterday':
-                $startDate = Carbon::yesterday();
+                $startDate = Carbon::yesterday()->startOfDay();
                 $endDate = Carbon::yesterday()->endOfDay();
+                $prevStartDate = Carbon::yesterday()->subDay()->startOfDay();
+                $prevEndDate = Carbon::yesterday()->subDay()->endOfDay();
+                $comparisonAvailable = true;
                 break;
             case 'this_week':
                 $startDate = Carbon::now()->startOfWeek();
                 $endDate = Carbon::now()->endOfWeek();
+                $prevStartDate = Carbon::now()->subWeek()->startOfWeek();
+                $prevEndDate = Carbon::now()->subWeek()->endOfWeek();
+                $comparisonAvailable = true;
                 break;
             case 'this_month':
                 $startDate = Carbon::now()->startOfMonth();
                 $endDate = Carbon::now()->endOfMonth();
+                $prevStartDate = Carbon::now()->subMonth()->startOfMonth();
+                $prevEndDate = Carbon::now()->subMonth()->endOfMonth();
+                $comparisonAvailable = true;
                 break;
             case 'custom':
-                if ($request->filled('start_date')) {
+                if ($request->filled('start_date') && $request->filled('end_date')) {
                     $startDate = Carbon::parse($request->start_date)->startOfDay();
-                }
-                if ($request->filled('end_date')) {
                     $endDate = Carbon::parse($request->end_date)->endOfDay();
+                    $diffDays = $startDate->diffInDays($endDate) + 1;
+                    $prevEndDate = $startDate->copy()->subSecond();
+                    $prevStartDate = $prevEndDate->copy()->subDays($diffDays - 1)->startOfDay();
+                    $comparisonAvailable = true;
+                } elseif ($request->filled('start_date')) {
+                    $startDate = Carbon::parse($request->start_date)->startOfDay();
+                    $endDate = Carbon::now()->endOfDay();
+                    $diffDays = $startDate->diffInDays($endDate) + 1;
+                    $prevEndDate = $startDate->copy()->subSecond();
+                    $prevStartDate = $prevEndDate->copy()->subDays($diffDays - 1)->startOfDay();
+                    $comparisonAvailable = true;
+                } elseif ($request->filled('end_date')) {
+                    $endDate = Carbon::parse($request->end_date)->endOfDay();
+                    $startDate = Carbon::now()->startOfMonth();
+                    $diffDays = $startDate->diffInDays($endDate) + 1;
+                    $prevEndDate = $startDate->copy()->subSecond();
+                    $prevStartDate = $prevEndDate->copy()->subDays($diffDays - 1)->startOfDay();
+                    $comparisonAvailable = true;
+                } else {
+                    $startDate = Carbon::now()->startOfMonth();
+                    $endDate = Carbon::now()->endOfMonth();
+                    $prevStartDate = Carbon::now()->subMonth()->startOfMonth();
+                    $prevEndDate = Carbon::now()->subMonth()->endOfMonth();
+                    $comparisonAvailable = true;
                 }
                 break;
             case 'all':
                 $startDate = null;
                 $endDate = null;
+                $comparisonAvailable = false;
                 break;
             default:
                 $startDate = Carbon::now()->startOfMonth();
                 $endDate = Carbon::now()->endOfMonth();
+                $prevStartDate = Carbon::now()->subMonth()->startOfMonth();
+                $prevEndDate = Carbon::now()->subMonth()->endOfMonth();
+                $comparisonAvailable = true;
                 break;
         }
 
@@ -146,6 +187,45 @@ class EarningsReportController extends Controller
         $selectedCompletedCount = $selectedCompletedBookings->count();
         $selectedIncompleteCount = (clone $filteredQuery)->whereIn('status', [0, 1])->count();
         $selectedCancelledCount = (clone $filteredQuery)->where('status', 3)->count();
+
+        // 3a. Previous Period Comparison Metrics (Dynamic Percentages)
+        $prevTotalBookings = 0;
+        $prevCompletedBookings = 0;
+        $prevCancelledBookings = 0;
+        $prevTotalEarnings = 0.0;
+
+        if ($comparisonAvailable && $prevStartDate && $prevEndDate) {
+            $prevQuery = clone $baseVendorQuery;
+            $prevQuery->whereBetween('created_at', [$prevStartDate, $prevEndDate]);
+
+            if ($request->has('status') && $request->status !== null && $request->status !== '') {
+                $prevQuery->where('status', (int) $request->status);
+            }
+
+            if ($request->filled('category_id') || $request->filled('service_id')) {
+                $catId = $request->input('category_id') ?: $request->input('service_id');
+                $prevQuery->where('category', $catId);
+            }
+
+            if ($request->filled('rider_id') || $request->filled('driver_id')) {
+                $driverId = $request->input('rider_id') ?: $request->input('driver_id');
+                $prevQuery->where('driver_id', $driverId);
+            }
+
+            $prevTotalBookings = (clone $prevQuery)->count();
+            $prevCompletedIds = (clone $prevQuery)->where('status', 2)->pluck('booking_id')->toArray();
+            $prevCompletedBookings = count($prevCompletedIds);
+            $prevCancelledBookings = (clone $prevQuery)->where('status', 3)->count();
+            $prevTotalEarnings = !empty($prevCompletedIds)
+                ? (float) DB::table('booking_payment')->whereIn('booking_id', $prevCompletedIds)->sum('total')
+                : 0.0;
+        }
+
+        $bookingsComp = $this->calculateMetricComparison($selectedTotalBookings, $prevTotalBookings, $comparisonAvailable);
+        $earningsComp = $this->calculateMetricComparison(round($selectedPeriodEarnings, 2), round($prevTotalEarnings, 2), $comparisonAvailable);
+        $completedComp = $this->calculateMetricComparison($selectedCompletedCount, $prevCompletedBookings, $comparisonAvailable);
+        $cancelledComp = $this->calculateMetricComparison($selectedCancelledCount, $prevCancelledBookings, $comparisonAvailable);
+
         $selectedPayments = !empty($selectedCompletedIds)
             ? DB::table('booking_payment')->whereIn('booking_id', $selectedCompletedIds)->get()->keyBy('booking_id')
             : collect();
@@ -299,10 +379,57 @@ class EarningsReportController extends Controller
                     'selected_incomplete_bookings' => $selectedIncompleteCount,
                     'selected_cancelled_bookings' => $selectedCancelledCount,
                     'avg_order_value' => round($avgOrderValue, 2),
+                    'total_bookings_percentage' => $bookingsComp['percentage'],
+                    'total_bookings_trend' => $bookingsComp['trend'],
+                    'total_bookings_direction' => $bookingsComp['direction'],
+                    'total_earnings_percentage' => $earningsComp['percentage'],
+                    'total_earnings_trend' => $earningsComp['trend'],
+                    'total_earnings_direction' => $earningsComp['direction'],
+                    'completed_bookings_percentage' => $completedComp['percentage'],
+                    'completed_bookings_trend' => $completedComp['trend'],
+                    'completed_bookings_direction' => $completedComp['direction'],
+                    'cancelled_bookings_percentage' => $cancelledComp['percentage'],
+                    'cancelled_bookings_trend' => $cancelledComp['trend'],
+                    'cancelled_bookings_direction' => $cancelledComp['direction'],
+                    'comparison_available' => $comparisonAvailable,
+                    'comparison' => [
+                        'available' => $comparisonAvailable,
+                        'previous_period' => [
+                            'start_date' => ($comparisonAvailable && $prevStartDate) ? $prevStartDate->toDateTimeString() : null,
+                            'end_date' => ($comparisonAvailable && $prevEndDate) ? $prevEndDate->toDateTimeString() : null,
+                            'total_bookings' => $prevTotalBookings,
+                            'total_earnings' => round($prevTotalEarnings, 2),
+                            'completed_bookings' => $prevCompletedBookings,
+                            'cancelled_bookings' => $prevCancelledBookings,
+                        ],
+                        'percentage_changes' => [
+                            'total_bookings' => $bookingsComp,
+                            'total_earnings' => $earningsComp,
+                            'completed' => $completedComp,
+                            'cancelled' => $cancelledComp,
+                        ],
+                    ],
                     'commission' => $commission,
                     'net_earnings' => $netEarnings,
                     'commission_available' => $commissionAvailable,
                     'commission_note' => ($commissionNote !== null && $commissionNote !== '') ? $commissionNote : '0',
+                ],
+                'comparison' => [
+                    'available' => $comparisonAvailable,
+                    'previous_period' => [
+                        'start_date' => ($comparisonAvailable && $prevStartDate) ? $prevStartDate->toDateTimeString() : null,
+                        'end_date' => ($comparisonAvailable && $prevEndDate) ? $prevEndDate->toDateTimeString() : null,
+                        'total_bookings' => $prevTotalBookings,
+                        'total_earnings' => round($prevTotalEarnings, 2),
+                        'completed_bookings' => $prevCompletedBookings,
+                        'cancelled_bookings' => $prevCancelledBookings,
+                    ],
+                    'metrics' => [
+                        'total_bookings' => $bookingsComp,
+                        'total_earnings' => $earningsComp,
+                        'completed_bookings' => $completedComp,
+                        'cancelled_bookings' => $cancelledComp,
+                    ],
                 ],
                 'earnings_chart' => $chartData,
                 'top_services' => $topServices,
@@ -323,5 +450,47 @@ class EarningsReportController extends Controller
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Calculate dynamic percentage change and trend direction safely.
+     *
+     * @param float|int $current
+     * @param float|int|null $previous
+     * @param bool $comparisonAvailable
+     * @return array
+     */
+    protected function calculateMetricComparison(float|int $current, float|int|null $previous, bool $comparisonAvailable): array
+    {
+        if (!$comparisonAvailable || $previous === null) {
+            return [
+                'current' => $current,
+                'previous' => null,
+                'percentage' => null,
+                'trend' => null,
+                'direction' => null,
+            ];
+        }
+
+        if ($previous > 0) {
+            $change = round((($current - $previous) / $previous) * 100, 2);
+            $trend = $change > 0 ? 'up' : ($change < 0 ? 'down' : 'neutral');
+        } elseif ($current > 0) {
+            // Previous was 0, current has activity -> 100% growth
+            $change = 100.0;
+            $trend = 'up';
+        } else {
+            // Both 0 -> no change
+            $change = 0.0;
+            $trend = 'neutral';
+        }
+
+        return [
+            'current' => $current,
+            'previous' => $previous,
+            'percentage' => $change,
+            'trend' => $trend,
+            'direction' => $trend,
+        ];
     }
 }

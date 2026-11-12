@@ -305,5 +305,60 @@ class SubscriberWebLoginTest extends TestCase
                 'message' => 'Your subscription/payment has expired. Please renew your payment.',
             ]);
     }
+
+    /**
+     * TC11: Authenticated subscriber accessing /dashboard is redirected to PBP dashboard.
+     */
+    public function test_tc11_subscriber_accessing_root_dashboard_redirects_to_pbp_dashboard()
+    {
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Dashboard Redirect Subscriber',
+            'email' => 'dash_sub@test.com',
+            'mobile' => '9876543111',
+            'password' => Hash::make('password123'),
+            'subscriberId' => 'SUB-TC11',
+        ]));
+
+        $response = $this->actingAs($subscriber, 'subscriber')
+            ->withSession(['subscribers' => $subscriber])
+            ->get('/dashboard');
+
+        $response->assertRedirect(route('subscribers.dashboard'));
+    }
+
+    /**
+     * TC12: Subscriber logging in via main /login form is redirected to PBP dashboard.
+     */
+    public function test_tc12_subscriber_login_via_main_login_routes_to_pbp_dashboard()
+    {
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Main Login Subscriber',
+            'email' => 'main_login_sub@test.com',
+            'mobile' => '9876543112',
+            'password' => Hash::make('password123'),
+            'subscriberId' => 'SUB-TC12',
+        ]));
+
+        $response = $this->post('/login', [
+            'email' => 'main_login_sub@test.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('subscribers.dashboard'));
+        $this->assertTrue(Auth::guard('subscriber')->check());
+        $this->assertEquals($subscriber->id, Auth::guard('subscriber')->id());
+    }
+
+    /**
+     * TC13: Super Admin functionality is preserved at /dashboard and /login.
+     */
+    public function test_tc13_super_admin_functionality_preserved_at_login_and_dashboard()
+    {
+        $admin = \App\Models\Admin::find(32);
+        $this->assertNotNull($admin);
+
+        $response = $this->actingAs($admin, 'web')->get('/dashboard');
+        $response->assertOk();
+    }
 }
 

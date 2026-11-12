@@ -1091,7 +1091,7 @@
                             </div>
                             <!-- <div class="navbar-right-info ">
 
-                                    <div class="sign-in "><a href="{{ url('login') }}"><i
+                                    <div class="sign-in "><a href="{{ route('subscriberLogin') }}"><i
                                                 class="flaticon-delivery-man"></i>Sign In</a></div>
 
                                 </div> -->
@@ -1143,7 +1143,7 @@
                             </div>
                         </nav>
                         <div class="phone-number myhiddennav2">
-                            {{-- <a href="{{url('login')}}"><i class="flaticon-delivery-man"></i>Sign In</a> --}}
+                            {{-- <a href="{{ route('subscriberLogin') }}"><i class="flaticon-delivery-man"></i>Sign In</a> --}}
                             <div class="row">
                                 <div class="col">
                                     <div class="iconed" style="margin-top: 10px;  margin-right:-20px"> <i
@@ -1247,7 +1247,7 @@
                             </nav>
                         </div>
                         <!-- <div class="navbar-right-info">
-                                    <div class="sign-in"><a href="{{ url('login') }}"><i
+                                    <div class="sign-in"><a href="{{ route('subscriberLogin') }}"><i
                                                 class="flaticon-delivery-man"></i>Sign In</a></div>
 
                                 </div> -->
@@ -1281,7 +1281,7 @@
                                 </nav>
                             </div>
                             <!-- <div class="navbar-right-info">
-                                        <div class="sign-in"><a href="{{ url('login') }}"><i
+                                        <div class="sign-in"><a href="{{ route('subscriberLogin') }}"><i
                                                     class="flaticon-delivery-man-1"></i>Sign In</a>
                                         </div>
 
