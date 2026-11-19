@@ -24,10 +24,12 @@ class LoginController extends Controller
     /**
      * Where to redirect users after login.
      *
-     * @var string
+     * @return string
      */
-  //protected $redirectTo = RouteServiceProvider::HOME;
-   protected $redirectTo = '/dashboard';
+    public function redirectTo()
+    {
+        return route('dashboard');
+    }
 
     /**
      * Create a new controller instance.
@@ -40,7 +42,8 @@ class LoginController extends Controller
     }
 
     /**
-     * Attempt to log the user into the application across supported admin & PBP guards.
+     * Attempt to log the user into the application.
+     * Only Admin accounts (via web guard) are permitted.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return bool
@@ -48,16 +51,9 @@ class LoginController extends Controller
     protected function attemptLogin(\Illuminate\Http\Request $request)
     {
         if ($this->guard()->attempt($this->credentials($request), $request->boolean('remember'))) {
-            return true;
-        }
-
-        if (\Illuminate\Support\Facades\Auth::guard('subscriber')->attempt($this->credentials($request), $request->boolean('remember'))) {
-            \Illuminate\Support\Facades\Session::put('subscribers', \Illuminate\Support\Facades\Auth::guard('subscriber')->user()->fresh());
-            return true;
-        }
-
-        if (\Illuminate\Support\Facades\Auth::guard('employee')->attempt($this->credentials($request), $request->boolean('remember'))) {
-            \Illuminate\Support\Facades\Session::put('subscribers', \Illuminate\Support\Facades\Auth::guard('employee')->user()->fresh());
+            \Illuminate\Support\Facades\Auth::guard('subscriber')->logout();
+            \Illuminate\Support\Facades\Auth::guard('employee')->logout();
+            \Illuminate\Support\Facades\Session::forget('subscribers');
             return true;
         }
 
@@ -73,22 +69,24 @@ class LoginController extends Controller
      */
     protected function authenticated(\Illuminate\Http\Request $request, $user)
     {
-        if (\Illuminate\Support\Facades\Auth::guard('subscriber')->check() || \Illuminate\Support\Facades\Auth::guard('employee')->check()) {
-            return redirect()->route('subscribers.dashboard');
+        $intended = $request->session()->get('url.intended');
+        if ($intended && (str_contains($intended, 'subscribers') || str_contains($intended, 'login') || str_contains($intended, 'logout'))) {
+            $request->session()->forget('url.intended');
         }
 
-        if ($user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Subscriber Admin', 'Sub Employee'])) {
-            return redirect()->route('subscribers.dashboard');
-        }
-
-        return redirect()->intended($this->redirectPath());
+        return redirect()->intended(route('dashboard'));
     }
     
-     public function logout()
+    public function logout(\Illuminate\Http\Request $request)
     {
         $this->guard()->logout();
+        \Illuminate\Support\Facades\Auth::guard('subscriber')->logout();
+        \Illuminate\Support\Facades\Auth::guard('employee')->logout();
+        \Illuminate\Support\Facades\Session::forget('subscribers');
 
-        // Customize the redirect URL after logout
-        return redirect('https://www.donkeydeliveries.com/');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('https://www.donkeydeliveries.com/donkey/login');
     }
 }

@@ -26,12 +26,8 @@ class RedirectIfAuthenticated
                 if ($guard === 'subscriber' || $guard === 'employee') {
                     return redirect()->route('subscribers.dashboard');
                 }
-                return redirect(RouteServiceProvider::HOME);
+                return redirect()->route('dashboard');
             }
-        }
-
-        if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
-            return redirect()->route('subscribers.dashboard');
         }
 
         return $next($request);

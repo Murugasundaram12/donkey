@@ -5,6 +5,7 @@ namespace Tests\Feature\Subscriber;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 use App\Models\Subscriber;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -327,9 +328,9 @@ class SubscriberWebLoginTest extends TestCase
     }
 
     /**
-     * TC12: Subscriber logging in via main /login form is redirected to PBP dashboard.
+     * TC12: Subscriber credentials on Admin Login form are rejected.
      */
-    public function test_tc12_subscriber_login_via_main_login_routes_to_pbp_dashboard()
+    public function test_tc12_subscriber_credentials_on_admin_login_are_rejected()
     {
         $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
             'name' => 'Main Login Subscriber',
@@ -344,9 +345,9 @@ class SubscriberWebLoginTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('subscribers.dashboard'));
-        $this->assertTrue(Auth::guard('subscriber')->check());
-        $this->assertEquals($subscriber->id, Auth::guard('subscriber')->id());
+        $response->assertSessionHasErrors('email');
+        $this->assertFalse(Auth::guard('web')->check());
+        $this->assertFalse(Auth::guard('subscriber')->check());
     }
 
     /**
@@ -359,6 +360,211 @@ class SubscriberWebLoginTest extends TestCase
 
         $response = $this->actingAs($admin, 'web')->get('/dashboard');
         $response->assertOk();
+    }
+
+    /**
+     * TC14: Super Admin dashboard is NOT hijacked to subscriber dashboard when subscriber guard is active.
+     */
+    public function test_tc14_admin_dashboard_not_hijacked_by_subscriber_guard()
+    {
+        $admin = \App\Models\Admin::find(32);
+        $this->assertNotNull($admin);
+
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Concurrent Subscriber',
+            'email' => 'concurrent_sub@test.com',
+            'mobile' => '9876543114',
+            'password' => Hash::make('password123'),
+            'subscriberId' => 'SUB-TC14',
+        ]));
+
+        Auth::guard('subscriber')->login($subscriber);
+        $this->assertTrue(Auth::guard('subscriber')->check());
+
+        $response = $this->actingAs($admin, 'web')->get('/dashboard');
+        $response->assertOk();
+    }
+
+    /**
+     * TC15: Admin login clears any leftover subscriber guard and routes to admin dashboard.
+     */
+    public function test_tc15_admin_login_clears_subscriber_session_and_routes_to_admin_dashboard()
+    {
+        $admin = \App\Models\Admin::find(32);
+        $this->assertNotNull($admin);
+        $admin->password = Hash::make('adminpass123');
+        $admin->save();
+
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Leftover Subscriber',
+            'email' => 'leftover_sub@test.com',
+            'mobile' => '9876543115',
+            'password' => Hash::make('password123'),
+            'subscriberId' => 'SUB-TC15',
+        ]));
+
+        Auth::guard('subscriber')->login($subscriber);
+        session(['subscribers' => $subscriber]);
+        $this->assertTrue(Auth::guard('subscriber')->check());
+
+        $response = $this->post('/login', [
+            'email' => 'Kesav2226@gmail.com',
+            'password' => 'adminpass123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertTrue(Auth::guard('web')->check());
+        $this->assertFalse(Auth::guard('subscriber')->check());
+    }
+
+    /**
+     * TC16: Stale subscriber intended URL does not override Admin dashboard destination.
+     */
+    public function test_tc16_stale_subscriber_intended_url_does_not_override_admin_dashboard()
+    {
+        $admin = \App\Models\Admin::find(32);
+        $this->assertNotNull($admin);
+        $admin->password = Hash::make('adminpass123');
+        $admin->save();
+
+        $response = $this->withSession(['url.intended' => 'https://donkeydeliveries.com/donkey/subscribers/dashboard'])
+            ->post('/login', [
+                'email' => 'Kesav2226@gmail.com',
+                'password' => 'adminpass123',
+            ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertTrue(Auth::guard('web')->check());
+    }
+
+    /**
+     * TC17: Invalid login credentials reject authentication.
+     */
+    public function test_tc17_invalid_admin_login_rejects_authentication()
+    {
+        $response = $this->post('/login', [
+            'email' => 'Kesav2226@gmail.com',
+            'password' => 'completely_wrong_password_xyz',
+        ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertFalse(Auth::guard('web')->check());
+        $this->assertFalse(Auth::guard('subscriber')->check());
+    }
+
+    /**
+     * TC18: Unauthenticated access to /dashboard redirects to /login.
+     */
+    public function test_tc18_unauthenticated_user_accessing_dashboard_redirects_to_login()
+    {
+        $response = $this->get('/dashboard');
+        $response->assertRedirect(route('login'));
+    }
+
+    /**
+     * TC19: Admin logout flushes session and allows logging in again to admin dashboard.
+     */
+    public function test_tc19_admin_logout_and_login_again_routes_to_admin_dashboard()
+    {
+        $admin = \App\Models\Admin::find(32);
+        $this->assertNotNull($admin);
+        $admin->password = Hash::make('adminpass123');
+        $admin->save();
+
+        // 1. Initial Login
+        $this->post('/login', [
+            'email' => 'Kesav2226@gmail.com',
+            'password' => 'adminpass123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertTrue(Auth::guard('web')->check());
+
+        // 2. Logout
+        $this->post('/logout');
+        $this->assertFalse(Auth::guard('web')->check());
+
+        // 3. Login again
+        $response = $this->post('/login', [
+            'email' => 'Kesav2226@gmail.com',
+            'password' => 'adminpass123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertTrue(Auth::guard('web')->check());
+        $this->assertFalse(Auth::guard('subscriber')->check());
+    }
+
+    /**
+     * TC20: Valid Employee login is preserved via dedicated subscriber login flow.
+     */
+    public function test_tc20_employee_login_preserved_via_subscriber_login_flow()
+    {
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Emp Parent Subscriber',
+            'email' => 'parent_sub_tc20@test.com',
+            'mobile' => '9876543120',
+            'password' => Hash::make('parentpass123'),
+            'subscriberId' => 'SUB-TC20',
+        ]));
+
+        $employee = Employee::create([
+            'name' => 'Sub Employee TC20',
+            'email' => 'emp_tc20@test.com',
+            'emp_id' => 'EMP-TC20-001',
+            'official_mail' => 'emp_tc20@test.com',
+            'mobile' => '9123456720',
+            'official_mobile' => '9123456720',
+            'password' => Hash::make('emppassword123'),
+            'address' => 'Test Address',
+            'aadhar' => '123456789012',
+            'subscriber_id' => $subscriber->id,
+        ]);
+
+        $response = $this->post('/subscribers/loginaction', [
+            'email' => 'emp_tc20@test.com',
+            'password' => 'emppassword123',
+        ]);
+
+        $response->assertRedirect(route('subscribers.dashboard'));
+        $this->assertTrue(Auth::guard('employee')->check());
+        $this->assertEquals($employee->id, Auth::guard('employee')->id());
+    }
+
+    /**
+     * TC21: Employee credentials on Admin Login form are rejected.
+     */
+    public function test_tc21_employee_credentials_on_admin_login_are_rejected()
+    {
+        $subscriber = Subscriber::create(array_merge($this->defaultVendorData, [
+            'name' => 'Emp Parent Subscriber 21',
+            'email' => 'parent_sub_tc21@test.com',
+            'mobile' => '9876543121',
+            'password' => Hash::make('parentpass123'),
+            'subscriberId' => 'SUB-TC21',
+        ]));
+
+        $employee = Employee::create([
+            'name' => 'Sub Employee TC21',
+            'email' => 'emp_tc21@test.com',
+            'emp_id' => 'EMP-TC21-001',
+            'official_mail' => 'emp_tc21@test.com',
+            'mobile' => '9123456721',
+            'official_mobile' => '9123456721',
+            'password' => Hash::make('emppassword123'),
+            'address' => 'Test Address',
+            'aadhar' => '123456789012',
+            'subscriber_id' => $subscriber->id,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => 'emp_tc21@test.com',
+            'password' => 'emppassword123',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertFalse(Auth::guard('web')->check());
+        $this->assertFalse(Auth::guard('employee')->check());
+        $this->assertFalse(Auth::guard('subscriber')->check());
     }
 }
 

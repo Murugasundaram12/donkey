@@ -50,7 +50,7 @@ class HomeController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
+            if (!Auth::guard('web')->check() && (Auth::guard('subscriber')->check() || Auth::guard('employee')->check())) {
                 return redirect()->route('subscribers.dashboard');
             }
             return $next($request);
@@ -275,7 +275,7 @@ class HomeController extends Controller
 
     public function dashboard()
     {
-        if (Auth::guard('subscriber')->check() || Auth::guard('employee')->check()) {
+        if (!Auth::guard('web')->check() && (Auth::guard('subscriber')->check() || Auth::guard('employee')->check())) {
             return redirect()->route('subscribers.dashboard');
         }
 
