@@ -211,6 +211,46 @@ class VendorBookingVisibilityAndInquiryApiTest extends TestCase
         $this->assertSame('0', (string) $enquiry->ficon);
     }
 
+    public function test_public_inquiry_with_priority_no_payload(): void
+    {
+        $uniqueMobile = '98' . rand(10000000, 99999999);
+
+        $payload = [
+            'name' => 'Arun Kumar',
+            'email' => 'arun.' . uniqid() . '@example.com',
+            'mobile' => $uniqueMobile,
+            'area' => 'Urapakkam',
+            'pincode' => '603210',
+            'inquiry_for' => 'Rider',
+            'message' => 'Interested in joining',
+            'Priority' => 'no',
+        ];
+
+        $response = $this->postJson('/api/inquiry', $payload);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'status' => true,
+                'message' => 'Inquiry submitted successfully. Our team will contact you shortly.',
+                'data' => [
+                    'name' => 'Arun Kumar',
+                    'mobile' => $uniqueMobile,
+                    'area' => 'Urapakkam',
+                    'pincode' => '603210',
+                    'inquiry_for' => 'Rider',
+                    'category' => 'Rider',
+                    'message' => 'Interested in joining',
+                    'Priority' => false,
+                    'immediate_join' => false,
+                ],
+            ]);
+
+        $enquiryId = $response->json('data.id');
+        $enquiry = Enquiry::find($enquiryId);
+        $this->assertNotNull($enquiry);
+        $this->assertSame('0', (string) $enquiry->ficon);
+    }
+
     public function test_public_inquiry_validation_failures(): void
     {
         $response = $this->postJson('/api/inquiry', [

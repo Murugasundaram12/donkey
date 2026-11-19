@@ -30,8 +30,24 @@ class InquiryController extends Controller
         if (!$request->has('message') && $request->has('description')) {
             $request->merge(['message' => $request->description]);
         }
-        if (!$request->has('immediate_join') && $request->has('ficon')) {
-            $request->merge(['immediate_join' => $request->ficon]);
+
+        // Support Priority, immediate_join, and ficon aliases
+        $priorityVal = null;
+        if ($request->has('Priority')) {
+            $priorityVal = $request->input('Priority');
+        } elseif ($request->has('priority')) {
+            $priorityVal = $request->input('priority');
+        } elseif ($request->has('immediate_join')) {
+            $priorityVal = $request->input('immediate_join');
+        } elseif ($request->has('ficon')) {
+            $priorityVal = $request->input('ficon');
+        }
+
+        if ($priorityVal !== null) {
+            $request->merge([
+                'Priority' => $priorityVal,
+                'immediate_join' => $priorityVal,
+            ]);
         }
 
         $validator = Validator::make($request->all(), [
@@ -42,6 +58,7 @@ class InquiryController extends Controller
             'pincode' => ['required', 'digits:6'],
             'inquiry_for' => ['required', 'string', 'max:100'],
             'message' => ['nullable', 'string', 'max:1000'],
+            'Priority' => ['nullable'],
             'immediate_join' => ['nullable'],
         ], [
             'mobile.regex' => 'The mobile must be a valid 10-digit Indian phone number starting with 6, 7, 8, or 9.',
@@ -98,10 +115,27 @@ class InquiryController extends Controller
             $pincodeVal = $pincodeInput;
         }
 
-        $immediateJoinInput = $request->input('immediate_join');
-        $immediateJoin = $immediateJoinInput !== null
-            ? filter_var($immediateJoinInput, FILTER_VALIDATE_BOOLEAN)
-            : true;
+        $immediateJoinInput = $request->input('Priority') ?? $request->input('immediate_join');
+        if ($immediateJoinInput !== null) {
+            if (is_bool($immediateJoinInput)) {
+                $immediateJoin = $immediateJoinInput;
+            } elseif (is_string($immediateJoinInput)) {
+                $str = strtolower(trim($immediateJoinInput));
+                if (in_array($str, ['no', 'false', '0', 'off'], true)) {
+                    $immediateJoin = false;
+                } elseif (in_array($str, ['yes', 'true', '1', 'on'], true)) {
+                    $immediateJoin = true;
+                } else {
+                    $immediateJoin = filter_var($immediateJoinInput, FILTER_VALIDATE_BOOLEAN);
+                }
+            } elseif (is_numeric($immediateJoinInput)) {
+                $immediateJoin = (int) $immediateJoinInput === 1;
+            } else {
+                $immediateJoin = (bool) $immediateJoinInput;
+            }
+        } else {
+            $immediateJoin = true;
+        }
 
         $description = (string) ($request->input('message') ?? '');
 
@@ -131,6 +165,7 @@ class InquiryController extends Controller
                 'inquiry_for' => $category,
                 'category' => $enquiry->category,
                 'message' => $enquiry->description,
+                'Priority' => $enquiry->ficon === '1' || $enquiry->ficon === 1,
                 'immediate_join' => $enquiry->ficon === '1' || $enquiry->ficon === 1,
                 'created_at' => $enquiry->created_at?->toISOString() ?? now()->toISOString(),
             ],
