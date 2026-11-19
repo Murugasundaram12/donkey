@@ -72,6 +72,7 @@ Route::post('/profile/update', [App\Http\Controllers\API\RegisterController::cla
 Route::post('/user/filter/{action}', [App\Http\Controllers\API\RegisterController::class, 'userFilter'])->name('userFilter');
 Route::get('/category/list', [App\Http\Controllers\API\Category::class, 'categoryList'])->name('categoryList');
 Route::get('/service_provider', [ServiceProviderController::class, 'show'])->name('public.service-provider');
+Route::post('inquiry', [\App\Http\Controllers\API\InquiryController::class, 'store'])->middleware('throttle:10,1')->name('api.inquiry');
 // Route::get('/logout', [App\Http\Controllers\API\RegisterController::class, 'logout'])->name('logout');
 //});
 Route::post('/driverlogin', [App\Http\Controllers\API\RegisterController::class, 'driverlogin'])->name('driverlogin');

@@ -23,10 +23,18 @@ class BookingController extends Controller
         $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
         $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
 
+        $vendorRiders = Driver::where('subscriberId', $vendor->id)->get();
+        $vendorRiderIds = $vendorRiders->flatMap(fn ($rider) => [$rider->id, $rider->userid])
+            ->filter()->unique()->values()->all();
+
         return Booking::with(['user', 'bookingPayment', 'pincode'])
-            ->where(function ($query) use ($vendor, $pincodes) {
+            ->where(function ($query) use ($vendor, $pincodes, $vendorRiderIds) {
                 $query->where('assigned_subscriber_id', $vendor->id)
                       ->orWhere('provider_accepted_by', $vendor->id);
+                if (!empty($vendorRiderIds)) {
+                    $query->orWhereIn('driver_id', $vendorRiderIds);
+                    $query->orWhereIn('accepted', $vendorRiderIds);
+                }
                 if (!empty($pincodes)) {
                     $query->orWhere(function ($available) use ($pincodes) {
                         $available->whereNull('assigned_subscriber_id')
@@ -38,6 +46,38 @@ class BookingController extends Controller
     }
 
     /**
+     * Normalize status parameter supporting numeric (0-4) and text representations.
+     */
+    private function normalizeStatus($rawStatus): ?int
+    {
+        if ($rawStatus === null || $rawStatus === '') {
+            return null;
+        }
+
+        if (is_numeric($rawStatus)) {
+            $val = (int) $rawStatus;
+            return in_array($val, [0, 1, 2, 3, 4], true) ? $val : null;
+        }
+
+        $normalized = strtolower(trim((string) $rawStatus));
+        $normalized = str_replace('-', '_', $normalized);
+
+        $statusMap = [
+            'pending' => 0,
+            'in_progress' => 1,
+            'inprogress' => 1,
+            'completed' => 2,
+            'complete' => 2,
+            'cancelled' => 3,
+            'canceled' => 3,
+            'on_ride' => 4,
+            'onride' => 4,
+        ];
+
+        return $statusMap[$normalized] ?? null;
+    }
+
+    /**
      * Today's Bookings
      */
     public function today(Request $request)
@@ -46,8 +86,9 @@ class BookingController extends Controller
         $query = $this->getVendorBookingQuery($vendor)
             ->whereDate('created_at', Carbon::today());
 
-        if ($request->has('status') && $request->status !== null) {
-            $query->where('status', (int) $request->status);
+        $status = $this->normalizeStatus($request->input('status'));
+        if ($status !== null) {
+            $query->where('status', $status);
         }
 
         if ($request->filled('search')) {
@@ -105,12 +146,42 @@ class BookingController extends Controller
         $vendor = $request->user();
         $query = $this->getVendorBookingQuery($vendor);
 
-        if ($request->has('status') && $request->status !== null && $request->status !== '') {
-            $query->where('status', (int) $request->status);
+        $status = $this->normalizeStatus($request->input('status'));
+        if ($status !== null) {
+            $query->where('status', $status);
         }
 
+        $startDate = null;
+        $endDate = null;
+
         if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
+            try {
+                $parsed = Carbon::parse($request->input('date'), 'Asia/Kolkata');
+                $startDate = $parsed->copy()->startOfDay();
+                $endDate = $parsed->copy()->endOfDay();
+            } catch (\Throwable $e) {}
+        } else {
+            $startInput = $request->input('start_date') ?: $request->input('from_date');
+            $endInput = $request->input('end_date') ?: $request->input('to_date');
+
+            if (!empty($startInput)) {
+                try {
+                    $startDate = Carbon::parse($startInput, 'Asia/Kolkata')->startOfDay();
+                } catch (\Throwable $e) {}
+            }
+            if (!empty($endInput)) {
+                try {
+                    $endDate = Carbon::parse($endInput, 'Asia/Kolkata')->endOfDay();
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->where('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->where('created_at', '<=', $endDate);
         }
 
         if ($request->filled('search')) {
