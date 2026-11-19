@@ -5,8 +5,9 @@ namespace App\Http\Controllers\API\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Pincode;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class BusinessController extends Controller
 {
@@ -40,7 +41,8 @@ class BusinessController extends Controller
                 'description' => (string) ($vendor->description ?? ''),
                 'gst' => (string) ($vendor->gst ?? ''),
                 'pincodes' => $pincodeObjects,
-                'logo_url' => $vendor->image ? asset('public/subscriber/' . $vendor->image) : null,
+                // 'logo_url' => $vendor->image ? asset('public/subscriber/' . $vendor->image) : null,
+                'qr_code_url' => $this->resolveQrUrl($vendor->qr),
                 'created_at' => $vendor->created_at ? $vendor->created_at->toDateTimeString() : null,
             ]
         ]);
@@ -58,9 +60,12 @@ class BusinessController extends Controller
             'email' => 'nullable|email|unique:subscriber,email,' . $vendor->id,
             'mobile' => 'nullable|string|max:15|unique:subscriber,mobile,' . $vendor->id,
             'location' => 'nullable|string',
-            'gst' => 'nullable|string|max:100',
+            'gst' => ['nullable', 'string', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i'],
             'pincode' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
+            'qr' => 'nullable|file|image|mimes:jpeg,png,jpg|max:4096',
+        ], [
+            'gst.regex' => 'The gst format is invalid. Please enter a valid 15-character GSTIN (e.g. 33AAAAA0000A1Z5).'
         ]);
 
         if ($validator->fails()) {
@@ -83,8 +88,9 @@ class BusinessController extends Controller
         if ($request->filled('location')) {
             $vendor->location = $request->location;
         }
-        if ($request->filled('gst')) {
-            $vendor->gst = $request->gst;
+        if ($request->has('gst')) {
+            $gstValue = $request->input('gst');
+            $vendor->gst = ($gstValue !== null && trim((string) $gstValue) !== '') ? strtoupper(trim((string) $gstValue)) : null;
         }
         if ($request->has('pincode')) {
             $pincodes = is_array($request->pincode) ? json_encode($request->pincode) : $request->pincode;
@@ -97,7 +103,29 @@ class BusinessController extends Controller
             $vendor->image = $imageName;
         }
 
+        $oldQrFilename = $vendor->qr;
+        $newQrUploaded = false;
+
+        if ($request->hasFile('qr')) {
+            $qrFile = $request->file('qr');
+            $extension = $qrFile->getClientOriginalExtension() ?: $qrFile->extension();
+            $qrName = time() . '_qr_' . uniqid() . '.' . $extension;
+
+            $qrDir = public_path('qr');
+            if (!File::isDirectory($qrDir)) {
+                File::makeDirectory($qrDir, 0775, true, true);
+            }
+
+            $qrFile->move($qrDir, $qrName);
+            $vendor->qr = $qrName;
+            $newQrUploaded = true;
+        }
+
         $vendor->save();
+
+        if ($newQrUploaded && !empty($oldQrFilename) && $oldQrFilename !== $vendor->qr) {
+            $this->deleteOldQrFile($oldQrFilename);
+        }
 
         return response()->json([
             'status' => true,
@@ -109,6 +137,8 @@ class BusinessController extends Controller
                 'phone' => (string) $vendor->mobile,
                 'location' => (string) ($vendor->location ?? ''),
                 'gst' => (string) ($vendor->gst ?? ''),
+                'logo_url' => $vendor->image ? asset('public/subscriber/' . $vendor->image) : null,
+                'qr_code_url' => $this->resolveQrUrl($vendor->qr),
             ]
         ]);
     }
@@ -233,5 +263,74 @@ class BusinessController extends Controller
             'status' => true,
             'message' => 'Work description updated successfully'
         ]);
+    }
+
+    /**
+     * Resolve QR code image URL across existing storage conventions.
+     *
+     * @param string|null $filename
+     * @return string|null
+     */
+    public function resolveQrUrl(?string $filename): ?string
+    {
+        if (empty($filename)) {
+            return null;
+        }
+
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
+        }
+
+        $safeFilename = basename($filename);
+        if ($safeFilename === '.' || $safeFilename === '..' || empty($safeFilename)) {
+            return null;
+        }
+
+        $candidateDirs = [
+            'qr',
+            'subscriber/qr',
+            'admin/subscriber/qr',
+        ];
+
+        foreach ($candidateDirs as $dir) {
+            $candidatePath = public_path($dir . '/' . $safeFilename);
+            if (File::exists($candidatePath) && File::isFile($candidatePath)) {
+                return asset($dir . '/' . $safeFilename);
+            }
+        }
+
+        return asset('qr/' . $safeFilename);
+    }
+
+    /**
+     * Safely delete old QR file from disk after successful update.
+     *
+     * @param string|null $filename
+     * @return void
+     */
+    protected function deleteOldQrFile(?string $filename): void
+    {
+        if (empty($filename)) {
+            return;
+        }
+
+        $safeFilename = basename($filename);
+        if ($safeFilename === '.' || $safeFilename === '..' || empty($safeFilename)) {
+            return;
+        }
+
+        $candidateDirs = [
+            'qr',
+            'subscriber/qr',
+            'admin/subscriber/qr',
+        ];
+
+        foreach ($candidateDirs as $dir) {
+            $candidatePath = public_path($dir . '/' . $safeFilename);
+            if (File::exists($candidatePath) && File::isFile($candidatePath)) {
+                @unlink($candidatePath);
+                break;
+            }
+        }
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Subscriber;
 use App\Services\SubscriptionRenewalService;
 use App\Services\VendorNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -585,6 +586,8 @@ class AuthController extends Controller
             'expiry_date' => $vendor->expiryDate ? Carbon::parse($vendor->expiryDate)->format('Y-m-d') : null,
             'need_to_pay' => (float) $vendor->need_to_pay,
             'platform_fee' => (float) $vendor->platform_fee,
+            'gst' => (string) ($vendor->gst ?? ''),
+            'qr_code_url' => $this->resolveQrUrl($vendor->qr),
             'subscription_price' => $pricing['price'],
             'subscription_gst_percentage' => $pricing['gst_percentage'],
             'subscription_gst_amount' => $pricing['gst_amount'],
@@ -626,5 +629,42 @@ class AuthController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Resolve QR code image URL across existing storage conventions.
+     *
+     * @param string|null $filename
+     * @return string|null
+     */
+    protected function resolveQrUrl(?string $filename): ?string
+    {
+        if (empty($filename)) {
+            return null;
+        }
+
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
+        }
+
+        $safeFilename = basename($filename);
+        if ($safeFilename === '.' || $safeFilename === '..' || empty($safeFilename)) {
+            return null;
+        }
+
+        $candidateDirs = [
+            'qr',
+            'subscriber/qr',
+            'admin/subscriber/qr',
+        ];
+
+        foreach ($candidateDirs as $dir) {
+            $candidatePath = public_path($dir . '/' . $safeFilename);
+            if (File::exists($candidatePath) && File::isFile($candidatePath)) {
+                return asset($dir . '/' . $safeFilename);
+            }
+        }
+
+        return asset('qr/' . $safeFilename);
     }
 }

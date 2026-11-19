@@ -195,6 +195,7 @@ Route::prefix('vendor')->group(function () {
     Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureVendorAuthenticated::class])->group(function () {
         // Auth & Renewal Exempt Routes (accessible even if payment expired)
         Route::get('me', [\App\Http\Controllers\API\Vendor\AuthController::class, 'me']);
+        Route::get('profile', [\App\Http\Controllers\API\Vendor\AuthController::class, 'me']);
         Route::post('password/change', [\App\Http\Controllers\API\Vendor\AuthController::class, 'changePassword']);
         Route::post('device-token', [\App\Http\Controllers\API\Vendor\AuthController::class, 'updateDeviceToken']);
         Route::post('logout', [\App\Http\Controllers\API\Vendor\AuthController::class, 'logout']);
@@ -251,7 +252,10 @@ Route::prefix('vendor')->group(function () {
             // Pincodes
             Route::get('pincodes/summary', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'summary']);
             Route::get('pincodes', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'index']);
+            Route::post('pincodes/services/status', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'batchUpdatePincodeServices']);
             Route::put('pincodes/{pincode_id}/status', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'updateStatus']);
+            Route::get('pincodes/{pincode_id}/services', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'getPincodeServices']);
+            Route::put('pincodes/{pincode_id}/services/{service_id}/status', [\App\Http\Controllers\API\Vendor\PincodeController::class, 'updatePincodeServiceStatus']);
 
             // Coupons
             Route::get('coupons', [\App\Http\Controllers\API\Vendor\CouponController::class, 'index']);
