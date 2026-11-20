@@ -28,10 +28,19 @@ class DashboardController extends Controller
         $subscribersPin = is_array($subscribersPin) ? array_values($subscribersPin) : [];
         $pincodes = Pincode::whereIn('id', $subscribersPin)->pluck('pincode')->toArray();
 
-        // Base booking query scoped strictly to vendor
-        $bookingQuery = Booking::query()->where(function ($query) use ($vendor, $pincodes) {
+        // Retrieve vendor's riders (both id and userid)
+        $vendorRiders = Driver::where('subscriberId', $vendor->id)->get();
+        $vendorRiderIds = $vendorRiders->flatMap(fn ($rider) => [$rider->id, $rider->userid])
+            ->filter()->unique()->values()->all();
+
+        // Base booking query scoped strictly to vendor and vendor's riders
+        $bookingQuery = Booking::query()->where(function ($query) use ($vendor, $pincodes, $vendorRiderIds) {
             $query->where('assigned_subscriber_id', $vendor->id)
                   ->orWhere('provider_accepted_by', $vendor->id);
+            if (!empty($vendorRiderIds)) {
+                $query->orWhereIn('driver_id', $vendorRiderIds);
+                $query->orWhereIn('accepted', $vendorRiderIds);
+            }
             if (!empty($pincodes)) {
                 $query->orWhere(function ($available) use ($pincodes) {
                     $available->whereNull('assigned_subscriber_id')
@@ -41,9 +50,12 @@ class DashboardController extends Controller
             }
         });
 
+        $todayStart = Carbon::today('Asia/Kolkata')->startOfDay();
+        $todayEnd = Carbon::today('Asia/Kolkata')->endOfDay();
+
         // Booking Counts
         $totalBookings = (clone $bookingQuery)->count();
-        $todayBookings = (clone $bookingQuery)->whereDate('created_at', Carbon::today())->count();
+        $todayBookings = (clone $bookingQuery)->whereBetween('created_at', [$todayStart, $todayEnd])->count();
         $pendingBookings = (clone $bookingQuery)->where('status', 0)->count();
         $inProgressBookings = (clone $bookingQuery)->where('status', 1)->count();
         $completedBookings = (clone $bookingQuery)->where('status', 2)->count();
@@ -58,7 +70,7 @@ class DashboardController extends Controller
 
         $todayCompletedBookingIds = (clone $bookingQuery)
             ->where('status', 2)
-            ->whereDate('created_at', Carbon::today())
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
             ->pluck('booking_id')
             ->toArray();
         

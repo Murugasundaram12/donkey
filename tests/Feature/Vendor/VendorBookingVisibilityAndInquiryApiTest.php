@@ -306,12 +306,19 @@ class VendorBookingVisibilityAndInquiryApiTest extends TestCase
     {
         $pincode = Pincode::first();
         $pincodeVal = $pincode ? $pincode->pincode : '600001';
+        $mobile = '95' . rand(10000000, 99999999);
 
         $response = $this->from('/')
+            ->withSession([
+                'subscriber_onboarding_otp_verified' => [
+                    'mobile' => $mobile,
+                    'verified_at' => now()->timestamp,
+                ],
+            ])
             ->post('/inquirystore', [
                 'name' => 'WebTester',
                 'mailId' => 'web.' . uniqid() . '@example.com',
-                'mobile' => '95' . rand(10000000, 99999999),
+                'mobile' => $mobile,
                 'area' => 'Anna Nagar',
                 'pincode' => $pincodeVal,
                 'category' => 'Rider',

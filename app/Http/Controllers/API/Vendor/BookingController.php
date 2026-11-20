@@ -83,8 +83,27 @@ class BookingController extends Controller
     public function today(Request $request)
     {
         $vendor = $request->user();
-        $query = $this->getVendorBookingQuery($vendor)
-            ->whereDate('created_at', Carbon::today());
+        $query = $this->getVendorBookingQuery($vendor);
+
+        $startDate = null;
+        $endDate = null;
+
+        $targetDate = $request->input('date') ?: ($request->input('start_date') ?: $request->input('from_date'));
+
+        if (!empty($targetDate)) {
+            try {
+                $parsed = Carbon::parse($targetDate, 'Asia/Kolkata');
+                $startDate = $parsed->copy()->startOfDay();
+                $endDate = $parsed->copy()->endOfDay();
+            } catch (\Throwable $e) {}
+        }
+
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::today('Asia/Kolkata')->startOfDay();
+            $endDate = Carbon::today('Asia/Kolkata')->endOfDay();
+        }
+
+        $query->whereBetween('created_at', [$startDate, $endDate]);
 
         $status = $this->normalizeStatus($request->input('status'));
         if ($status !== null) {
