@@ -453,20 +453,6 @@ class SubscriberController extends Controller
             ]);
         }
 
-        if (
-            !$isResend &&
-            $existingOtp &&
-            ($existingOtp['mobile'] ?? null) === $normalisedMobile &&
-            !empty($existingOtp['expires_at']) &&
-            now()->timestamp > (int) $existingOtp['expires_at']
-        ) {
-            return response()->json([
-                'message' => 'OTP expired. Please click Resend OTP to get a new code.',
-                'masked_phone' => $this->maskedMobile($mobile),
-                'expired' => true,
-            ], 422);
-        }
-
         $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addSeconds(60)->timestamp;
 

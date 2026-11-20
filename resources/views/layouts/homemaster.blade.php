@@ -715,16 +715,18 @@
                                             class="flaticon-calling"></i></div>
                                 </div>
                                 <div class="col">
-                                    <a href="tel:{{ $site_details[0]->phone }}"
+                                    <a href="tel:{{ $site_details[0]->phone ?? '' }}"
                                         style="display:inline-flex; width:116px;">
                                         @php
-                                            $numbers = explode('/', $site_details[0]->phone);
-
+                                            $phoneRaw = $site_details[0]->phone ?? '';
+                                            $numbers = explode('/', $phoneRaw);
                                         @endphp
-                                        {{ $numbers[0] }}
-                                        <br>
-                                        {{ $numbers[1] }}
-                                        <!-- {{ $site_details[0]->phone }} --> </a>
+                                        {{ $numbers[0] ?? '' }}
+                                        @if(!empty($numbers[1]))
+                                            <br>
+                                            {{ $numbers[1] }}
+                                        @endif
+                                        <!-- {{ $site_details[0]->phone ?? '' }} --> </a>
                                 </div>
                             </div>
                         </div>
@@ -1023,19 +1025,21 @@
                                         </div> --}}
                                         <div class="icon-box">
                                             <div class="icon"><span class="flaticon-calling"></span></div>
-                                            <div class="text"><strong></strong><a class="disblo"
-                                                    href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[0]) }}">
-                                                    @php
-                                                        $numbers = explode('/', $site_details[0]->phone);
-                                                    @endphp
-                                                    {{ $numbers[0] }}
+                                            <div class="text"><strong></strong>
+                                                @php
+                                                    $phoneRaw = $site_details[0]->phone ?? '';
+                                                    $numbers = explode('/', $phoneRaw);
+                                                @endphp
+                                                <a class="disblo"
+                                                    href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[0] ?? '') }}">
+                                                    {{ $numbers[0] ?? '' }}
                                                 </a>
-                                                <br>
-                                                <a href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[1]) }}">
-
-                                                    {{ $numbers[1] }}
-                                                    <!-- {{ $site_details[0]->phone }} -->
-                                                </a>
+                                                @if(!empty($numbers[1]))
+                                                    <br>
+                                                    <a href="tel:{{ str_replace([' ', '-', '(', ')'], '', $numbers[1]) }}">
+                                                        {{ $numbers[1] }}
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
 

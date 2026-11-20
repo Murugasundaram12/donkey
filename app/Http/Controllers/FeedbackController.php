@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Feedback\FeedbackStoreRequest;
 use App\Models\Feedback;
+use App\Traits\VerifiesWhatsAppOtp;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FeedbackController extends Controller
 {
+    use VerifiesWhatsAppOtp;
     /**
      * Display a listing of the resource.
      *
@@ -38,11 +41,38 @@ class FeedbackController extends Controller
      */
     public function store(FeedbackStoreRequest $request)
     {
-        //  dd($request);
-    //  $validator=$request->validated();
+        $isPublic = !Auth::check();
 
-     Feedback::create($request->validated());
-     return back();
+        if ($isPublic && config('services.whatsapp.onboarding_otp_enabled')) {
+            if (!$this->hasVerifiedOtp($request->get('phone'))) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Please verify your WhatsApp OTP before submitting.',
+                        'requires_otp' => true,
+                    ], 422);
+                }
+
+                return back()
+                    ->withInput()
+                    ->withErrors(['phone' => 'Please verify your WhatsApp OTP before submitting.']);
+            }
+        }
+
+        Feedback::create($request->validated());
+
+        if ($isPublic && config('services.whatsapp.onboarding_otp_enabled')) {
+            session()->forget('subscriber_onboarding_otp_verified');
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Successfully Submitted!',
+            ], 200);
+        }
+
+        return back();
     }
 
     /**
